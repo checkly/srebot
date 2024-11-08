@@ -136,9 +136,15 @@ return result;
       });
     });
   }
-  // New function
-  async getFailedAPIResults(checkid: string): Promise<CheckResult[]> {
-    const url = `https://api.checklyhq.com/v1/check-results/${checkid}?limit=100&page=1&hasFailures=true&resultType=FINAL`;
+  
+  // Uses the last 6 hours as a time frame
+  async getCheckResults(checkid: string, hasFailures?: boolean, limit?: number): Promise<CheckResult[]> {
+    limit = limit || 100;
+    let hasFailuresQuery = '';
+    if (hasFailures !== undefined) {
+      hasFailuresQuery = `hasFailures=${hasFailures}&`;
+    }
+    const url = `https://api.checklyhq.com/v1/check-results/${checkid}?limit=${limit}&page=1&${hasFailuresQuery}resultType=FINAL`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {

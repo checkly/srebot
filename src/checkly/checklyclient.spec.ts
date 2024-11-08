@@ -1,5 +1,6 @@
 import { ChecklyClient } from './checklyclient';
 import 'dotenv/config';
+import { getChecklyPrometheus } from './ChecklyPrometheus';
 
 jest.setTimeout(30000);
 describe('ChecklyService', () => {
@@ -22,7 +23,7 @@ it('can download all checks', async () => {
 
   it('get failed results', async () => {
     const s = await client.getActivatedChecks();
-    const result = await client.getFailedAPIResults(s[0].id);
+    const result = await client.getCheckResults(s[1].id,true, 100);
 
     //console.log(JSON.stringify(result));
     expect(result).toBeDefined();
@@ -31,6 +32,11 @@ it('can download all checks', async () => {
   it('should be defined', async () => {
     const checks = await client.getChecks();
     const result = await client.getCheck(checks[0].id);
+    expect(result).toBeDefined();
+  });
+
+  it('can download prometheus metrics', async () => {
+    const result = await getChecklyPrometheus();
     expect(result).toBeDefined();
   });
 
@@ -47,3 +53,5 @@ it('can download all checks', async () => {
 */
 
 });
+
+
