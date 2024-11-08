@@ -1,0 +1,16 @@
+{
+  "name": "srebot",
+  "version": "1.0.0",
+  "description": "bajo construcción",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "llamaindex": "^0.8.5",
+    "node-ts": "^6.1.3",
+    "typescript": "^5.6.3"
+  }
+}
