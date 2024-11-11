@@ -3,11 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import fetch from 'node-fetch';
 import { Check, CheckGroup,CheckResult,ErrorMessage,LogEntry } from './models';
+import { PrometheusParser } from './PrometheusParser';
 
 interface ChecklyClientOptions {
   accountId?: string;
   apiKey?: string;
   checklyApiUrl?: string;
+  checklyPrometheusKey?: string;
+  prometheusIntegrationUrl?: string;
 }
 
 export class ChecklyClient {
@@ -17,6 +20,8 @@ export class ChecklyClient {
   private readonly checklyApiUrl: string;
   private readonly accountId: string;
   private readonly apiKey: string;
+  private readonly checklyPrometheusKey: string;
+  private readonly prometheusIntegrationUrl: string;
 
   /**
  * Creates an instance of ChecklyClient.
@@ -25,11 +30,16 @@ export class ChecklyClient {
  * @param {string} [options.accountId] - The account ID to use for authentication. Defaults to the value of the `CHECKLY_ACCOUNT_ID` environment variable.
  * @param {string} [options.apiKey] - The API key to use for authentication. Defaults to the value of the `CHECKLY_API_KEY` environment variable.
  * @param {string} [options.checklyApiUrl] - The base URL of the Checkly API. Defaults to 'https://api.checklyhq.com/v1/'.
+ * @param {string} [options.checklyPrometheusKey] - The Prometheus integration key. Defaults to the value of the `PROMETHEUS_INTEGRATION_KEY` environment variable.
+ * @param {string} [options.prometheusIntegrationUrl] - The URL for the Prometheus integration. Defaults to 'https://api.checklyhq.com/accounts/{accountId}/v2/prometheus/metrics'.
  */
   constructor(options: ChecklyClientOptions = {}) {
     this.accountId = options.accountId || process.env.CHECKLY_ACCOUNT_ID!;
     this.apiKey = options.apiKey || process.env.CHECKLY_API_KEY!;
     this.checklyApiUrl = options.checklyApiUrl || 'https://api.checklyhq.com/v1/';
+    this.checklyPrometheusKey = options.checklyPrometheusKey || process.env.PROMETHEUS_INTEGRATION_KEY!;
+    this.prometheusIntegrationUrl = options.prometheusIntegrationUrl || `https://api.checklyhq.com/accounts/${this.accountId}/v2/prometheus/metrics`;
+    
   }
 
   async getCheck(checkid: string): Promise<Check> {
@@ -56,7 +66,7 @@ async getActivatedChecks(): Promise<Check[]> {
     }
     if (check.groupId){
       const group = groupMap.get(check.groupId);
-       if (group?.activated){
+       if (group?.activated && check.activated){
         return check;
        }
     }
@@ -160,5 +170,35 @@ return result;
     const json = await response.json();
     const result = json.map((x) => plainToClass(CheckResult, x));
     return result;
+  }
+
+  async getPrometheusCheckStatus() {
+    try {
+      const response = await fetch(this.prometheusIntegrationUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.checklyPrometheusKey}`
+        }
+      })
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const text = await response.text();
+      const metrics = PrometheusParser.parse(text);
+      const statusmetric = metrics.filter(m => m.metricName === 'checkly_check_status')[0];
+      
+      const ac = statusmetric.values.filter(v => v.labels.activated==='true');
+      // status is either failing, passing or degraded
+      // the value is 1 if status is true, 0 if false
+      const failing = ac.filter(v => v.labels.status === 'failing' && v.value === 1);
+      const passing = ac.filter(v => v.labels.status === 'passing' && v.value === 1);
+      const degraded = ac.filter(v => v.labels.status === 'degraded' && v.value === 1);
+      return {failing, passing, degraded};
+    } catch (error) {
+      console.error('Error fetching Prometheus metrics:', error);
+      throw error;
+    }
   }
 }

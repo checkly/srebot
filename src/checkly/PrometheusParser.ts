@@ -22,7 +22,10 @@ export class PrometheusParser {
           currentMetric.type = type;
         }
       } else if (line.trim() !== '') {
-        const [metricPart, valuePart] = line.split(' ');
+        const lastSpaceIndex = line.lastIndexOf(' ');
+        const valuePart = line.substring(lastSpaceIndex + 1);
+        const metricPart = line.substring(0, lastSpaceIndex);
+        
         const metricName = metricPart.split('{')[0];
         const labelsPart = metricPart.split('{')[1]?.split('}')[0];
         const labels = labelsPart

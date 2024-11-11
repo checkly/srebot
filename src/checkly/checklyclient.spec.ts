@@ -1,6 +1,6 @@
 import { ChecklyClient } from './checklyclient';
 import 'dotenv/config';
-import { getChecklyPrometheus } from './ChecklyPrometheus';
+
 
 jest.setTimeout(30000);
 describe('ChecklyService', () => {
@@ -36,7 +36,7 @@ it('can download all checks', async () => {
   });
 
   it('can download prometheus metrics', async () => {
-    const result = await getChecklyPrometheus();
+    const result = await client.getPrometheusCheckStatus();
     expect(result).toBeDefined();
   });
 
