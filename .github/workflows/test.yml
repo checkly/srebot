@@ -1,0 +1,40 @@
+name: Npm Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Set up environment variables
+        run: |
+          echo "CHECKLY_API_KEY=${{ secrets.CHECKLY_API_KEY }}" >> $GITHUB_ENV
+          echo "CHECKLY_ACCOUNT_ID=${{ secrets.CHECKLY_ACCOUNT_ID }}" >> $GITHUB_ENV
+          echo "PROMETHEUS_INTEGRATION_KEY=${{ secrets.PROMETHEUS_INTEGRATION_KEY }}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+        env:
+          CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
+          CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
+          PROMETHEUS_INTEGRATION_KEY: ${{ secrets.PROMETHEUS_INTEGRATION_KEY }}
