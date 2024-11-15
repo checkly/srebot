@@ -6,8 +6,7 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches: [main]
+
 jobs:
   Deploy-Production:
     runs-on: ubuntu-latest
