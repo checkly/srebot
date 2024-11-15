@@ -12,7 +12,9 @@
 		"db:migrate": "prisma migrate dev",
 		"db:studio": "prisma studio",
 		"db:deploy": "prisma migrate deploy",
-		"db:generate": "prisma generate"
+		"db:generate": "prisma generate",
+		"postinstall": "prisma generate",
+		"vercel-build": "prisma generate && prisma migrate deploy && next build"
 	},
 	"author": "",
 	"license": "ISC",
