@@ -32,7 +32,6 @@ it('can download all checks', async () => {
   it('should be defined', async () => {
     const checks = await client.getChecks();
     const result = await client.getCheck(checks[0].id);
-    
     expect(result).toBeDefined();
   });
 
