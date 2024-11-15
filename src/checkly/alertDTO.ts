@@ -6,7 +6,62 @@ import {
   IsArray,
   IsOptional,
   IsDate,
+  IsEnum,
 } from 'class-validator';
+
+/**
+ * Enum representing the different alert types.
+ * See https://www.checklyhq.com/docs/alerting-and-retries/alert-states/#alert-states--transitions
+ * for more details.
+ * @enum {string}
+ */
+export enum AlertType {
+  /**
+   * Nothing to see here, keep moving.
+   */
+NO_ALERT = 'NO_ALERT',
+
+/**
+ * Send directly, if threshold is “alert after 1 failure”.
+ */
+ALERT_DEGRADED = 'ALERT_DEGRADED',
+
+/**
+ * Send directly, if threshold is “alert after 1 failure”.
+ */
+ALERT_FAILURE = 'ALERT_FAILURE',
+
+/**
+ * i.e. when threshold is “alert after 2 failures” or “after 5 minutes”.
+ */
+ALERT_DEGRADED_REMAIN = 'ALERT_DEGRADED_REMAIN',
+
+/**
+ * Send but only if you received a degraded notification before.
+ */
+ALERT_DEGRADED_RECOVERY = 'ALERT_DEGRADED_RECOVERY',
+
+/**
+ * This is an escalation, it overrides any threshold setting. We send this even if you already received degraded notifications.
+ */
+ALERT_DEGRADED_FAILURE = 'ALERT_DEGRADED_FAILURE',
+
+/**
+ * i.e. when threshold is “alert after 2 failures” or “after 5 minutes”.
+ */
+ALERT_FAILURE_REMAIN = 'ALERT_FAILURE_REMAIN',
+
+/**
+ * This is a deescalation, it overrides any thresholds settings. We send this even if you already received failure notifications.
+ */
+ALERT_FAILURE_DEGRADED = 'ALERT_FAILURE_DEGRADED',
+
+/**
+ * Send directly.
+ */
+ALERT_RECOVERY = 'ALERT_RECOVERY',
+}
+
 
 export class WebhookAlertDto {
 
@@ -27,8 +82,8 @@ export class WebhookAlertDto {
   @IsString()
   ALERT_TITLE: string;
 
-  @IsString()
-  ALERT_TYPE: string;
+  @IsEnum(AlertType)
+  ALERT_TYPE: AlertType;
 
   @IsUUID()
   CHECK_RESULT_ID: string;
