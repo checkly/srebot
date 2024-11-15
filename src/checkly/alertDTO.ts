@@ -5,9 +5,65 @@ import {
   IsNumber,
   IsArray,
   IsOptional,
+  IsDate,
+  IsEnum,
 } from 'class-validator';
 
-export class AlertDto {
+/**
+ * Enum representing the different alert types.
+ * See https://www.checklyhq.com/docs/alerting-and-retries/alert-states/#alert-states--transitions
+ * for more details.
+ * @enum {string}
+ */
+export enum AlertType {
+  /**
+   * Nothing to see here, keep moving.
+   */
+NO_ALERT = 'NO_ALERT',
+
+/**
+ * Send directly, if threshold is “alert after 1 failure”.
+ */
+ALERT_DEGRADED = 'ALERT_DEGRADED',
+
+/**
+ * Send directly, if threshold is “alert after 1 failure”.
+ */
+ALERT_FAILURE = 'ALERT_FAILURE',
+
+/**
+ * i.e. when threshold is “alert after 2 failures” or “after 5 minutes”.
+ */
+ALERT_DEGRADED_REMAIN = 'ALERT_DEGRADED_REMAIN',
+
+/**
+ * Send but only if you received a degraded notification before.
+ */
+ALERT_DEGRADED_RECOVERY = 'ALERT_DEGRADED_RECOVERY',
+
+/**
+ * This is an escalation, it overrides any threshold setting. We send this even if you already received degraded notifications.
+ */
+ALERT_DEGRADED_FAILURE = 'ALERT_DEGRADED_FAILURE',
+
+/**
+ * i.e. when threshold is “alert after 2 failures” or “after 5 minutes”.
+ */
+ALERT_FAILURE_REMAIN = 'ALERT_FAILURE_REMAIN',
+
+/**
+ * This is a deescalation, it overrides any thresholds settings. We send this even if you already received failure notifications.
+ */
+ALERT_FAILURE_DEGRADED = 'ALERT_FAILURE_DEGRADED',
+
+/**
+ * Send directly.
+ */
+ALERT_RECOVERY = 'ALERT_RECOVERY',
+}
+
+
+export class WebhookAlertDto {
 
   @IsString()
   CHECK_NAME: string;
@@ -26,18 +82,18 @@ export class AlertDto {
   @IsString()
   ALERT_TITLE: string;
 
-  @IsString()
-  ALERT_TYPE: string;
+  @IsEnum(AlertType)
+  ALERT_TYPE: AlertType;
 
   @IsUUID()
   CHECK_RESULT_ID: string;
 
   @IsNumber()
-  RESPONSE_TIME: number;
+  RESPONSE_TIME: Number;
 
   @IsOptional() // This is optional because it's only for API checks
   @IsNumber()
-  API_CHECK_RESPONSE_STATUS_CODE?: number;
+  API_CHECK_RESPONSE_STATUS_CODE?: Number;
 
   @IsOptional() // This is optional because it's only for API checks
   @IsString()
@@ -51,14 +107,14 @@ export class AlertDto {
 
   @IsOptional() // This is only for ALERT_SSL alerts
   @IsNumber()
-  SSL_DAYS_REMAINING?: number;
+  SSL_DAYS_REMAINING?: Number;
 
   @IsOptional() // This is only for ALERT_SSL alerts
   @IsString()
   SSL_CHECK_DOMAIN?: string;
 
-  @IsString()
-  STARTED_AT: string;
+  @IsDate()
+  STARTED_AT: Date;
 
   @Transform(({ value }) => {
     try {
@@ -85,31 +141,8 @@ export class AlertDto {
   TAGS: string[];
 
   @IsNumber()
-  $RANDOM_NUMBER: number;
+  $RANDOM_NUMBER: Number;
 
   @IsString()
   moment: string;
-
-  constructor(json: Partial<AlertDto>) {
-    this.CHECK_NAME = json.CHECK_NAME || '';
-    this.CHECK_ID = json.CHECK_ID || '';
-    this.$UUID = json.$UUID || '';
-    this.CHECK_TYPE = json.CHECK_TYPE || '';
-    this.GROUP_NAME = json.GROUP_NAME || '';
-    this.ALERT_TITLE = json.ALERT_TITLE || '';
-    this.ALERT_TYPE = json.ALERT_TYPE || '';
-    this.CHECK_RESULT_ID = json.CHECK_RESULT_ID || '';
-    this.RESPONSE_TIME = json.RESPONSE_TIME ? Number(json.RESPONSE_TIME) : 0;
-    this.API_CHECK_RESPONSE_STATUS_CODE = json.API_CHECK_RESPONSE_STATUS_CODE || 0;
-    this.API_CHECK_RESPONSE_STATUS_TEXT = json.API_CHECK_RESPONSE_STATUS_TEXT || '';
-    this.RUN_LOCATION = json.RUN_LOCATION || '';
-    this.RESULT_LINK = json.RESULT_LINK || '';
-    this.SSL_DAYS_REMAINING = json.SSL_DAYS_REMAINING || 0;
-    this.SSL_CHECK_DOMAIN = json.SSL_CHECK_DOMAIN || '';
-    this.STARTED_AT = json.STARTED_AT || '';
-    this.TAGS = json.TAGS || [];
-    this.$RANDOM_NUMBER = json.$RANDOM_NUMBER ? Number(json.$RANDOM_NUMBER) : 0;
-    this.moment = json.moment || '';
-  }
-
 }
