@@ -15,7 +15,7 @@ datasource db {
 
 model Alert {
   id        String   @id @default(cuid())
-  data      String
+  data      Json
   context   String
   summary   String
   createdAt DateTime @default(now())
