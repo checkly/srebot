@@ -89,27 +89,4 @@ export class AlertDto {
 
   @IsString()
   moment: string;
-
-  constructor(json: Partial<AlertDto>) {
-    this.CHECK_NAME = json.CHECK_NAME || '';
-    this.CHECK_ID = json.CHECK_ID || '';
-    this.$UUID = json.$UUID || '';
-    this.CHECK_TYPE = json.CHECK_TYPE || '';
-    this.GROUP_NAME = json.GROUP_NAME || '';
-    this.ALERT_TITLE = json.ALERT_TITLE || '';
-    this.ALERT_TYPE = json.ALERT_TYPE || '';
-    this.CHECK_RESULT_ID = json.CHECK_RESULT_ID || '';
-    this.RESPONSE_TIME = json.RESPONSE_TIME ? Number(json.RESPONSE_TIME) : 0;
-    this.API_CHECK_RESPONSE_STATUS_CODE = json.API_CHECK_RESPONSE_STATUS_CODE || 0;
-    this.API_CHECK_RESPONSE_STATUS_TEXT = json.API_CHECK_RESPONSE_STATUS_TEXT || '';
-    this.RUN_LOCATION = json.RUN_LOCATION || '';
-    this.RESULT_LINK = json.RESULT_LINK || '';
-    this.SSL_DAYS_REMAINING = json.SSL_DAYS_REMAINING || 0;
-    this.SSL_CHECK_DOMAIN = json.SSL_CHECK_DOMAIN || '';
-    this.STARTED_AT = json.STARTED_AT || '';
-    this.TAGS = json.TAGS || [];
-    this.$RANDOM_NUMBER = json.$RANDOM_NUMBER ? Number(json.$RANDOM_NUMBER) : 0;
-    this.moment = json.moment || '';
-  }
-
 }
