@@ -9,6 +9,8 @@ import {
 	generateContextAnalysisSummary,
 } from "src/aggregator/chains";
 import { WebhookAlertDto } from "src/checkly/alertDTO";
+import { prisma } from "src/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function GET() {
 	return NextResponse.json({ message: "Hello from Next.js!" });
@@ -29,8 +31,21 @@ export async function POST(request: NextRequest) {
 		const contextAnalysis = await generateContextAnalysis(context);
 		const summary = await generateContextAnalysisSummary(contextAnalysis);
 
-		// TODO: Save the alert to the database
-		console.log("Context analysis summary:", summary);
+		await prisma.alert
+			.create({
+				data: {
+					data: { ...alertDto } as unknown as Prisma.InputJsonValue,
+					context: JSON.stringify(contextAnalysis),
+					summary,
+				},
+			})
+			.catch((error) => {
+				console.error("Error saving alert to the database:", error);
+				return NextResponse.json(
+					{ message: "Error saving alert to the database" },
+					{ status: 500 }
+				);
+			});
 
 		return NextResponse.json({ message: "OK" });
 	} catch (error) {
