@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { openai } from "./openai";
+import { openai } from "../ai/openai";
 import { CheckContext } from "src/aggregator/ContextAggregator";
 import { stringify } from "yaml";
 
