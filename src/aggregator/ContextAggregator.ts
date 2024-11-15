@@ -1,5 +1,5 @@
 import { checklyAggregator } from "./checkly-aggregator";
-import { AlertDto } from "src/checkly/alertDTO";
+import { WebhookAlertDto } from "src/checkly/alertDTO";
 
 export enum ContextKey {
 	ChecklyAlert = "checkly.alert",
@@ -16,10 +16,10 @@ export interface CheckContext {
 }
 
 export class CheckContextAggregator {
-	alert: AlertDto;
+	alert: WebhookAlertDto;
 	plugins = [checklyAggregator];
 
-	constructor(alert: AlertDto) {
+	constructor(alert: WebhookAlertDto) {
 		this.alert = alert;
 	}
 
