@@ -31,9 +31,6 @@ export async function POST(request: NextRequest) {
 		const contextAnalysis = await generateContextAnalysis(context);
 		const summary = await generateContextAnalysisSummary(contextAnalysis);
 
-		// TODO: Save the alert to the database
-		console.log("Context analysis summary:", summary);
-
 		await prisma.alert
 			.create({
 				data: {
@@ -44,6 +41,10 @@ export async function POST(request: NextRequest) {
 			})
 			.catch((error) => {
 				console.error("Error saving alert to the database:", error);
+				return NextResponse.json(
+					{ message: "Error saving alert to the database" },
+					{ status: 500 }
+				);
 			});
 
 		return NextResponse.json({ message: "OK" });
