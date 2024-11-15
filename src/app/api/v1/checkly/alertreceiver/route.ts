@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from "next/server";
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
-import { WebhookAlertDto } from '../../../../../src/checkly/alertDTO';
-import 'reflect-metadata';
+import { WebhookAlertDto } from '../../../../../checkly/alertDTO';
+
 export async function GET() {
 	return NextResponse.json({ message: "Hello from Next.js!" });
 }
