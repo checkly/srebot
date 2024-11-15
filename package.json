@@ -13,6 +13,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ai-sdk/openai": "^0.0.72",
+    "@prisma/client": "^5.22.0",
+    "ai": "^3.4.33",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
@@ -23,12 +26,15 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "reflect-metadata": "^0.2.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "yaml": "^2.6.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/react": "18.3.12",
     "jest": "^29.7.0",
+    "prisma": "^5.22.0",
     "ts-jest": "^29.2.5"
   }
 }
