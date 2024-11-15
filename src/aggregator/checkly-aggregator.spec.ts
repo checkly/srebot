@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { checkly } from "../checkly/client";
 import { WebhookAlertDto } from "../checkly/alertDTO";
 import { checklyAggregator } from "./checkly-aggregator";
