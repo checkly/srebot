@@ -5,9 +5,10 @@ import {
   IsNumber,
   IsArray,
   IsOptional,
+  IsDate,
 } from 'class-validator';
 
-export class AlertDto {
+export class WebhookAlertDto {
 
   @IsString()
   CHECK_NAME: string;
@@ -33,11 +34,11 @@ export class AlertDto {
   CHECK_RESULT_ID: string;
 
   @IsNumber()
-  RESPONSE_TIME: number;
+  RESPONSE_TIME: Number;
 
   @IsOptional() // This is optional because it's only for API checks
   @IsNumber()
-  API_CHECK_RESPONSE_STATUS_CODE?: number;
+  API_CHECK_RESPONSE_STATUS_CODE?: Number;
 
   @IsOptional() // This is optional because it's only for API checks
   @IsString()
@@ -51,14 +52,14 @@ export class AlertDto {
 
   @IsOptional() // This is only for ALERT_SSL alerts
   @IsNumber()
-  SSL_DAYS_REMAINING?: number;
+  SSL_DAYS_REMAINING?: Number;
 
   @IsOptional() // This is only for ALERT_SSL alerts
   @IsString()
   SSL_CHECK_DOMAIN?: string;
 
-  @IsString()
-  STARTED_AT: string;
+  @IsDate()
+  STARTED_AT: Date;
 
   @Transform(({ value }) => {
     try {
@@ -85,7 +86,7 @@ export class AlertDto {
   TAGS: string[];
 
   @IsNumber()
-  $RANDOM_NUMBER: number;
+  $RANDOM_NUMBER: Number;
 
   @IsString()
   moment: string;

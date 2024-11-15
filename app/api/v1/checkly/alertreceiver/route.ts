@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from "next/server";
 import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
-import { AlertDto } from '../../../../../src/checkly/alertDTO';
-
+import { WebhookAlertDto } from '../../../../../src/checkly/alertDTO';
+import 'reflect-metadata';
 export async function GET() {
 	return NextResponse.json({ message: "Hello from Next.js!" });
 }
@@ -10,7 +10,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
-		const alertDto = plainToInstance(AlertDto, body);
+		const alertDto = plainToInstance(WebhookAlertDto, body, { enableImplicitConversion: true });
 	
 		// Validate the DTO
 		await validateOrReject(alertDto);
