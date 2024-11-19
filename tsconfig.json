@@ -10,6 +10,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    //"rootDir": "./src",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
@@ -24,7 +25,7 @@
     ],
     "allowJs": true,
     "strict": false,
-    "noEmit": true,
+    //"noEmit": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -37,7 +38,7 @@
     ]
   },
   "include": [
-    "**/*.ts",
+    "src/**/*.ts",
     "tests/**/*.ts",
     ".next/types/**/*.ts"
   ],
