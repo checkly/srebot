@@ -6,10 +6,18 @@ import { GithubAgentInteractionTool } from "./tools/GithubAgentInteractionTool";
 
 export class SreAssistant extends BaseAssistant {
 	alertId: string;
+	interactionContext: {
+		username: string;
+		date: string;
+	};
 
 	constructor(
 		threadId: string,
 		alertId: string,
+		interactionContext: {
+			username: string;
+			date: string;
+		},
 		config?: Partial<RunCreateParams>
 	) {
 		super(threadId, {
@@ -17,6 +25,7 @@ export class SreAssistant extends BaseAssistant {
 			...config,
 		});
 
+		this.interactionContext = interactionContext;
 		this.alertId = alertId;
 	}
 
@@ -29,6 +38,10 @@ Important reminders:
 - If you're unsure about any aspect, clearly state your level of confidence
 - Maintain a professional and calm tone throughout your responses
 - Focus on providing actionable information that can help reduce MTTR
+
+Interaction Context:
+Username: ${this.interactionContext["Username"]}
+Date: ${this.interactionContext["Date"]}
 
 Format your responses as slack messages and keep the answer concise and relevant.
 `;
