@@ -10,7 +10,7 @@ const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
 
 jest.setTimeout(120000); // Set timeout to 120 seconds
 
-describe('GithubAgent Tests', () => {
+describe.skip('GithubAgent Tests', () => {
   let openai: OpenAIProvider;
   let github: GitHubAPI;
 

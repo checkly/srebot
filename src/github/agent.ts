@@ -13,7 +13,6 @@ export class GithubAgent {
 
   async summarizeRelease(org: string, repo: string, release: string, previousRelease: string) {
     let diff = await this.github.getDiffBetweenTags(org, repo, release, previousRelease);
-    console.log("release summary", org, repo, release, previousRelease, JSON.stringify(diff).length);
 
     const { text } = await generateText({
       model: this.model,
@@ -25,7 +24,6 @@ export class GithubAgent {
 
   async find_repo(org: string, prompt: string) {
     let repositories = (await this.github.queryRepositories(org)).map(r => ({name: r.name, description: r.description}));
-    console.log('repositories', org, JSON.stringify(repositories));
 
     const { text } = await generateText({
       model: this.model,
@@ -48,16 +46,12 @@ export class GithubAgent {
 
   async summarizeReleases(prompt: string, org: string) {
     let repo = await this.find_repo(org, prompt);
-    console.log('repo', org, repo);
     let since = await this.get_date(org, prompt);
-    console.log('since', org, since);
     let releases = await this.github.queryLatestReleases(org, repo, new Date(since));
-    console.log('releases', org, repo, JSON.stringify(releases).length);
 
     return await Promise.all(releases.slice(0, -1).map(async (release, i) => {
       let previousRelease = releases[i + 1]?.tag || '';
       let summary = await this.summarizeRelease(org, repo, release.tag, previousRelease);
-      console.log("summary: ", JSON.stringify(summary, null, 2));
       return {
         id: release.tag,
         repo: repo,
