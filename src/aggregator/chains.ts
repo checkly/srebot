@@ -34,7 +34,7 @@ export const generateContextAnalysis = async (context: CheckContext[]) => {
 };
 
 export const generateContextAnalysisSummary = async (
-	contextAnalysis: CheckContext[]
+	contextAnalysis: (CheckContext & { analysis: string })[]
 ) => {
 	const summary = await generateText({
 		model: openai("gpt-4o"),
