@@ -37,6 +37,18 @@ app.message("whatismyuserid", async ({ context, say }) => {
 	await say(context.userId!);
 });
 
+let setupAgent = () => {
+	const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
+	const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
+
+	let openai = createOpenAI({ apiKey: OPENAI_API_KEY });
+	let github = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
+
+	return new GithubAgent(openai("gpt-4o"), github);
+};
+
+const githubAgent = setupAgent();
+
 app.event("app_mention", async ({ event, context }) => {
 	try {
 		let threadId;

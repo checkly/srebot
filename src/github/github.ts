@@ -38,6 +38,7 @@ class GitHubAPI {
         tag: release.tag_name,
         author: release.author.name,
         date: release.created_at,
+        link: release.html_url,
       }));
     } catch (error) {
       console.error('Error querying GitHub releases:', error);
@@ -54,6 +55,17 @@ class GitHubAPI {
       throw error;
     }
   }
+
+  async getReleaseAuthors(owner: string, repo: string, tag_name: string) {
+    let commits = await this.octokit.rest.repos.listCommits({
+      owner,
+      repo,
+      sha: tag_name,
+    })
+    
+    return commits.data.map(commit => commit.author);
+  }
+
 
   async getDiffBetweenTags(org: string, repo: string, baseTag: string, headTag: string): Promise<CompareCommitsResponse> {
     try {
