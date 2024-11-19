@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { Tool, createToolParameters, createToolOutput } from "../../ai/Tool";
-import { prisma } from "src/prisma";
+import { prisma } from "../../prisma";
 import { SreAssistant } from "../SreAssistant";
 import { generateObject, generateText } from "ai";
-import { openaiSDKClient } from "src/ai/openai";
+import { openaiSDKClient } from "../../ai/openai";
 
 const parameters = createToolParameters(
 	z.object({

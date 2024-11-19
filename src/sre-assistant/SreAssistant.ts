@@ -12,7 +12,7 @@ export class SreAssistant extends BaseAssistant {
 		config?: Partial<RunCreateParams>
 	) {
 		super(threadId, {
-			assistant_id: process.env.ASSISTANT_ID as string,
+			assistant_id: process.env.OPENAI_ASSISTANT_ID as string,
 			...config,
 		});
 
