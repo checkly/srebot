@@ -4,9 +4,11 @@ import checklyWebhookRouter from "./routes/checklywebhook";
 import { SreAssistant } from "./sre-assistant/SreAssistant";
 import { getOpenaiClient } from "./ai/openai";
 import { getRunMessages } from "./ai/utils";
+import { slackApp:app } from "./slackbot/app";
 
 // configures dotenv to work in your application
 dotenv.config();
+
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -43,3 +45,16 @@ app
 		// gracefully handle error
 		throw new Error(error.message);
 	});
+
+  //run slack app
+  slackApp.error(async (error) => {
+    // Check the details of the error to handle cases where you should retry sending a message or stop the app
+    console.error(error);
+  });
+  
+  (async () => {
+    await slackApp.start();
+    console.log('⚡️ Bolt app is running!');
+  })();
+  
+
