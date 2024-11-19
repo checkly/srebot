@@ -1,7 +1,9 @@
 import { App, LogLevel } from "@slack/bolt";
-import { getOpenaiClient } from "../ai/openai";
+import { getOpenaiClient, getOpenaiSDKClient } from "../ai/openai";
 import { getRunMessages } from "../ai/utils";
 import { SreAssistant } from "../sre-assistant/SreAssistant";
+import GitHubAPI from "../github/github";
+import { GithubAgent } from "../github/agent";
 
 export const app = new App({
 	signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -38,10 +40,9 @@ app.message("whatismyuserid", async ({ context, say }) => {
 });
 
 let setupAgent = () => {
-	const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 	const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
 
-	let openai = createOpenAI({ apiKey: OPENAI_API_KEY });
+	let openai = getOpenaiSDKClient();
 	let github = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
 
 	return new GithubAgent(openai("gpt-4o"), github);

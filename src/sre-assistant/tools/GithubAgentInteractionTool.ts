@@ -46,6 +46,6 @@ export class GithubAgentInteractionTool extends Tool<
 		let agent = new GithubAgent(getOpenaiSDKClient()("gpt-4o"), github);
 		let response = await agent.summarizeReleases(input.request, "checkly");
 
-		return stringify(response.slice(0, 30));
+		return stringify(response);
 	}
 }

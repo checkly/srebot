@@ -28,7 +28,10 @@ Important reminders:
 - Be concise but comprehensive in your explanations
 - If you're unsure about any aspect, clearly state your level of confidence
 - Maintain a professional and calm tone throughout your responses
-- Focus on providing actionable information that can help reduce MTTR`;
+- Focus on providing actionable information that can help reduce MTTR
+
+Format your responses as slack messages and keep the answer concise and relevant.
+`;
 	}
 
 	protected async getTools(): Promise<Tool[]> {

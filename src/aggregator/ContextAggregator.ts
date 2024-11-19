@@ -1,5 +1,5 @@
 import { checklyAggregator } from "./checkly-aggregator";
-import { WebhookAlertDto } from "src/checkly/alertDTO";
+import { WebhookAlertDto } from "../checkly/alertDTO";
 
 export enum ContextKey {
 	ChecklyAlert = "checkly.alert",

@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { getOpenaiSDKClient } from "../ai/openai";
-import { CheckContext } from "src/aggregator/ContextAggregator";
+import { CheckContext } from "../aggregator/ContextAggregator";
 import { stringify } from "yaml";
 import { ContextKey } from "./ContextAggregator";
 
