@@ -1,6 +1,6 @@
 import { BaseAssistant } from "../ai/Assistant";
 import { Tool } from "../ai/Tool";
-import type { RunCreateParams } from "openai/src/resources/beta/threads/index.js";
+import type { RunCreateParams } from "openai/resources/beta/threads";
 import { SearchContextTool } from "./tools/SearchContextTool";
 
 export class SreAssistant extends BaseAssistant {

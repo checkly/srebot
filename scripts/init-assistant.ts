@@ -1,14 +1,16 @@
-import { openaiClient } from "../src/ai/openai";
+import { getOpenaiClient } from "../src/ai/openai";
+
+const openai = getOpenaiClient();
 
 function createAssistant(name: string) {
-	return openaiClient.beta.assistants.create({
+	return openai.beta.assistants.create({
 		model: "gpt-4o",
 		name,
 	});
 }
 
 async function main() {
-	const assistants = await openaiClient.beta.assistants.list();
+	const assistants = await openai.beta.assistants.list();
 
 	if (!assistants.data.length) {
 		console.log("Creating sre-assistant");

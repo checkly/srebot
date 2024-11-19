@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { openaiSDKClient } from "../ai/openai";
+import { getOpenaiSDKClient } from "../ai/openai";
 import { CheckContext } from "src/aggregator/ContextAggregator";
 import { stringify } from "yaml";
 import { ContextKey } from "./ContextAggregator";
@@ -15,7 +15,7 @@ export const generateContextAnalysis = async (context: CheckContext[]) => {
 		Analyze the following context and generate a dense summary of the current situation: `;
 
 		const summary = await generateText({
-			model: openaiSDKClient("gpt-4o"),
+			model: getOpenaiSDKClient()("gpt-4o"),
 			prompt: basePrompt + text,
 			maxTokens: 300,
 		});
@@ -37,7 +37,7 @@ export const generateContextAnalysisSummary = async (
 	contextAnalysis: (CheckContext & { analysis: string })[]
 ) => {
 	const summary = await generateText({
-		model: openaiSDKClient("gpt-4o"),
+		model: getOpenaiSDKClient()("gpt-4o"),
 		prompt: `The following check has failed: ${stringify(
 			contextAnalysis.find((c) => c.key === ContextKey.ChecklyCheck)
 		)}\n\nAnaylze the following context and generate a dense summary of the current situation: ${contextAnalysis

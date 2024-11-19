@@ -6,11 +6,11 @@ import type {
 	RunCreateParams,
 	RunCreateParamsNonStreaming,
 	RunSubmitToolOutputsParams,
-} from "openai/src/resources/beta/threads/index.js";
+} from "openai/resources/beta/threads";
 import type { Tool } from "./Tool";
 import type { AssistantStream } from "openai/lib/AssistantStream.js";
 import { AssistantMessage, Attachment, DataMessage } from "ai";
-import { openaiClient } from "./openai";
+import { getOpenaiClient } from "./openai";
 import {
 	cancelRun,
 	formatToolOutput,
@@ -20,7 +20,9 @@ import {
 	requiresToolAction,
 } from "./utils";
 import { toFile } from "openai";
-import { FileObject } from "openai/src/resources/files.js";
+import { FileObject } from "openai/resources";
+
+const openai = getOpenaiClient();
 
 // Enhanced types for better type safety
 export interface RunContext {
@@ -123,7 +125,7 @@ export class BaseAssistant {
 		await this.onBeforeRun();
 		const config = await this.prepareRunConfig();
 
-		return openaiClient.beta.threads.runs.stream(this.threadId, {
+		return openai.beta.threads.runs.stream(this.threadId, {
 			...config,
 			...runConfig,
 			stream: true,
@@ -141,14 +143,11 @@ export class BaseAssistant {
 		await this.onBeforeRun();
 		const config = await this.prepareRunConfig();
 
-		const run = await openaiClient.beta.threads.runs.createAndPoll(
-			this.threadId,
-			{
-				...(config as RunCreateParamsNonStreaming),
-				...runConfig,
-				stream: false,
-			}
-		);
+		const run = await openai.beta.threads.runs.createAndPoll(this.threadId, {
+			...(config as RunCreateParamsNonStreaming),
+			...runConfig,
+			stream: false,
+		});
 
 		return this.handleRunResult(run, { stream: false });
 	}
@@ -160,7 +159,7 @@ export class BaseAssistant {
 		runId: string,
 		toolOutputs: RunSubmitToolOutputsParams.ToolOutput[]
 	): Promise<AssistantStream> {
-		return openaiClient.beta.threads.runs.submitToolOutputsStream(
+		return openai.beta.threads.runs.submitToolOutputsStream(
 			this.threadId,
 			runId,
 			{
@@ -221,7 +220,7 @@ export class BaseAssistant {
 		options?: Partial<MessageCreateParams>
 	): Promise<Message> {
 		try {
-			return await openaiClient.beta.threads.messages.create(this.threadId, {
+			return await openai.beta.threads.messages.create(this.threadId, {
 				role: "user",
 				content: message,
 				...options,
@@ -242,7 +241,7 @@ export class BaseAssistant {
 		file: Buffer,
 		purpose: "vision" | "assistants"
 	): Promise<FileObject> {
-		return await openaiClient.files.create({
+		return await openai.files.create({
 			file: await toFile(file, "screenshot.png", {
 				type: "image/png",
 			}),
@@ -316,12 +315,11 @@ export class BaseAssistant {
 
 			return this.handleRunResult(nextRun, options);
 		} else {
-			const nextRun =
-				await openaiClient.beta.threads.runs.submitToolOutputsAndPoll(
-					this.threadId,
-					run.id,
-					{ tool_outputs: toolOutputs }
-				);
+			const nextRun = await openai.beta.threads.runs.submitToolOutputsAndPoll(
+				this.threadId,
+				run.id,
+				{ tool_outputs: toolOutputs }
+			);
 
 			return this.handleRunResult(nextRun, options);
 		}

@@ -1,5 +1,5 @@
 import { tool } from "ai";
-import type { AssistantTool } from "openai/src/resources/beta/assistants.js";
+import type { AssistantTool } from "openai/resources/beta";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { BaseAssistant } from "./Assistant";

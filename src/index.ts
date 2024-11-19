@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import checklyWebhookRouter from "./routes/checklywebhook";
 import { SreAssistant } from "./sre-assistant/SreAssistant";
-import { openaiClient } from "./ai/openai";
+import { getOpenaiClient } from "./ai/openai";
 import { getRunMessages } from "./ai/utils";
 
 // configures dotenv to work in your application
@@ -23,7 +23,7 @@ app.get("/", (request: Request, response: Response) => {
 
 app.post("/test/:alertId", async (req: Request, res: Response) => {
 	const { alertId } = req.params;
-	const thread = await openaiClient.beta.threads.create();
+	const thread = await getOpenaiClient().beta.threads.create();
 	const assistant = new SreAssistant(thread.id, alertId);
 	const userMessage = await assistant.addMessage(req.body.message);
 	const responseMessages = await assistant

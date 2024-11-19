@@ -3,7 +3,7 @@ import { Tool, createToolParameters, createToolOutput } from "../../ai/Tool";
 import { prisma } from "../../prisma";
 import { SreAssistant } from "../SreAssistant";
 import { generateObject, generateText } from "ai";
-import { openaiSDKClient } from "../../ai/openai";
+import { getOpenaiSDKClient } from "../../ai/openai";
 
 const parameters = createToolParameters(
 	z.object({
@@ -58,7 +58,7 @@ export class SearchContextTool extends Tool<
 				relevance: z.number(),
 				context: z.string(),
 			}),
-			model: openaiSDKClient("gpt-4o"),
+			model: getOpenaiSDKClient()("gpt-4o"),
 			prompt: `You are an AI assistant tasked with searching through a given context based on a user's query. Your goal is to find and return the most relevant information from the context that relates to the query.
 
 Here is the context you will be searching through:

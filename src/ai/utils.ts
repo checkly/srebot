@@ -2,9 +2,11 @@ import {
 	Message,
 	Run,
 	RunSubmitToolOutputsParams,
-} from "openai/src/resources/beta/threads";
-import { openaiClient } from "./openai";
+} from "openai/resources/beta/threads";
+import { getOpenaiClient } from "./openai";
 import { stringify } from "yaml";
+
+const openai = getOpenaiClient();
 
 export const requiresToolAction = (run: Run): boolean => {
 	return (
@@ -18,12 +20,12 @@ export const isThreadLockError = (error: any): boolean => {
 };
 
 export const cancelRun = async (threadId: string): Promise<void> => {
-	const run = await openaiClient.beta.threads.runs
+	const run = await openai.beta.threads.runs
 		.list(threadId, { limit: 1, order: "desc" })
 		.then((response) => response.data[0]);
 
 	if (run) {
-		await openaiClient.beta.threads.runs.cancel(threadId, run.id);
+		await openai.beta.threads.runs.cancel(threadId, run.id);
 	}
 };
 
@@ -53,7 +55,7 @@ export const getRunMessages = async (
 	threadId: string,
 	runId: string
 ): Promise<Message[]> => {
-	const messages = await openaiClient.beta.threads.messages.list(threadId, {
+	const messages = await openai.beta.threads.messages.list(threadId, {
 		run_id: runId,
 	});
 	return messages.data;
