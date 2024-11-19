@@ -2,6 +2,7 @@ import { BaseAssistant } from "../ai/Assistant";
 import { Tool } from "../ai/Tool";
 import type { RunCreateParams } from "openai/resources/beta/threads";
 import { SearchContextTool } from "./tools/SearchContextTool";
+import { GithubAgentInteractionTool } from "./tools/GithubAgentInteractionTool";
 
 export class SreAssistant extends BaseAssistant {
 	alertId: string;
@@ -31,6 +32,6 @@ Important reminders:
 	}
 
 	protected async getTools(): Promise<Tool[]> {
-		return [new SearchContextTool(this)];
+		return [new SearchContextTool(this), new GithubAgentInteractionTool(this)];
 	}
 }
