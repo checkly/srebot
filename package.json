@@ -4,7 +4,7 @@
     "next:build": "next build",
     "next:start": "next start",
     "build": "npx tsc",
-    "start": "npx tsc && node dist/src/index.js",
+    "start": "npx tsc && node dist/index.js",
     "bot:start": "ts-node ./src/slackbot/index.ts",
     "dev": "nodemon src/index.ts",
     "lint": "next lint",
