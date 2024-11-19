@@ -1,12 +1,12 @@
 import 'dotenv/config';
 import GitHubAPI from './github';
 
-const githubToken = process.env.GITHUB_TOKEN!;
+const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
 
 describe('GitHub API Tests', () => {
 
   it('should return the latest releases for checkly', async () => {
-    const githubAPI = new GitHubAPI(githubToken);
+    const githubAPI = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
     const org = 'checkly';
     const repo = 'checkly-backend';
 
@@ -19,7 +19,7 @@ describe('GitHub API Tests', () => {
   });
 
   it('should return the latest releases with diffs for checkly', async () => {
-    const githubAPI = new GitHubAPI(githubToken);
+    const githubAPI = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
     const org = 'checkly';
     const repo = 'checkly-backend';
 
