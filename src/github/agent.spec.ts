@@ -5,6 +5,7 @@ import GitHubAPI from './github';
 
 dotenv.config();
 
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 
 jest.setTimeout(120000); // Set timeout to 120 seconds
@@ -14,7 +15,7 @@ describe('GithubAgent Tests', () => {
   let github: GitHubAPI;
 
   beforeAll(() => {
-    openai = createOpenAI();
+    openai = createOpenAI({ apiKey: OPENAI_API_KEY });
     github = new GitHubAPI(GITHUB_TOKEN);
   });
 
