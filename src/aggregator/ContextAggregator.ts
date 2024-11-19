@@ -13,6 +13,7 @@ export interface CheckContext {
 	source: "checkly";
 	key: ContextKey;
 	value: unknown;
+	analysis: string;
 }
 
 export class CheckContextAggregator {
