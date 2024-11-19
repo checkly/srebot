@@ -24,7 +24,10 @@ app.get("/", (request: Request, response: Response) => {
 app.post("/test/:alertId", async (req: Request, res: Response) => {
 	const { alertId } = req.params;
 	const thread = await getOpenaiClient().beta.threads.create();
-	const assistant = new SreAssistant(thread.id, alertId);
+	const assistant = new SreAssistant(thread.id, alertId, {
+		username: "Test User",
+		date: new Date().toISOString(),
+	});
 	const userMessage = await assistant.addMessage(req.body.message);
 	const responseMessages = await assistant
 		.runSync()
