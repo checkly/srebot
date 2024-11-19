@@ -82,7 +82,14 @@ app.event("app_mention", async ({ event, context }) => {
 			threadId = thread.id;
 		}
 
-		const assistant = new SreAssistant(threadId, alertId);
+		const assistant = new SreAssistant(threadId, alertId, {
+			username:
+				event.user_profile?.display_name ||
+				event.username ||
+				event.user_profile?.name ||
+				"Unknown User",
+			date: new Date().toISOString(),
+		});
 		const userMessage = await assistant.addMessage(event.text);
 		const responseMessages = await assistant
 			.runSync()
