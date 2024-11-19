@@ -9,7 +9,7 @@ export const app = new App({
     process.env.NODE_ENV !== 'production' ? LogLevel.DEBUG : LogLevel.INFO,
 });
 
-app.command('/help', async ({ command, ack }) => {
+app.command('/help123', async ({ command, ack }) => {
   await ack();
   await app.client.chat.postEphemeral({
     channel: command.channel_id,
