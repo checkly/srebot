@@ -1,6 +1,6 @@
 import { CheckContext, ContextKey } from "./ContextAggregator";
 import { checkly } from "../checkly/client";
-import { WebhookAlertDto } from "src/checkly/alertDTO";
+import { WebhookAlertDto } from "../checkly/alertDTO";
 
 export const checklyAggregator = {
 	fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {

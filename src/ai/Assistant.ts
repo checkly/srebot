@@ -104,7 +104,6 @@ export class BaseAssistant {
 	 */
 	protected async onAfterRun(run: Run): Promise<void> {
 		const messages = await getRunMessages(this.threadId, run.id);
-		console.log("Run completed", run.id, messages);
 	}
 
 	/**
@@ -175,14 +174,18 @@ export class BaseAssistant {
 	private async runTool(
 		toolCall: RequiredActionFunctionToolCall
 	): Promise<unknown> {
-		this.logToolExecution(toolCall);
+		console.log(
+			"Running tool",
+			toolCall.function.name,
+			toolCall.function.arguments
+		);
 
 		try {
 			const parameters = JSON.parse(toolCall.function.arguments);
 			const tool = await this.getTool(toolCall.function.name);
 			const output = await tool.run(parameters);
 
-			console.log("Tool output", output);
+			console.log("Tool output: ", output);
 
 			this.runContext?.toolCallStack.push({ ...toolCall, output });
 			return output;
@@ -201,8 +204,6 @@ export class BaseAssistant {
 		runResult: Run,
 		options: RunOptions = { stream: true }
 	): Promise<Run> {
-		console.log("Handling run result", runResult);
-
 		if (!requiresToolAction(runResult)) {
 			await this.onAfterRun(runResult);
 			return runResult;
@@ -271,11 +272,6 @@ export class BaseAssistant {
 	private async processToolCalls(
 		run: Run
 	): Promise<RunSubmitToolOutputsParams.ToolOutput[]> {
-		console.log(
-			"Processing tool calls",
-			run.required_action?.submit_tool_outputs
-		);
-
 		if (!run.required_action?.submit_tool_outputs.tool_calls) {
 			return [];
 		}
@@ -286,12 +282,9 @@ export class BaseAssistant {
 					const output = await this.runTool(toolCall).catch((error) => {
 						return handleToolError(toolCall.id, error);
 					});
-					console.log("Tool output:::", output);
 
 					const toolOutput = formatToolOutput(toolCall.id, output);
-
-					this.sendDataMessage(toolCall, toolOutput);
-					console.log("Tool output", toolOutput);
+					this.sendToolDataMessage(toolCall, toolOutput);
 					return toolOutput;
 				}
 			)
@@ -306,8 +299,6 @@ export class BaseAssistant {
 		toolOutputs: RunSubmitToolOutputsParams.ToolOutput[],
 		options: RunOptions
 	): Promise<Run> {
-		console.log("Submitting tool outputs", toolOutputs);
-
 		if (options.stream) {
 			const runStream = await this.submitToolOutputsStream(run.id, toolOutputs);
 			const nextRun = await this.runContext?.forwardStream(runStream);
@@ -325,29 +316,10 @@ export class BaseAssistant {
 		}
 	}
 
-	private logToolExecution(toolCall: RequiredActionFunctionToolCall): void {
-		this.runContext?.sendMessage({
-			id: toolCall.id,
-			role: "assistant",
-			content: [
-				{
-					type: "text",
-					text: {
-						value: `###TOOL_CALL###${JSON.stringify(
-							toolCall
-						)}###TOOL_CALL_END###`,
-					},
-				},
-			],
-		});
-	}
-
-	private sendDataMessage(
+	private sendToolDataMessage(
 		toolCall: RequiredActionFunctionToolCall,
 		toolOutput: RunSubmitToolOutputsParams.ToolOutput
 	): void {
-		console.log("Sending data message", toolOutput);
-
 		this.runContext?.sendDataMessage({
 			id: toolOutput.tool_call_id,
 			role: "data",
