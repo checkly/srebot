@@ -99,15 +99,7 @@ app.event("app_mention", async ({ event, context }) => {
 			app.client.chat.postMessage({
 				token: context.botToken,
 				channel: event.channel,
-				blocks: [
-					{
-						type: "section",
-						text: {
-							type: "mrkdwn",
-							text: msg,
-						},
-					},
-				],
+				text: msg,
 				thread_ts: (event as any).thread_ts || event.ts,
 			});
 		};

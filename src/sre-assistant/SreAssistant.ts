@@ -43,7 +43,7 @@ Interaction Context:
 Username: ${this.interactionContext["Username"]}
 Date: ${this.interactionContext["Date"]}
 
-Format your responses as slack messages and keep the answer concise and relevant.
+Format your responses as slack mrkdwn messages and keep the answer concise and relevant.
 `;
 	}
 
