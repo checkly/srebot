@@ -109,9 +109,7 @@ export class BaseAssistant {
 	/**
 	 * Hook called before run execution - override in subclass
 	 */
-	protected async onBeforeRun(): Promise<void> {
-		console.log("Starting run");
-	}
+	protected async onBeforeRun(): Promise<void> {}
 
 	/**
 	 * Start a streaming run
