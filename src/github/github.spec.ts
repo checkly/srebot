@@ -4,36 +4,27 @@ import GitHubAPI from './github';
 const githubToken = process.env.GITHUB_TOKEN!;
 
 describe('GitHub API Tests', () => {
-  it('should return the organization ID for checkly', async () => {
-    const githubAPI = new GitHubAPI(githubToken);
-    const org = 'checkly';
-
-    const orgId = await githubAPI.getOrgId(org);
-    expect(orgId).toBe(25982255);
-  });
 
   it('should return the latest releases for checkly', async () => {
     const githubAPI = new GitHubAPI(githubToken);
     const org = 'checkly';
+    const repo = 'checkly-backend';
 
-    const releases = await githubAPI.queryLatestReleases(org);
-    console.log(JSON.stringify(releases, null, 2));
+    const _24h_ago = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    releases.forEach(async (releasesPerRepo) => {
-      const { repo, latest, previous } = releasesPerRepo;
-      
-      let diff = await githubAPI.getDiffBetweenTags(org, repo.name, latest.tag_name, previous.tag_name);
-
-      console.log(JSON.stringify({repo, latest, previous, diff}, null, 2));
-    });
+    const releases = await githubAPI.queryLatestReleases(org, repo, _24h_ago);
+    
+    let diff = await githubAPI.getDiffBetweenTags(org, repo, releases[0].tag, releases[1].tag);
+    expect(diff).toBeDefined();
   });
 
   it('should return the latest releases with diffs for checkly', async () => {
     const githubAPI = new GitHubAPI(githubToken);
     const org = 'checkly';
+    const repo = 'checkly-backend';
 
-    const releasesWithDiffs = await githubAPI.queryLatestReleasesWithDiffs(org);
-    console.log(JSON.stringify(releasesWithDiffs, null, 2));
+    const _24h_ago = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const releasesWithDiffs = await githubAPI.queryLatestReleasesWithDiffs(org, repo, _24h_ago);
     expect(releasesWithDiffs).toBeDefined();
   });
 });

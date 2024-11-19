@@ -1,4 +1,9 @@
 import { Octokit } from 'octokit';
+import { Endpoints } from '@octokit/types';
+
+type Repository = Endpoints['GET /repos/{owner}/{repo}']['response']['data'];
+type ListReleasesResponse = Endpoints['GET /repos/{owner}/{repo}/releases']['response']['data'];
+type CompareCommitsResponse = Endpoints['GET /repos/{owner}/{repo}/compare/{base}...{head}']['response']['data'];
 
 class GitHubAPI {
   private octokit: Octokit;
@@ -7,42 +12,35 @@ class GitHubAPI {
     this.octokit = new Octokit({ auth: githubToken });
   }
 
-  async queryLatestReleases(org: string): Promise<any> {
+  async queryRepositories(org: string) {
     try {
-      const { data: repos } = await this.octokit.rest.repos.listForOrg({
+      const { data: repositories } = await this.octokit.rest.repos.listForOrg({
         org,
-        type: 'private',
       });
-
-      const releases = await Promise.all(
-        repos.map(async (repo: any) => {
-          const { data: repoReleases } = await this.octokit.rest.repos.listReleases({
-            owner: org,
-            repo: repo.name,
-          });
-          let [latest, previous] = repoReleases.slice(0, 2);
-
-          return { repo, latest, previous };
-        })
-      );
-
-      return releases.filter(async (release: any) => {
-        return release.latest && release.previous;
-      });
+      return repositories;
     } catch (error) {
-      console.error('Error querying GitHub releases:', error);
+      console.error('Error querying GitHub repositories:', error);
       throw error;
     }
   }
 
-  async getOrgId(org: string): Promise<number> {
+  async queryLatestReleases(org: string, repoName: string, since: Date) {
     try {
-      const { data: organization } = await this.octokit.rest.orgs.get({
-        org,
+      let { data: releases } = await this.octokit.rest.repos.listReleases({
+        owner: org,
+        repo: repoName,
       });
-      return organization.id;
+
+      return releases.filter(release => {
+        return new Date(release.created_at) > since;
+      }).map(release => ({
+        id: release.id,
+        tag: release.tag_name,
+        author: release.author.name,
+        date: release.created_at,
+      }));
     } catch (error) {
-      console.error('Error fetching organization ID:', error);
+      console.error('Error querying GitHub releases:', error);
       throw error;
     }
   }
@@ -57,12 +55,13 @@ class GitHubAPI {
     }
   }
 
-  async getDiffBetweenTags(org: string, repo: string, baseTag: string, headTag: string): Promise<any> {
+  async getDiffBetweenTags(org: string, repo: string, baseTag: string, headTag: string): Promise<CompareCommitsResponse> {
     try {
-      const { data: diff } = await this.octokit.rest.repos.compareCommitsWithBasehead({
+      const { data: diff } = await this.octokit.rest.repos.compareCommits({
         owner: org,
         repo,
-        basehead: `${baseTag}...${headTag}`,
+        base: baseTag,
+        head: headTag,
       });
       return diff;
     } catch (error) {
@@ -71,18 +70,22 @@ class GitHubAPI {
     }
   }
 
-  async queryLatestReleasesWithDiffs(org: string): Promise<any> {
-    const releases = await this.queryLatestReleases(org);
+  async queryLatestReleasesWithDiffs(org: string, repoName: string, since: Date) {
+    const releases = await this.queryLatestReleases(org, repoName, since);
 
-    const releasesWithDiffs = await Promise.all(
-      releases.map(async (releasesPerRepo: any) => {
-        const { repo, latest, previous } = releasesPerRepo;
-        const diff = await this.getDiffBetweenTags(org, repo.name, previous.tag_name, latest.tag_name);
-        return { repo, latest, previous, diff };
+    if (releases.length < 2) {
+      return releases;
+    }
+
+    const releaseDiffs = await Promise.all(
+      releases.slice(0, -1).map(async (release, i) => {
+      const previousRelease = releases[i + 1];
+      const diff = await this.getDiffBetweenTags(org, repoName, previousRelease.tag, release.tag);
+      return { release, diff };
       })
     );
 
-    return releasesWithDiffs;
+    return releaseDiffs;
   }
 }
 
