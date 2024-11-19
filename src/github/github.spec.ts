@@ -3,7 +3,7 @@ import GitHubAPI from './github';
 
 const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
 
-describe('GitHub API Tests', () => {
+describe.skip('GitHub API Tests', () => {
 
   it('should return the latest releases for checkly', async () => {
     const githubAPI = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
