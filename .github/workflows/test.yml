@@ -14,10 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - name: Read Node.js version
         id: node-version
         run: echo "NODE_VERSION=$(cat .node-version)" >> $GITHUB_ENV
@@ -26,7 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Set up environment variables
         run: |
@@ -37,7 +33,7 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Build API
         run: npm run build
