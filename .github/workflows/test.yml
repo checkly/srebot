@@ -12,16 +12,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Read Node.js version
         id: node-version
         run: echo "NODE_VERSION=$(cat .node-version)" >> $GITHUB_ENV
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
 
       - name: Set up environment variables
         run: |
@@ -32,7 +33,10 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Build API
+        run: npm run build
 
       - name: Run tests
         run: npm test
