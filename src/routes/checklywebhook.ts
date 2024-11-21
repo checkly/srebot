@@ -46,11 +46,13 @@ router.post("/", async (req: Request, res: Response) => {
 			messages: [
 				{
 					role: "assistant",
-					content: summary,
+					content:
+						"New alert: " + alertDto.CHECK_NAME + "\nSummary: " + summary,
 				},
 			],
 		});
-		await app.client.chat.postMessage({
+
+		const alertMessage = await app.client.chat.postMessage({
 			channel: "C07V9GNU9L6",
 			metadata: {
 				event_type: "alert",
@@ -75,9 +77,30 @@ router.post("/", async (req: Request, res: Response) => {
 					type: "section",
 					text: {
 						type: "mrkdwn",
-						text: `*Summary*\n${summary}`,
+						text: `*${alertDto.CHECK_NAME}*: ${alertDto.CHECK_ID}`,
 					},
 				},
+				{
+					type: "actions",
+					elements: [
+						{
+							type: "button",
+							text: {
+								type: "plain_text",
+								text: "View Check",
+								emoji: true,
+							},
+							url: `https://app.checklyhq.com/checks/${alertDto.CHECK_ID}`,
+						},
+					],
+				},
+				// {
+				// 	type: "section",
+				// 	text: {
+				// 		type: "mrkdwn",
+				// 		text: `*Summary*\n${summary}`,
+				// 	},
+				// },
 				{
 					type: "context",
 					elements: [
@@ -88,6 +111,12 @@ router.post("/", async (req: Request, res: Response) => {
 					],
 				},
 			],
+		});
+
+		await app.client.chat.postMessage({
+			channel: "C07V9GNU9L6",
+			text: `*Summary*\n${summary}`,
+			thread_ts: alertMessage.ts,
 		});
 
 		res.json({ message: "OK" });
