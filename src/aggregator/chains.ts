@@ -42,8 +42,10 @@ export const generateContextAnalysisSummary = async (
 			contextAnalysis.find((c) => c.key === ContextKey.ChecklyCheck)
 		)}\n\nAnaylze the following context and generate a dense summary of the current situation: ${contextAnalysis
 			.map((c) => c.analysis)
-			.join("\n\n")}`,
-		maxTokens: 300,
+			.join(
+				"\n\n"
+			)}\n\nGenerate a condensed breakdown of the current situation. Focus on the essential details and provide a concise overview. Max. 100 words.`,
+		maxTokens: 200,
 	});
 
 	return summary.text;
