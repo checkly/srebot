@@ -66,18 +66,8 @@ router.post("/", async (req: Request, res: Response) => {
 					type: "header",
 					text: {
 						type: "plain_text",
-						text: "🚨 New Alert",
+						text: "🚨 New Alert: " + alertDto.CHECK_NAME,
 						emoji: true,
-					},
-				},
-				{
-					type: "divider",
-				},
-				{
-					type: "section",
-					text: {
-						type: "mrkdwn",
-						text: `*${alertDto.CHECK_NAME}*: ${alertDto.CHECK_ID}`,
 					},
 				},
 				{
