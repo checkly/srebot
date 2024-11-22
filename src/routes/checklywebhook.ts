@@ -29,87 +29,113 @@ router.post("/", async (req: Request, res: Response) => {
 		// Validate the DTO
 		await validateOrReject(alertDto);
 
-		const aggregator = new CheckContextAggregator(alertDto);
-		const context = await aggregator.aggregate();
-		const contextAnalysis = await generateContextAnalysis(context);
-		const summary = await generateContextAnalysisSummary(contextAnalysis);
-
-		const alert = await prisma.alert.create({
-			data: {
-				data: { ...alertDto } as unknown as Prisma.InputJsonValue,
-				context: JSON.stringify(contextAnalysis),
-				summary,
+		const exisingAlert = await prisma.alert.findFirst({
+			where: {
+				AND: [
+					{
+						data: {
+							path: ["CHECK_RESULT_ID"],
+							equals: alertDto.CHECK_RESULT_ID,
+						},
+					},
+					{
+						data: {
+							path: ["CHECK_ID"],
+							equals: alertDto.CHECK_ID,
+						},
+					},
+				],
 			},
 		});
 
-		const thread = await getOpenaiClient().beta.threads.create({
-			messages: [
-				{
-					role: "assistant",
-					content:
-						"New alert: " + alertDto.CHECK_NAME + "\nSummary: " + summary,
-				},
-			],
-		});
+		if (exisingAlert && process.env.ALLOW_DUPLICATE_ALERTS !== "true") {
+			res.status(200).json({ message: "Alert already processed" });
+		} else {
+			const aggregator = new CheckContextAggregator(alertDto);
+			const context = await aggregator.aggregate();
+			const contextAnalysis = await generateContextAnalysis(context);
+			const summary = await generateContextAnalysisSummary(contextAnalysis);
 
-		const alertMessage = await app.client.chat.postMessage({
-			channel: "C07V9GNU9L6",
-			metadata: {
-				event_type: "alert",
-				event_payload: {
-					alertId: alert.id,
-					threadId: thread.id,
+			const alert = await prisma.alert.create({
+				data: {
+					data: { ...alertDto } as unknown as Prisma.InputJsonValue,
+					context: {
+						createMany: {
+							data: contextAnalysis
+								.filter((c) => c.key && c.value)
+								.map((c) => ({
+									key: c.key,
+									value: c.value as any,
+								})),
+						},
+					},
+					summary,
 				},
-			},
-			blocks: [
-				{
-					type: "header",
-					text: {
-						type: "plain_text",
-						text: "🚨 New Alert: " + alertDto.CHECK_NAME,
-						emoji: true,
+			});
+
+			const thread = await getOpenaiClient().beta.threads.create({
+				messages: [
+					{
+						role: "assistant",
+						content:
+							"New alert: " + alertDto.CHECK_NAME + "\nSummary: " + summary,
+					},
+				],
+			});
+
+			await app.client.chat.postMessage({
+				channel: "C07V9GNU9L6",
+				metadata: {
+					event_type: "alert",
+					event_payload: {
+						alertId: alert.id,
+						threadId: thread.id,
 					},
 				},
-				{
-					type: "actions",
-					elements: [
-						{
-							type: "button",
-							text: {
-								type: "plain_text",
-								text: "View Check",
-								emoji: true,
+				blocks: [
+					{
+						type: "header",
+						text: {
+							type: "plain_text",
+							text: "🚨 " + alertDto.CHECK_NAME + " has failed 🚨",
+							emoji: true,
+						},
+					},
+					{
+						type: "section",
+						fields: [
+							{
+								type: "mrkdwn",
+								text: `🩺 *Check:* <https://app.checklyhq.com/checks/${alertDto.CHECK_ID}|${alertDto.CHECK_NAME}>`,
 							},
-							url: `https://app.checklyhq.com/checks/${alertDto.CHECK_ID}`,
-						},
-					],
-				},
-				// {
-				// 	type: "section",
-				// 	text: {
-				// 		type: "mrkdwn",
-				// 		text: `*Summary*\n${summary}`,
-				// 	},
-				// },
-				{
-					type: "context",
-					elements: [
-						{
+							{
+								type: "mrkdwn",
+								text: `🔮 *Result:* <${alertDto.RESULT_LINK}|View>`,
+							},
+							{
+								type: "mrkdwn",
+								text: `📅 *When:* ${new Date(
+									alertDto.STARTED_AT
+								).toLocaleString()}`,
+							},
+							{
+								type: "mrkdwn",
+								text: `🌍 *Location:* ${alertDto.RUN_LOCATION}`,
+							},
+						],
+					},
+					{
+						type: "section",
+						text: {
 							type: "mrkdwn",
-							text: `🕐 Alert created at: ${new Date().toLocaleString()}`,
+							text: `*Summary*\n${summary}`,
 						},
-					],
-				},
-			],
-		});
+					},
+				],
+			});
 
-		await app.client.chat.postMessage({
-			channel: "C07V9GNU9L6",
-			text: `*Summary*\n${summary}`,
-			thread_ts: alertMessage.ts,
-		});
-
-		res.json({ message: "OK" });
+			res.json({ message: "OK" });
+		}
 	} catch (error) {
 		console.error("Error parsing or validating request body:", error);
 		res.status(400).json({ message: "Invalid request body" });

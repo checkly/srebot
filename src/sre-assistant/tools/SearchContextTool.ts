@@ -4,10 +4,19 @@ import { prisma } from "../../prisma";
 import { SreAssistant } from "../SreAssistant";
 import { generateObject, generateText } from "ai";
 import { getOpenaiSDKClient } from "../../ai/openai";
+import { ContextKey } from "../../aggregator/ContextAggregator";
 
 const parameters = createToolParameters(
 	z.object({
-		query: z.string().describe("The query to search for in the context"),
+		query: z
+			.string()
+			.describe(
+				"A concise and specific search query or request for information in natural language."
+			),
+		contextKey: z
+			.enum(Object.values(ContextKey) as [string, ...string[]])
+			.optional()
+			.describe("A specific context key to filter the search results."),
 	})
 );
 
@@ -27,6 +36,7 @@ export class SearchContextTool extends Tool<
 > {
 	static parameters = parameters;
 	static outputSchema = outputSchema;
+	contextKeys: string[] = Object.values(ContextKey);
 
 	constructor(agent: SreAssistant) {
 		super({
@@ -38,18 +48,62 @@ export class SearchContextTool extends Tool<
 		});
 	}
 
-	async execute(input: z.infer<typeof parameters>) {
-		const alertData = await prisma.alert.findUniqueOrThrow({
+	async init() {
+		const alertId = this.agent.alertId;
+		if (!alertId) {
+			throw new Error("Alert ID not found");
+		}
+
+		const contextKeysData = await prisma.alert.findUniqueOrThrow({
 			where: {
-				id: this.agent.alertId,
+				id: alertId,
 			},
 			select: {
-				context: true,
+				context: {
+					select: {
+						key: true,
+					},
+				},
 			},
 		});
 
-		if (!alertData.context) {
+		if (!contextKeysData.context) {
 			throw new Error("Alert not found");
+		}
+
+		const contextKeys = contextKeysData.context.map((c) => c.key);
+		this.contextKeys = contextKeys;
+
+		this.description = `Search for relevant context based on the given query. Extract the most relevant information from the context that relates to the query. Available context keys: ${contextKeys.join(
+			", "
+		)}`;
+		this.parameters = createToolParameters(
+			z.object({
+				query: z.string().describe("The query to search for in the context"),
+				contextKey: z
+					.enum(contextKeys.map((c) => c) as [string, ...string[]])
+					.optional()
+					.describe("The context key to search in."),
+			})
+		);
+	}
+
+	async execute(input: z.infer<typeof parameters>) {
+		const contextData = await prisma.alertContext.findMany({
+			where: {
+				key: {
+					in: this.contextKeys,
+				},
+				alertId: this.agent.alertId,
+			},
+			select: {
+				key: true,
+				value: true,
+			},
+		});
+
+		if (!contextData.length) {
+			throw new Error("No context data found");
 		}
 
 		const relevantContext = await generateObject({
@@ -63,7 +117,7 @@ export class SearchContextTool extends Tool<
 
 Here is the context you will be searching through:
 <context>
-${alertData.context}
+${contextData.map((c) => c.key + ": " + c.value).join("\n")}
 </context>
 
 The user's query is:

@@ -21,13 +21,13 @@ export abstract class Tool<
 	TAgent extends BaseAssistant = BaseAssistant
 > {
 	protected readonly name: string;
-	protected readonly description: string;
-	protected readonly parameters: TParams;
 	protected readonly agent: TAgent;
 	protected readonly outputSchema?: TOutput;
 	protected readonly version: string = "1.0.0";
 	protected readonly maxRetries: number = 1;
 	protected readonly timeout?: number;
+	description: string;
+	parameters: TParams;
 
 	constructor(config: {
 		name: string;
