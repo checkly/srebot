@@ -15,10 +15,28 @@ datasource db {
 }
 
 model Alert {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   data      Json
-  context   String
+  context   AlertContext[]
   summary   String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+enum Source {
+  custom
+  checkly
+  github
+}
+
+model AlertContext {
+  id        String   @id @default(cuid())
+  alertId   String
+  source    Source   @default(custom)
+  key       String
+  value     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  alert Alert @relation(fields: [alertId], references: [id])
 }
