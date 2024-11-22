@@ -1,9 +1,11 @@
-import { Octokit } from 'octokit';
-import { Endpoints } from '@octokit/types';
+import { Octokit } from "octokit";
+import { Endpoints } from "@octokit/types";
 
-type Repository = Endpoints['GET /repos/{owner}/{repo}']['response']['data'];
-type ListReleasesResponse = Endpoints['GET /repos/{owner}/{repo}/releases']['response']['data'];
-type CompareCommitsResponse = Endpoints['GET /repos/{owner}/{repo}/compare/{base}...{head}']['response']['data'];
+type Repository = Endpoints["GET /repos/{owner}/{repo}"]["response"]["data"];
+type ListReleasesResponse =
+  Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"];
+type CompareCommitsResponse =
+  Endpoints["GET /repos/{owner}/{repo}/compare/{base}...{head}"]["response"]["data"];
 
 class GitHubAPI {
   private octokit: Octokit;
@@ -19,7 +21,7 @@ class GitHubAPI {
       });
       return repositories;
     } catch (error) {
-      console.error('Error querying GitHub repositories:', error);
+      console.error("Error querying GitHub repositories:", error);
       throw error;
     }
   }
@@ -31,17 +33,19 @@ class GitHubAPI {
         repo: repoName,
       });
 
-      return releases.filter(release => {
-        return new Date(release.created_at) > since;
-      }).map(release => ({
-        id: release.id,
-        tag: release.tag_name,
-        author: release.author.name,
-        date: release.created_at,
-        link: release.html_url,
-      }));
+      return releases
+        .filter((release) => {
+          return new Date(release.created_at) > since;
+        })
+        .map((release) => ({
+          id: release.id,
+          tag: release.tag_name,
+          author: release.author.name,
+          date: release.created_at,
+          link: release.html_url,
+        }));
     } catch (error) {
-      console.error('Error querying GitHub releases:', error);
+      console.error("Error querying GitHub releases:", error);
       throw error;
     }
   }
@@ -51,7 +55,7 @@ class GitHubAPI {
       const response = await this.octokit.rest.rateLimit.get();
       console.log(response.data);
     } catch (error) {
-      console.error('Error checking rate limit:', error);
+      console.error("Error checking rate limit:", error);
       throw error;
     }
   }
@@ -61,13 +65,17 @@ class GitHubAPI {
       owner,
       repo,
       sha: tag_name,
-    })
-    
-    return commits.data.map(commit => commit.author);
+    });
+
+    return commits.data.map((commit) => commit.author);
   }
 
-
-  async getDiffBetweenTags(org: string, repo: string, baseTag: string, headTag: string): Promise<CompareCommitsResponse> {
+  async getDiffBetweenTags(
+    org: string,
+    repo: string,
+    baseTag: string,
+    headTag: string
+  ): Promise<CompareCommitsResponse> {
     try {
       const { data: diff } = await this.octokit.rest.repos.compareCommits({
         owner: org,
@@ -77,12 +85,16 @@ class GitHubAPI {
       });
       return diff;
     } catch (error) {
-      console.error('Error fetching diff between tags:', error);
+      console.error("Error fetching diff between tags:", error);
       throw error;
     }
   }
 
-  async queryLatestReleasesWithDiffs(org: string, repoName: string, since: Date) {
+  async queryLatestReleasesWithDiffs(
+    org: string,
+    repoName: string,
+    since: Date
+  ) {
     const releases = await this.queryLatestReleases(org, repoName, since);
 
     if (releases.length < 2) {
@@ -91,9 +103,15 @@ class GitHubAPI {
 
     const releaseDiffs = await Promise.all(
       releases.slice(0, -1).map(async (release, i) => {
-      const previousRelease = releases[i + 1];
-      const diff = await this.getDiffBetweenTags(org, repoName, previousRelease.tag, release.tag);
-      return { release, diff };
+        const previousRelease = releases[i + 1];
+        const diff = await this.getDiffBetweenTags(
+          org,
+          repoName,
+          previousRelease.tag,
+          release.tag
+        );
+
+        return { release, diff };
       })
     );
 

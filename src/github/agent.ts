@@ -12,7 +12,7 @@ export class GithubAgent {
   }
 
   async summarizeRelease(org: string, repo: string, release: string, previousRelease: string) {
-    let diff = await this.github.getDiffBetweenTags(org, repo, release, previousRelease);
+    let diff = await this.github.getDiffBetweenTags(org, repo, previousRelease, release);
 
     const { text } = await generateText({
       model: this.model,
@@ -61,8 +61,9 @@ export class GithubAgent {
         id: release.tag,
         release_date: release.date,
         link: release.link,
+        diffLink: diff.html_url,
         summary: summary,
-        authors: Array.from(new Set(diff.commits.map(c => c.author))),
+        authors: Array.from(new Set(diff.commits.map(commit => commit.author))),
       };
     }));
     
