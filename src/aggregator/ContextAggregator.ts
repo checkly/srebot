@@ -2,10 +2,12 @@ import { checklyAggregator } from "./checkly-aggregator";
 import { WebhookAlertDto } from "../checkly/alertDTO";
 
 export enum ContextKey {
+	ChecklyScript = "checkly.script",
 	ChecklyAlert = "checkly.alert",
 	ChecklyCheck = "checkly.check",
 	ChecklyResults = "checkly.results",
 	ChecklyPrometheusStatus = "checkly.prometheusStatus",
+	ChecklyLogs = "checkly.logs",
 }
 
 export interface CheckContext {
