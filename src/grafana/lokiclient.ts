@@ -4,7 +4,6 @@ export class LokiClient {
     private readonly environment: string;
     user: string;
   
-    //'sum by (level) (count_over_time({app=""}[1m]))';
     constructor(lokiUrl: string, lokiApiKey: string, user: string, environment: string) {
       this.lokiUrl = lokiUrl;
       this.lokiApiKey = lokiApiKey;
@@ -15,10 +14,49 @@ export class LokiClient {
     queryError(service: string): string {
       return `{app="${service}", env="${this.environment}"} |= "error"`;
     }
-    getAvailableServices(): string[] {
-      return [''];
+
+   async getLogCountByLevel(app: string, rangeMinutes: number): Promise<any> {
+        const query = `sum by (detected_level) (count_over_time({app="${app}", env="${this.environment}"}[5m]))`;
+        const end = new Date();
+        const start = new Date(end.getTime() - rangeMinutes * 60 * 1000);
+        const data = await this.queryLoki(query, start.toISOString(), end.toISOString());
+        return data;
     }
-    async getErrorsForService(service: string,env: string, rangeMinutes: number) {
+
+    async getAllEnvironments(): Promise<string[]> {
+        return this.getAllValuesForLabel('env');
+    }
+
+   
+    async getAllApps(): Promise<string[]> {
+        return this.getAllValuesForLabel('app');
+    }
+
+    /**
+     * This function gets all available values for a label in Loki. 
+     * @returns 
+     */
+    async getAllValuesForLabel(label: string): Promise<string[]> {
+        const url = new URL(`${this.lokiUrl}/loki/api/v1/label/${label}/values`);
+        const authHeader = 'Basic ' + btoa(`${this.user}:${this.lokiApiKey}`);
+    
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader
+          }
+        });
+    
+        if (!response.ok) {
+          throw new Error(`Error fetching available services: ${response.statusText}`);
+        }
+    
+        const data = await response.json();
+        return data.data; // Assuming the response structure is { "status": "success", "data": ["app1", "app2", ...] }
+      }
+
+    async getErrorsForService(service: string, rangeMinutes: number) {
       // Get the current time and subtract "rangeMinutes" minutes
       const end = new Date();
       const start = new Date(end.getTime() - rangeMinutes * 60 * 1000);
