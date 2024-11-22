@@ -4,6 +4,7 @@ import { getRunMessages } from "../ai/utils";
 import { SreAssistant } from "../sre-assistant/SreAssistant";
 import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
+import moment from "moment";
 
 export const app = new App({
 	signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -49,6 +50,83 @@ let setupAgent = () => {
 };
 
 const githubAgent = setupAgent();
+
+const releaseHeader = {
+  "type": "section",
+  "text": {
+    "type": "mrkdwn",
+    "text": "*Release Overview*"
+  }
+}
+
+const divider = { type: "divider" };
+
+const createReleaseBlock = function({release, releaseUrl, diffUrl, date, repo, repoUrl, authors, summary}: {release: string, releaseUrl: string, diffUrl: string, date: string, repo: string, repoUrl: string, authors: string[], summary: string}) {
+  return {
+    "blocks": [
+      {
+        "type": "section",
+        "fields": [
+          {
+            "type": "mrkdwn",
+            "text": `:rocket: *Release*\n<${releaseUrl}|${release}> - <${diffUrl}|Diff>`
+          },
+          {
+            "type": "mrkdwn",
+            "text": `:calendar: *When*\n${date}`
+          },
+          {
+            "type": "mrkdwn",
+            "text": `:package: *Repo*\n<${repoUrl}|${repo}>`
+          },
+          {
+            "type": "mrkdwn",
+            "text": `:star: *Authors*\n${authors.join(', ')}`
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": `*Summary*\n${summary}`
+        }
+      },
+    ]
+  };
+}
+
+app.command("/release", async ({ command, ack, respond }) => {
+  await ack();
+  let summaries = await githubAgent.summarizeReleases(command.text, 'checkly');
+  if (summaries.releases.length === 0) {
+    await respond({ text: `No releases found in repo ${summaries.repo} since ${summaries.since}`});
+  }
+
+  let releases = summaries.releases.sort((a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime());  let response = [releaseHeader].concat(releases.map(summary => {
+    const formattedDate = moment(summary.release_date).fromNow();
+    return createReleaseBlock({ 
+      release: summary.id, 
+      releaseUrl: summary.link,
+      diffUrl: summary.diffLink,
+      date: formattedDate, 
+      repo: summaries.repo.name, 
+      repoUrl: summaries.repo.link, 
+      authors: summary.authors.filter(author => author !== null).map(author => author.login), 
+      summary: summary.summary 
+    }).blocks as any;
+  }).reduce((prev, curr) => {
+    if (!prev) {
+      return curr;
+    }
+
+    return prev.concat([divider]).concat(curr);
+  }));
+
+  await respond({
+    blocks: response
+  });
+})
 
 app.event("app_mention", async ({ event, context }) => {
 	try {
