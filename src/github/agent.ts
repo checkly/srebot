@@ -20,8 +20,8 @@ export class GithubAgent {
 		let diff = await this.github.getDiffBetweenTags(
 			org,
 			repo,
+			previousRelease,
 			release,
-			previousRelease
 		);
 
 		const { text } = await generateText({
@@ -97,8 +97,9 @@ export class GithubAgent {
 					id: release.tag,
 					release_date: release.date,
 					link: release.link,
+					diffLink: diff.html_url,
 					summary: summary,
-					authors: Array.from(new Set(diff.commits.map((c) => c.author))),
+					authors: Array.from(new Set(diff.commits.map(commit => commit.author))),
 				};
 			})
 		);
