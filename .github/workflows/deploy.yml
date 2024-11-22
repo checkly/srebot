@@ -28,9 +28,9 @@ jobs:
     steps:
       - name: Install Render CLI
         run: |
-          curl -L https://github.com/renderinc/render-cli/releases/download/v0.1.0/render-cli-v0.1.0-linux-amd64.tar.gz -o render-cli.tar.gz
-          tar -xzf render-cli.tar.gz
-          sudo mv render /usr/local/bin/
+          brew tap render-oss/homebrew-render
+          brew update
+          brew install render
       - name: Authenticate with Render
         run: render login --api-key ${{ secrets.RENDER_API_KEY }}
       - name: Trigger Render Deployment
