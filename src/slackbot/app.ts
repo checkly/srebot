@@ -78,7 +78,6 @@ app.command("/srebot-releases", async ({ command, ack, respond }) => {
 	});
 });
 
-// Event handling
 app.event("app_mention", async ({ event, context }) => {
 	try {
 		let threadId, alertId;
@@ -123,7 +122,6 @@ app.event("app_mention", async ({ event, context }) => {
 		const run = await assistant.runSync();
 		const responseMessages = await getRunMessages(threadId, run.id);
 
-		// Send responses
 		const sendMessage = (msg: string) =>
 			app.client.chat.postMessage({
 				token: context.botToken,
@@ -150,7 +148,6 @@ app.event("app_mention", async ({ event, context }) => {
 		);
 	} catch (error) {
 		console.error("Error processing app mention:", error);
-		// Send error message to channel
 		await app.client.chat.postMessage({
 			token: context.botToken,
 			channel: event.channel,
