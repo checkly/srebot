@@ -1,87 +1,51 @@
-import { App, LogLevel } from "@slack/bolt";
+import { App } from "@slack/bolt";
 import { getOpenaiClient, getOpenaiSDKClient } from "../ai/openai";
 import { getRunMessages } from "../ai/utils";
 import { SreAssistant } from "../sre-assistant/SreAssistant";
-import GitHubAPI from "../github/github";
-import { GithubAgent } from "../github/agent";
+import { getSlackConfig, validateConfig } from "./config";
+import { getThreadMetadata } from "./utils";
 
-export const app = new App({
-	signingSecret: process.env.SLACK_SIGNING_SECRET,
-	token: process.env.SLACK_AUTH_TOKEN,
-	appToken: process.env.SLACK_APP_TOKEN,
-	socketMode: true,
-	logLevel:
-		process.env.NODE_ENV !== "production" ? LogLevel.DEBUG : LogLevel.INFO,
-});
-
-app.command("/help123", async ({ command, ack }) => {
-	await ack();
-	await app.client.chat.postEphemeral({
-		channel: command.channel_id,
-		text: "hey",
-		user: command.user_id,
-	});
-});
-
-app.message(`hey help`, async ({ message, context }) => {
-	await app.client.chat.postEphemeral({
-		channel: message.channel,
-		text: "e",
-		user: context.userId!,
-	});
-});
-
-app.message("Hey SREBot", async ({ say }) => {
-	await say("helloworld");
-});
-
-app.message("whatismyuserid", async ({ context, say }) => {
-	await say(context.userId!);
-});
-
-let setupAgent = () => {
-	const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
-
-	let openai = getOpenaiSDKClient();
-	let github = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
-
-	return new GithubAgent(openai("gpt-4o"), github);
+// Initialize Slack app with validated configuration
+const initializeSlackApp = () => {
+	const config = getSlackConfig();
+	validateConfig(config);
+	return new App(config);
 };
 
-const githubAgent = setupAgent();
+export const app = initializeSlackApp();
 
+// Event handling
 app.event("app_mention", async ({ event, context }) => {
 	try {
-		let threadId;
-		let alertId = "test";
+		let threadId, alertId;
+		const threadTs = (event as any).thread_ts || event.ts;
 
+		// Handle threaded conversations
 		if ((event as any).thread_ts) {
 			try {
 				const result = await app.client.conversations.replies({
 					channel: event.channel,
 					ts: (event as any).thread_ts,
-					limit: 1,
 					include_all_metadata: true,
 				});
-				if (result.messages && result.messages.length > 0) {
-					const metadata = result.messages[0].metadata?.event_payload as {
-						threadId: string;
-						alertId: string;
-					};
 
-					threadId = metadata?.threadId;
-					alertId = metadata?.alertId;
-				}
+				const { threadId: existingThreadId, alertId: existingAlertId } =
+					await getThreadMetadata(result.messages || []);
+
+				threadId = existingThreadId;
+				alertId = existingAlertId;
 			} catch (error) {
-				console.error("Error fetching parent message:", error);
+				console.error("Error fetching thread replies:", error);
 			}
 		}
 
+		// Create new thread if needed
 		if (!threadId) {
 			const thread = await getOpenaiClient().beta.threads.create();
 			threadId = thread.id;
 		}
 
+		// Initialize assistant and process message
 		const assistant = new SreAssistant(threadId, alertId, {
 			username:
 				event.user_profile?.display_name ||
@@ -90,28 +54,44 @@ app.event("app_mention", async ({ event, context }) => {
 				"Unknown User",
 			date: new Date().toISOString(),
 		});
-		const userMessage = await assistant.addMessage(event.text);
-		const responseMessages = await assistant
-			.runSync()
-			.then((run) => getRunMessages(threadId, run.id));
 
-		const send = async (msg: string) => {
+		await assistant.addMessage(event.text);
+		const run = await assistant.runSync();
+		const responseMessages = await getRunMessages(threadId, run.id);
+
+		// Send responses
+		const sendMessage = (msg: string) =>
 			app.client.chat.postMessage({
 				token: context.botToken,
 				channel: event.channel,
 				text: msg,
-				thread_ts: (event as any).thread_ts || event.ts,
+				thread_ts: threadTs,
+				...(threadId && {
+					metadata: {
+						event_type: "alert",
+						event_payload: { threadId },
+					},
+				}),
 			});
-		};
 
-		await responseMessages.map((msg) =>
-			send(
-				msg.content
-					.map((c) => (c.type === "text" ? c.text.value : ""))
-					.join("\n")
+		await Promise.all(
+			responseMessages.map((msg) =>
+				sendMessage(
+					msg.content
+						.filter((c) => c.type === "text")
+						.map((c) => (c as any).text.value)
+						.join("")
+				)
 			)
 		);
 	} catch (error) {
-		console.error("Error reacting to mention:", error);
+		console.error("Error processing app mention:", error);
+		// Send error message to channel
+		await app.client.chat.postMessage({
+			token: context.botToken,
+			channel: event.channel,
+			text: "Sorry, I encountered an error while processing your request.",
+			thread_ts: (event as any).thread_ts || event.ts,
+		});
 	}
 });
