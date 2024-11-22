@@ -33,5 +33,7 @@ jobs:
           sudo mv cli_v0.8.5 /usr/local/bin/render
       - name: Authenticate with Render
         run: render login
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
       - name: Trigger Render Deployment
         run: render deploy --service-id ${{ secrets.RENDER_SERVICE_ID }}
