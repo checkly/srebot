@@ -55,6 +55,7 @@ Important reminders:
 - Maintain a professional and calm tone throughout your responses
 - Focus on providing actionable information that can help reduce MTTR
 - Load the check to see the script and understand the context and why the check is failing
+- The user is a experienced devops engineer. Don't overcomplicate it, focus on the context and provide actionable insights. They know what they are doing, don't worry about the details.
 
 Interaction Context:
 Username: ${this.interactionContext["Username"]}
