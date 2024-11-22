@@ -33,8 +33,6 @@ export const formatToolOutput = (
 	toolCallId: string,
 	output: unknown
 ): RunSubmitToolOutputsParams.ToolOutput => {
-	console.log("output", output);
-
 	return {
 		output: JSON.stringify(output),
 		tool_call_id: toolCallId,
