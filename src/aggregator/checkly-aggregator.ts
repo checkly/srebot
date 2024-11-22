@@ -1,47 +1,10 @@
 import { CheckContext, ContextKey } from "./ContextAggregator";
 import { checkly } from "../checkly/client";
 import { WebhookAlertDto } from "../checkly/alertDTO";
-import { Check, CheckResult } from "../checkly/models";
-
-const getCheckLogs = async (checkId: string, checkResultId: string) => {
-	const logs = await checkly.getCheckResult(checkId, checkResultId);
-	console.log("logs");
-	console.log(logs);
-
-	return logs;
-};
-
-const mapCheckToContextValue = (check: Check) => {
-	return {
-		checkId: check.id,
-		type: check.checkType,
-		frequency: check.frequency,
-		frequencyOffset: check.frequencyOffset,
-		shouldFail: check.shouldFail,
-		locations: check.locations,
-		tags: check.tags,
-		maxResponseTime: check.maxResponseTime,
-		sslCheckDomain: check.sslCheckDomain,
-		retryStrategy: check.retryStrategy,
-	};
-};
-
-const mapCheckResultToContextValue = (result: CheckResult) => {
-	return {
-		resultId: result.id,
-		hasErrors: result.hasErrors,
-		hasFailures: result.hasFailures,
-		runLocation: result.runLocation,
-		startedAt: result.startedAt,
-		stoppedAt: result.stoppedAt,
-		responseTime: result.responseTime,
-		checkId: result.checkId,
-		attempts: result.attempts,
-		isDegraded: result.isDegraded,
-		overMaxResponseTime: result.overMaxResponseTime,
-		resultType: result.resultType,
-	};
-};
+import {
+	mapCheckResultToContextValue,
+	mapCheckToContextValue,
+} from "../checkly/utils";
 
 export const checklyAggregator = {
 	fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {
