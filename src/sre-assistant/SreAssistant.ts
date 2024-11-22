@@ -47,6 +47,9 @@ Format your responses as slack mrkdwn messages and keep the answer concise and r
 	}
 
 	protected async getTools(): Promise<Tool[]> {
+		const searchContextTool = new SearchContextTool(this);
+		await searchContextTool.init();
+
 		return [new SearchContextTool(this), new GithubAgentInteractionTool(this)];
 	}
 }
