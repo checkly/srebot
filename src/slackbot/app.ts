@@ -5,6 +5,7 @@ import { SreAssistant } from "../sre-assistant/SreAssistant";
 import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
 import moment from "moment";
+import { createReleaseBlock, divider as releaseDivider, releaseHeader } from "../github/slackBlock";
 
 export const app = new App({
 	signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -51,52 +52,7 @@ let setupAgent = () => {
 
 const githubAgent = setupAgent();
 
-const releaseHeader = {
-  "type": "section",
-  "text": {
-    "type": "mrkdwn",
-    "text": "*Release Overview*"
-  }
-}
-
-const divider = { type: "divider" };
-
-const createReleaseBlock = function({release, releaseUrl, diffUrl, date, repo, repoUrl, authors, summary}: {release: string, releaseUrl: string, diffUrl: string, date: string, repo: string, repoUrl: string, authors: string[], summary: string}) {
-  return {
-    "blocks": [
-      {
-        "type": "section",
-        "fields": [
-          {
-            "type": "mrkdwn",
-            "text": `:rocket: *Release*\n<${releaseUrl}|${release}> - <${diffUrl}|Diff>`
-          },
-          {
-            "type": "mrkdwn",
-            "text": `:calendar: *When*\n${date}`
-          },
-          {
-            "type": "mrkdwn",
-            "text": `:package: *Repo*\n<${repoUrl}|${repo}>`
-          },
-          {
-            "type": "mrkdwn",
-            "text": `:star: *Authors*\n${authors.join(', ')}`
-          }
-        ]
-      },
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": `*Summary*\n${summary}`
-        }
-      },
-    ]
-  };
-}
-
-app.command("/release", async ({ command, ack, respond }) => {
+app.command("/srebot-releases", async ({ command, ack, respond }) => {
   await ack();
   let summaries = await githubAgent.summarizeReleases(command.text, 'checkly');
   if (summaries.releases.length === 0) {
@@ -104,15 +60,16 @@ app.command("/release", async ({ command, ack, respond }) => {
   }
 
   let releases = summaries.releases.sort((a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime());  let response = [releaseHeader].concat(releases.map(summary => {
-    const formattedDate = moment(summary.release_date).fromNow();
+    const date = moment(summary.release_date).fromNow();
+    const authors = summary.authors.filter(author => author !== null).map(author => author.login)
     return createReleaseBlock({ 
       release: summary.id, 
       releaseUrl: summary.link,
       diffUrl: summary.diffLink,
-      date: formattedDate, 
+      date,
       repo: summaries.repo.name, 
       repoUrl: summaries.repo.link, 
-      authors: summary.authors.filter(author => author !== null).map(author => author.login), 
+      authors,
       summary: summary.summary 
     }).blocks as any;
   }).reduce((prev, curr) => {
@@ -120,7 +77,7 @@ app.command("/release", async ({ command, ack, respond }) => {
       return curr;
     }
 
-    return prev.concat([divider]).concat(curr);
+    return prev.concat([releaseDivider]).concat(curr);
   }));
 
   await respond({
