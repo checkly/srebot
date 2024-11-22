@@ -4,6 +4,14 @@ import { getRunMessages } from "../ai/utils";
 import { SreAssistant } from "../sre-assistant/SreAssistant";
 import { getSlackConfig, validateConfig } from "./config";
 import { getThreadMetadata } from "./utils";
+import GitHubAPI from "../github/github";
+import { GithubAgent } from "../github/agent";
+import moment from "moment";
+import {
+	createReleaseBlock,
+	divider as releaseDivider,
+	releaseHeader,
+} from "../github/slackBlock";
 
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
@@ -13,6 +21,62 @@ const initializeSlackApp = () => {
 };
 
 export const app = initializeSlackApp();
+
+let setupAgent = () => {
+	const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
+
+	let openai = getOpenaiSDKClient();
+	let github = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
+
+	return new GithubAgent(openai("gpt-4o"), github);
+};
+
+const githubAgent = setupAgent();
+
+app.command("/srebot-releases", async ({ command, ack, respond }) => {
+	await ack();
+	let summaries = await githubAgent.summarizeReleases(command.text, "checkly");
+	if (summaries.releases.length === 0) {
+		await respond({
+			text: `No releases found in repo ${summaries.repo} since ${summaries.since}`,
+		});
+	}
+
+	let releases = summaries.releases.sort(
+		(a, b) =>
+			new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+	);
+	let response = [releaseHeader].concat(
+		releases
+			.map((summary) => {
+				const date = moment(summary.release_date).fromNow();
+				const authors = summary.authors
+					.filter((author) => author !== null)
+					.map((author) => author.login);
+				return createReleaseBlock({
+					release: summary.id,
+					releaseUrl: summary.link,
+					diffUrl: summary.diffLink,
+					date,
+					repo: summaries.repo.name,
+					repoUrl: summaries.repo.link,
+					authors,
+					summary: summary.summary,
+				}).blocks as any;
+			})
+			.reduce((prev, curr) => {
+				if (!prev) {
+					return curr;
+				}
+
+				return prev.concat([releaseDivider]).concat(curr);
+			})
+	);
+
+	await respond({
+		blocks: response,
+	});
+});
 
 // Event handling
 app.event("app_mention", async ({ event, context }) => {

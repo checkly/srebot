@@ -24,6 +24,27 @@ class GitHubAPI {
     }
   }
 
+  async getPreviousReleaseTag(org: string, repoName: string, release: string) {
+    try {
+      const { data: releases } = await this.octokit.rest.repos.listReleases({
+        owner: org,
+        repo: repoName,
+      });
+
+      const releaseIndex = releases.findIndex(r => r.tag_name === release);
+      if (releaseIndex === -1) {
+        throw new Error(`Release ${release} not found`);
+      } else if (releaseIndex === releases.length - 1) {
+        return "";
+      } else {
+        return releases[releaseIndex + 1].tag_name;
+      }
+    } catch (error) {
+      console.error('Error querying GitHub releases:', error);
+      throw error;
+    }
+  }
+
   async queryLatestReleases(org: string, repoName: string, since: Date) {
     try {
       let { data: releases } = await this.octokit.rest.repos.listReleases({
