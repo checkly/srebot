@@ -14,7 +14,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build"
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "smee": "npx smee-client"
   },
   "author": "",
   "license": "ISC",

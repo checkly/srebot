@@ -20,15 +20,15 @@ export class GithubAgent {
 		let diff = await this.github.getDiffBetweenTags(
 			org,
 			repo,
+			previousRelease,
 			release,
-			previousRelease
 		);
 
 		const { text } = await generateText({
 			model: this.model,
 			prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes so that another developer quickly understands what has changes: ${JSON.stringify(
 				diff
-			)}. Do not describe the outer context as the developer is already aware. Do not yap.`,
+			)}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. DO no use any other formatting rules.`,
 		});
 
 		return { diff, summary: text };
@@ -97,8 +97,9 @@ export class GithubAgent {
 					id: release.tag,
 					release_date: release.date,
 					link: release.link,
+					diffLink: diff.html_url,
 					summary: summary,
-					authors: Array.from(new Set(diff.commits.map((c) => c.author))),
+					authors: Array.from(new Set(diff.commits.map(commit => commit.author))),
 				};
 			})
 		);

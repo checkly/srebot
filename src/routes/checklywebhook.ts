@@ -84,7 +84,7 @@ router.post("/", async (req: Request, res: Response) => {
 			});
 
 			await app.client.chat.postMessage({
-				channel: "C07V9GNU9L6",
+				channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
 				metadata: {
 					event_type: "alert",
 					event_payload: {
