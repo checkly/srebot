@@ -35,7 +35,7 @@ jobs:
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           CI: true
-        run: render login
+        run: render login --output json
       - name: Trigger Render Deployment
         run: render deploy --service-id ${{ secrets.RENDER_SERVICE_ID }}
         env:
