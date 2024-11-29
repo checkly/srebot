@@ -7,7 +7,9 @@ import {
 } from "../checkly/utils";
 
 export const checklyAggregator = {
+	name: "Checkly",
 	fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {
+		console.log("Aggregating Checkly Context...");
 		const [check, results] = await Promise.all([
 			checkly.getCheck(alert.CHECK_ID),
 			checkly.getCheckResult(alert.CHECK_ID, alert.CHECK_RESULT_ID),

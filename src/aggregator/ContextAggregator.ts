@@ -9,6 +9,7 @@ export enum ContextKey {
 	ChecklyResults = "checkly.results",
 	ChecklyPrometheusStatus = "checkly.prometheusStatus",
 	ChecklyLogs = "checkly.logs",
+	GitHubRepoChanges = "github.repoChanges.$repo",
 }
 
 export interface CheckContext {
@@ -30,7 +31,13 @@ export class CheckContextAggregator {
 	aggregate() {
 		return Promise.all(
 			this.plugins.map(async (plugin) => {
-				return plugin.fetchContext(this.alert);
+				return plugin.fetchContext(this.alert).catch((error) => {
+					console.error(
+						`Error fetching context from ${plugin.name ?? "unknown plugin"}:`,
+						error
+					);
+					return [];
+				});
 			})
 		).then((results) => results.flat());
 	}

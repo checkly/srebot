@@ -3,10 +3,6 @@ import { WebhookAlertDto } from "../checkly/alertDTO";
 import { CheckContext, ContextKey } from "./ContextAggregator";
 import moment from "moment";
 
-// Configure repositories to monitor
-const REPOS = process.env.GITHUB_REPOS
-	? JSON.parse(process.env.GITHUB_REPOS)
-	: [];
 const githubApi = new GitHubAPI(process.env.GITHUB_TOKEN || "");
 
 interface RepoChange {
@@ -24,6 +20,10 @@ interface RepoChange {
 		author: string;
 		url: string;
 	}>;
+	releases: Array<{
+		release: string;
+		diff: string;
+	}>;
 }
 
 async function getRecentChanges(repo: string): Promise<RepoChange> {
@@ -31,10 +31,22 @@ async function getRecentChanges(repo: string): Promise<RepoChange> {
 	const since = moment().subtract(24, "hours").toISOString();
 
 	// Get recent commits
-	const commits = await githubApi.getCommits(owner, repoName, { since });
+	const commits = await githubApi
+		.getCommits(owner, repoName, { since })
+		.catch((error) => {
+			console.error("Error fetching commits:", error);
+			return [];
+		});
 
 	// Get recent pull requests
 	const pullRequests = await githubApi.getPullRequests(owner, repoName);
+
+	// Get recent releases
+	const releases = await githubApi.queryLatestReleasesWithDiffs(
+		owner,
+		repoName,
+		new Date(since)
+	);
 
 	// Filter PRs updated in the last 24 hours
 	const recentPRs = pullRequests.filter((pr) =>
@@ -56,54 +68,62 @@ async function getRecentChanges(repo: string): Promise<RepoChange> {
 			author: pr.user?.login || "Unknown",
 			url: pr.html_url,
 		})),
+		releases: releases.map((release) => ({
+			release: release.release,
+			diff: release.diff,
+		})),
 	};
 }
 
-export async function githubAggregator(
-	alert: WebhookAlertDto
-): Promise<CheckContext[]> {
-	try {
-		const contexts: CheckContext[] = [];
+export const githubAggregator = {
+	name: "GitHub",
+	fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {
+		console.log("Aggregating GitHub Context...");
+		try {
+			await githubApi.checkRateLimit();
 
-		// If no repos configured, try to get all repos from the organization
-		if (REPOS.length === 0 && process.env.GITHUB_ORG) {
-			const repos = await githubApi.queryRepositories(process.env.GITHUB_ORG);
-			REPOS.push(
-				...repos.map((repo) => `${process.env.GITHUB_ORG}/${repo.name}`)
+			const REPOS = process.env.GITHUB_REPOS
+				? JSON.parse(process.env.GITHUB_REPOS)
+				: [];
+
+			// If no repos configured, try to get all repos from the organization
+			if (REPOS.length === 0 && process.env.GITHUB_ORG) {
+				const repos = await githubApi.queryRepositories(process.env.GITHUB_ORG);
+				REPOS.push(
+					...repos.map((repo) => `${process.env.GITHUB_ORG}/${repo.name}`)
+				);
+			}
+
+			// Fetch changes for all configured repositories
+			const repoChanges = await Promise.all(
+				REPOS.map((repo) => getRecentChanges(repo))
 			);
+
+			const makeRepoChangesContext = (repoChange: RepoChange) =>
+				({
+					key: ContextKey.GitHubRepoChanges.replace("$repo", repoChange.repo),
+					value: repoChange,
+					checkId: alert.CHECK_ID,
+					source: "github",
+				} as CheckContext);
+
+			if (repoChanges) {
+				const context = repoChanges
+					.filter(
+						(repoChange) =>
+							repoChange.commits.length > 0 ||
+							repoChange.pullRequests.length > 0 ||
+							repoChange.releases.length > 0
+					)
+					.map((repoChange) => makeRepoChangesContext(repoChange));
+
+				return context;
+			}
+
+			return [];
+		} catch (error) {
+			console.error("Error in GitHub aggregator:", error);
+			return [];
 		}
-
-		// Fetch changes for all configured repositories
-		const repoChanges = await Promise.all(
-			REPOS.map((repo) => getRecentChanges(repo))
-		);
-
-		// Create a summary of all changes
-		const changesSummary = repoChanges
-			.filter(
-				(changes) =>
-					changes.commits.length > 0 || changes.pullRequests.length > 0
-			)
-			.map((changes) => {
-				const commitCount = changes.commits.length;
-				const prCount = changes.pullRequests.length;
-				return `${changes.repo}: ${commitCount} commits, ${prCount} PR updates`;
-			})
-			.join("\n");
-
-		if (changesSummary) {
-			contexts.push({
-				checkId: alert.CHECK_ID,
-				source: "github",
-				key: ContextKey.ChecklyCheck,
-				value: repoChanges,
-				analysis: `GitHub changes in the last 24h:\n${changesSummary}`,
-			});
-		}
-
-		return contexts;
-	} catch (error) {
-		console.error("Error in GitHub aggregator:", error);
-		return [];
-	}
-}
+	},
+};
