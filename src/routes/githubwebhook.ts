@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto, { sign } from "crypto";
 import express, { Request, Response, NextFunction } from "express";
 import {
   ReleaseEvent,
@@ -37,14 +37,13 @@ const githubAgent = setupAgent();
 
 const router = express.Router();
 
-async function verifySignature(req: Request, res: Response, buf: Buffer) {
+function verifySignature(req: Request, res: Response, buf: Buffer) {
   const signature = req.headers["x-hub-signature-256"] as string;
   const hmac = crypto.createHmac("sha256", GH_WEBHOOK_SECRET);
   const digest = `sha256=${hmac.update(buf).digest("hex")}`;
-
-  if (signature !== digest) {
-    throw new Error("Invalid signature");
-  }
+  console.log("digest", digest, signature, signature === digest);
+  
+  return signature === digest;
 }
 
 router.get("/", (req: Request, res: Response) => {
@@ -54,12 +53,14 @@ router.get("/", (req: Request, res: Response) => {
 
 router.post(
   "/",
-  express.json({ verify: verifySignature }),
   async (req: Request, res: Response) => {
-    const event = req.headers["x-github-event"] as WebhookEventName;
-    const payload = JSON.parse(req.body.payload) as WebhookEvent;
+    if (!verifySignature(req, res, Buffer.from(JSON.stringify(req.body)))) {
+      res.status(401).send("Signature verification failed");
+      return;
+    }
 
-    console.log(typeof payload);
+    const event = req.headers["x-github-event"] as WebhookEventName;
+    const payload = req.body.payload as WebhookEvent;
 
     switch (event) {
       case "ping":
