@@ -60,7 +60,7 @@ router.post(
     }
 
     const event = req.headers["x-github-event"] as WebhookEventName;
-    const payload = req.body.payload as WebhookEvent;
+    const payload = req.body as WebhookEvent;
 
     switch (event) {
       case "ping":
