@@ -1,5 +1,6 @@
 import { checklyAggregator } from "./checkly-aggregator";
 import { WebhookAlertDto } from "../checkly/alertDTO";
+import { githubAggregator } from "./github-aggregator";
 
 export enum ContextKey {
 	ChecklyScript = "checkly.script",
@@ -12,7 +13,7 @@ export enum ContextKey {
 
 export interface CheckContext {
 	checkId: string;
-	source: "checkly";
+	source: "checkly" | "github";
 	key: ContextKey;
 	value: unknown;
 	analysis: string;
@@ -20,7 +21,7 @@ export interface CheckContext {
 
 export class CheckContextAggregator {
 	alert: WebhookAlertDto;
-	plugins = [checklyAggregator];
+	plugins = [checklyAggregator, githubAggregator];
 
 	constructor(alert: WebhookAlertDto) {
 		this.alert = alert;

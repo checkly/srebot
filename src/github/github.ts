@@ -120,6 +120,36 @@ class GitHubAPI {
 
     return releaseDiffs;
   }
+
+  async getCommits(owner: string, repo: string, options: { since?: string } = {}) {
+    try {
+      const { data: commits } = await this.octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        since: options.since,
+      });
+      return commits;
+    } catch (error) {
+      console.error('Error fetching commits:', error);
+      throw error;
+    }
+  }
+
+  async getPullRequests(owner: string, repo: string, options: { state?: 'open' | 'closed' | 'all' } = { state: 'all' }) {
+    try {
+      const { data: pullRequests } = await this.octokit.rest.pulls.list({
+        owner,
+        repo,
+        state: options.state,
+        sort: 'updated',
+        direction: 'desc',
+      });
+      return pullRequests;
+    } catch (error) {
+      console.error('Error fetching pull requests:', error);
+      throw error;
+    }
+  }
 }
 
 export default GitHubAPI;
