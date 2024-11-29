@@ -12,7 +12,7 @@ import { GithubAgent } from "../github/agent";
 import { createReleaseBlock, releaseHeader } from "../github/slackBlock";
 import moment from "moment";
 
-const GITHUB_SECRET = process.env.GITHUB_SECRET || "your_secret";
+const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
 export const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -39,7 +39,7 @@ const router = express.Router();
 
 async function verifySignature(req: Request, res: Response, buf: Buffer) {
   const signature = req.headers["x-hub-signature-256"] as string;
-  const hmac = crypto.createHmac("sha256", GITHUB_SECRET);
+  const hmac = crypto.createHmac("sha256", GH_WEBHOOK_SECRET);
   const digest = `sha256=${hmac.update(buf).digest("hex")}`;
 
   if (signature !== digest) {
