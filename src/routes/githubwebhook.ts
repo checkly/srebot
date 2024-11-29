@@ -96,8 +96,9 @@ router.post(
           .map((c) => c.author)
           .filter((author) => author !== null)
           .map((author) => author.login);
+        let releaseName = releaseEvent.release.name || releaseEvent.release.tag_name;
         let releaseBlocks = createReleaseBlock({
-          release: releaseEvent.release.name,
+          release: releaseName,
           releaseUrl: releaseEvent.release.html_url,
           diffUrl: release.diff.html_url,
           date,
