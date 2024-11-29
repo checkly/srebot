@@ -37,6 +37,6 @@ jobs:
           CI: true
         run: render login --output json
       - name: Trigger Render Deployment
-        run: render deploy --service-id ${{ secrets.RENDER_SERVICE_ID }}
+        run: render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json
         env:
           CI: true
