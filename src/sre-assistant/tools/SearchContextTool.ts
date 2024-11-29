@@ -117,7 +117,7 @@ export class SearchContextTool extends Tool<
 
 Here is the context you will be searching through:
 <context>
-${contextData.map((c) => c.key + ": " + c.value).join("\n")}
+${contextData.map((c) => c.key + ": " + JSON.stringify(c.value)).join("\n")}
 </context>
 
 The user's query is:

@@ -23,7 +23,7 @@ const parameters = createToolParameters(
 		checkId: z
 			.string()
 			.describe(
-				"The ID of the Check to get information about. Omit this field for the 'getChecksStatus' action."
+				"The ID of the Check to get information about. Omit this field for the 'getChecksStatus' action. Required for the 'getCheck' and 'getCheckResult' actions."
 			)
 			.optional(),
 		query: z
@@ -59,12 +59,20 @@ export class ChecklyTool extends Tool<
 
 	async execute(input: z.infer<typeof parameters>) {
 		if (input.action === "getCheck") {
+			if (!input.checkId) {
+				return "Check ID is required";
+			}
+
 			const check = await checkly.getCheck(input.checkId!);
 			return stringify({
 				...mapCheckToContextValue(check),
 				script: check.script,
 			});
 		} else if (input.action === "getCheckResult") {
+			if (!input.checkId) {
+				return "Check ID is required";
+			}
+
 			const results = await checkly
 				.getCheckResults(input.checkId!, undefined, 1)
 				.then((result) => {
