@@ -47,6 +47,11 @@ async function verifySignature(req: Request, res: Response, buf: Buffer) {
   }
 }
 
+router.get("/", (req: Request, res: Response) => {
+	res.json({ message: "Hello from Github Webhook!" });
+});
+
+
 router.post(
   "/",
   express.json({ verify: verifySignature }),

@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import checklyWebhookRouter from "./routes/checklywebhook";
+import githubWebhookRouter from "./routes/githubwebhook";
 import { SreAssistant } from "./sre-assistant/SreAssistant";
 import { getOpenaiClient } from "./ai/openai";
 import { getRunMessages } from "./ai/utils";
@@ -17,6 +18,7 @@ app.use(express.json());
 
 // Use the Checkly Webhook router
 app.use("/checkly-webhook", checklyWebhookRouter);
+app.use("/github-webhook", githubWebhookRouter);
 
 app.get("/", (request: Request, response: Response) => {
 	response.status(200).send("Hello World");
