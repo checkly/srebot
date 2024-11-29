@@ -37,4 +37,4 @@ jobs:
           CI: true
         run: |
           render login --output json
-          render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json
+          render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm
