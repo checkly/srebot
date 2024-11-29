@@ -30,7 +30,7 @@ jobs:
         run: |
           curl -L https://github.com/render-oss/cli/releases/download/v0.8.5/cli_0.8.5_linux_amd64.zip -o render.zip
           unzip render.zip
-          sudo mv cli_v0.8.5 /usr/local/bin/render
+          sudo mv cli_v0.8.6 /usr/local/bin/render
       - name: Authenticate with Render
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
