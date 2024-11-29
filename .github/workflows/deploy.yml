@@ -31,12 +31,10 @@ jobs:
           curl -L https://github.com/render-oss/cli/releases/download/v0.8.6/cli_0.8.6_linux_amd64.zip -o render.zip
           unzip render.zip
           sudo mv cli_v0.8.6 /usr/local/bin/render
-      - name: Authenticate with Render
+      - name: Authenticate with Render& Deploy
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           CI: true
-        run: render login --output json
-      - name: Trigger Render Deployment
-        run: render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json
-        env:
-          CI: true
+        run: |
+          render login --output json
+          render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json
