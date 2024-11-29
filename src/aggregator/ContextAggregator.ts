@@ -1,5 +1,6 @@
 import { checklyAggregator } from "./checkly-aggregator";
 import { WebhookAlertDto } from "../checkly/alertDTO";
+import { githubAggregator } from "./github-aggregator";
 
 export enum ContextKey {
 	ChecklyScript = "checkly.script",
@@ -8,11 +9,12 @@ export enum ContextKey {
 	ChecklyResults = "checkly.results",
 	ChecklyPrometheusStatus = "checkly.prometheusStatus",
 	ChecklyLogs = "checkly.logs",
+	GitHubRepoChanges = "github.repoChanges.$repo",
 }
 
 export interface CheckContext {
 	checkId: string;
-	source: "checkly";
+	source: "checkly" | "github";
 	key: ContextKey;
 	value: unknown;
 	analysis: string;
@@ -20,7 +22,7 @@ export interface CheckContext {
 
 export class CheckContextAggregator {
 	alert: WebhookAlertDto;
-	plugins = [checklyAggregator];
+	plugins = [checklyAggregator, githubAggregator];
 
 	constructor(alert: WebhookAlertDto) {
 		this.alert = alert;
@@ -29,7 +31,13 @@ export class CheckContextAggregator {
 	aggregate() {
 		return Promise.all(
 			this.plugins.map(async (plugin) => {
-				return plugin.fetchContext(this.alert);
+				return plugin.fetchContext(this.alert).catch((error) => {
+					console.error(
+						`Error fetching context from ${plugin.name ?? "unknown plugin"}:`,
+						error
+					);
+					return [];
+				});
 			})
 		).then((results) => results.flat());
 	}

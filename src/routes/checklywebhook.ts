@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction, text } from "express";
 import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
 import "reflect-metadata";
@@ -12,6 +12,8 @@ import { prisma } from "../prisma";
 import { Prisma } from "@prisma/client";
 import { app } from "../slackbot/app";
 import { getOpenaiClient } from "../ai/openai";
+import { SreAssistant } from "../sre-assistant/SreAssistant";
+import { getRunMessages } from "../ai/utils";
 
 const router = express.Router();
 
@@ -53,6 +55,7 @@ router.post("/", async (req: Request, res: Response) => {
 		} else {
 			const aggregator = new CheckContextAggregator(alertDto);
 			const context = await aggregator.aggregate();
+
 			const contextAnalysis = await generateContextAnalysis(context);
 			const summary = await generateContextAnalysisSummary(contextAnalysis);
 
@@ -78,12 +81,17 @@ router.post("/", async (req: Request, res: Response) => {
 					{
 						role: "assistant",
 						content:
-							"New alert: " + alertDto.CHECK_NAME + "\nSummary: " + summary,
+							"*Alert:* <https://app.checklyhq.com/checks/" +
+							alertDto.CHECK_ID +
+							"|" +
+							alertDto.CHECK_NAME +
+							">\n\n*Summary:* " +
+							summary,
 					},
 				],
 			});
 
-			await app.client.chat.postMessage({
+			const oMessage = await app.client.chat.postMessage({
 				channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
 				metadata: {
 					event_type: "alert",
@@ -133,6 +141,40 @@ router.post("/", async (req: Request, res: Response) => {
 					},
 				],
 			});
+
+			// trigger the assistant for a deeper analysis
+			const assistant = new SreAssistant(thread.id, alert.id, {
+				username: "Checkly Alert",
+				date: new Date().toISOString(),
+			});
+
+			await assistant.addMessage(
+				`What happened? Check GitHub & Investigate further...`
+			);
+
+			const run = await assistant.runSync();
+			const responseMessages = await getRunMessages(thread.id, run.id);
+
+			// Post assistant's analysis to the thread
+			await Promise.all(
+				responseMessages.map((msg) =>
+					app.client.chat.postMessage({
+						channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
+						thread_ts: oMessage.ts,
+						text: msg.content
+							.filter((c) => c.type === "text")
+							.map((c) => (c as any).text.value)
+							.join(""),
+						metadata: {
+							event_type: "alert",
+							event_payload: {
+								alertId: alert.id,
+								threadId: thread.id,
+							},
+						},
+					})
+				)
+			);
 
 			res.json({ message: "OK" });
 		}
