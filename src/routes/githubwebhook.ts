@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto, { sign } from "crypto";
 import express, { Request, Response, NextFunction } from "express";
 import {
   ReleaseEvent,
@@ -6,13 +6,13 @@ import {
   WebhookEventName,
 } from "@octokit/webhooks-types";
 import { App, LogLevel } from "@slack/bolt";
-import { getOpenaiSDKClient } from "src/ai/openai";
-import GitHubAPI from "src/github/github";
-import { GithubAgent } from "src/github/agent";
+import { getOpenaiSDKClient } from "../ai/openai";
+import GitHubAPI from "../github/github";
+import { GithubAgent } from "../github/agent";
 import { createReleaseBlock, releaseHeader } from "../github/slackBlock";
 import moment from "moment";
 
-const GITHUB_SECRET = process.env.GITHUB_SECRET || "your_secret";
+const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
 export const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -37,35 +37,56 @@ const githubAgent = setupAgent();
 
 const router = express.Router();
 
-async function verifySignature(req: Request, res: Response, buf: Buffer) {
+function verifySignature(req: Request, res: Response, buf: Buffer) {
   const signature = req.headers["x-hub-signature-256"] as string;
-  const hmac = crypto.createHmac("sha256", GITHUB_SECRET);
+  const hmac = crypto.createHmac("sha256", GH_WEBHOOK_SECRET);
   const digest = `sha256=${hmac.update(buf).digest("hex")}`;
-
-  if (signature !== digest) {
-    throw new Error("Invalid signature");
-  }
+  console.log("digest", digest, signature, signature === digest);
+  
+  return signature === digest;
 }
 
+router.get("/", (req: Request, res: Response) => {
+	res.json({ message: "Hello from Github Webhook!" });
+});
+
+
 router.post(
-  "/webhook",
-  express.json({ verify: verifySignature }),
+  "/",
   async (req: Request, res: Response) => {
+    if (!verifySignature(req, res, Buffer.from(JSON.stringify(req.body)))) {
+      res.status(401).send("Signature verification failed");
+      return;
+    }
+
     const event = req.headers["x-github-event"] as WebhookEventName;
-    const body = req.body as WebhookEvent;
+    const payload = req.body as WebhookEvent;
 
     switch (event) {
+      case "ping":
+        console.log("Ping event received");
+        res.status(200).send("Webhook received");
+        break;
       case "release":
-        let releaseEvent = body as ReleaseEvent;
+        let releaseEvent = payload as ReleaseEvent;
         if (releaseEvent.action !== "published") {
           res.status(200).send("Webhook received");
           return;
         }
 
-        const previousRelease = await github.getPreviousReleaseTag('checkly', releaseEvent.repository.name, releaseEvent.release.tag_name);
+        console.log(
+          "Release event received:",
+          releaseEvent.repository.owner.login
+        );
+
+        const previousRelease = await github.getPreviousReleaseTag(
+          releaseEvent.repository.owner.login,
+          releaseEvent.repository.name,
+          releaseEvent.release.tag_name
+        );
 
         const release = await githubAgent.summarizeRelease(
-          releaseEvent.repository.organization!,
+          releaseEvent.repository.owner.login,
           releaseEvent.repository.name,
           releaseEvent.release.tag_name,
           previousRelease
@@ -75,8 +96,9 @@ router.post(
           .map((c) => c.author)
           .filter((author) => author !== null)
           .map((author) => author.login);
+        let releaseName = releaseEvent.release.name || releaseEvent.release.tag_name;
         let releaseBlocks = createReleaseBlock({
-          release: releaseEvent.release.name,
+          release: releaseName,
           releaseUrl: releaseEvent.release.html_url,
           diffUrl: release.diff.html_url,
           date,
@@ -87,12 +109,11 @@ router.post(
         }).blocks;
 
         await app.client.chat.postMessage({
-          channel: "C07V9GNU9L6",
+          channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
+          text: `New release: ${releaseEvent.release.name} in ${releaseEvent.repository.owner.login}/${releaseEvent.repository.name}`,
           metadata: {
             event_type: "release-summary",
-            event_payload: {
-              
-            },
+            event_payload: {},
           },
           blocks: releaseBlocks,
         });
@@ -105,3 +126,5 @@ router.post(
     }
   }
 );
+
+export default router;
