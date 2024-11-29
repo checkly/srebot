@@ -7,6 +7,14 @@ import { getOpenaiClient } from "./ai/openai";
 import { getRunMessages } from "./ai/utils";
 import { app as slackApp } from "./slackbot/app";
 
+process
+.on("unhandledRejection", (reason, promise) => {
+	console.error("Unhandled Rejection at:", promise, "reason:", reason);
+})
+.on("uncaughtException", (error) => {
+	console.error("Uncaught Exception thrown", error);
+});
+
 // configures dotenv to work in your application
 dotenv.config();
 const app = express();
@@ -60,4 +68,3 @@ app
     await slackApp.start();
     console.log('⚡️ Bolt app is running!');
   })();
-  
