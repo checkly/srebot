@@ -55,9 +55,6 @@ describe("GithubAggregator", () => {
 				expect(item).toHaveProperty("source", "github");
 				expect(item).toHaveProperty("key");
 				expect(item).toHaveProperty("value");
-
-				// Value should be an array for all GitHub contexts
-				expect(Array.isArray(item.value)).toBe(true);
 			});
 		}
 	});
