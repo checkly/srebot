@@ -109,6 +109,7 @@ router.post(
 
         await app.client.chat.postMessage({
           channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
+          text: `New release: ${releaseEvent.release.name} in ${releaseEvent.repository.owner.login}/${releaseEvent.repository.name}`,
           metadata: {
             event_type: "release-summary",
             event_payload: {},
