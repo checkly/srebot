@@ -11,6 +11,30 @@ export class GithubAgent {
 		this.github = github;
 	}
 
+	async singleSentenceReleaseSummary(
+		org: string,
+		repo: string,
+		release: string,
+		previousRelease: string
+	) {
+		let diff = await this.github.getDiffBetweenTags(
+			org,
+			repo,
+			previousRelease,
+			release,
+		);
+
+		const { text } = await generateText({
+			model: this.model,
+			prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes in a single sentence: ${JSON.stringify(
+				diff
+			)}. Do not describe the outer context as the developer is already aware. Do not yap. Do not use any formatting rules.`,
+		});
+
+		return { diff, summary: text };
+	}
+
+
 	async summarizeRelease(
 		org: string,
 		repo: string,
@@ -28,7 +52,7 @@ export class GithubAgent {
 			model: this.model,
 			prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes so that another developer quickly understands what has changes: ${JSON.stringify(
 				diff
-			)}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. DO no use any other formatting rules.`,
+			)}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules.`,
 		});
 
 		return { diff, summary: text };
