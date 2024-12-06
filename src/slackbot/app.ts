@@ -20,6 +20,7 @@ const initializeSlackApp = () => {
 	return new App(config);
 };
 
+let org = process.env.GITHUB_ORG!;
 export const app = initializeSlackApp();
 
 let setupAgent = () => {

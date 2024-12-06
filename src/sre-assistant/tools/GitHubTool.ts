@@ -4,7 +4,7 @@ import { SreAssistant } from "../SreAssistant";
 import { stringify } from "yaml";
 import GitHubAPI from "../../github/github";
 
-const githubApi = new GitHubAPI(process.env.GITHUB_TOKEN || "");
+const githubApi = new GitHubAPI(process.env.CHECKLY_GITHUB_TOKEN || "");
 const MAX_RESPONSE_LENGTH = 90000;
 const parameters = createToolParameters(
 	z.object({
