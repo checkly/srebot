@@ -149,7 +149,7 @@ router.post("/", async (req: Request, res: Response) => {
 			});
 
 			await assistant.addMessage(
-				`What happened? Check GitHub & Investigate further...`
+				`What happened? Check *GitHub* & Investigate further...`
 			);
 
 			const run = await assistant.runSync();
