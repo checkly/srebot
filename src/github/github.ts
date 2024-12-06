@@ -77,6 +77,7 @@ class GitHubAPI {
 	async checkRateLimit() {
 		try {
 			const response = await this.octokit.rest.rateLimit.get();
+			console.log(response.data);
 
 			if (response.data.resources.core.remaining === 0) {
 				throw new Error("Rate limit exceeded");

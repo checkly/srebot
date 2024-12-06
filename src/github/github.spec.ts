@@ -5,6 +5,11 @@ const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
 
 describe('GitHub API Tests', () => {
 
+  it.skip('should print the api usage', async () => {
+    const githubAPI = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
+    await githubAPI.checkRateLimit();
+  });
+
   it.skip('should return the latest releases for checkly', async () => {
     const githubAPI = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
     const org = 'checkly';

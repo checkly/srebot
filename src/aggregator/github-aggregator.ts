@@ -3,7 +3,7 @@ import { WebhookAlertDto } from "../checkly/alertDTO";
 import { CheckContext, ContextKey } from "./ContextAggregator";
 import moment from "moment";
 
-const githubApi = new GitHubAPI(process.env.GITHUB_TOKEN || "");
+const githubApi = new GitHubAPI(process.env.CHECKLY_GITHUB_TOKEN || "");
 
 interface RepoChange {
 	repo: string;
