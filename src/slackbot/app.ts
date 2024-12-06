@@ -38,7 +38,7 @@ app.command("/srebot-releases", async ({ command, ack, respond }) => {
 	let summaries = await githubAgent.summarizeReleases(command.text, "checkly");
 	if (summaries.releases.length === 0) {
 		await respond({
-			text: `No releases found in repo ${summaries.repo} since ${summaries.since}`,
+			text: `No releases found in repo ${summaries.repo.name} since ${summaries.since}`,
 		});
 	}
 
