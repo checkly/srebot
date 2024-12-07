@@ -172,18 +172,10 @@ export class BaseAssistant {
 	private async runTool(
 		toolCall: RequiredActionFunctionToolCall
 	): Promise<unknown> {
-		console.log(
-			"Running tool",
-			toolCall.function.name,
-			toolCall.function.arguments
-		);
-
 		try {
 			const parameters = JSON.parse(toolCall.function.arguments);
 			const tool = await this.getTool(toolCall.function.name);
 			const output = await tool.run(parameters);
-
-			console.log("Tool output: ", output);
 
 			this.runContext?.toolCallStack.push({ ...toolCall, output });
 			return output;

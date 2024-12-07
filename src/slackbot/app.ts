@@ -127,7 +127,7 @@ app.event("app_mention", async ({ event, context }) => {
 			app.client.chat.postMessage({
 				token: context.botToken,
 				channel: event.channel,
-				text: msg,
+				text: msg.replace(/(\*\*|__)(.*?)\1/g, "*$2*"),
 				thread_ts: threadTs,
 				...(threadId && {
 					metadata: {

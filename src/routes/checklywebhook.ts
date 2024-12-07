@@ -2,7 +2,10 @@ import express, { Request, Response, NextFunction, text } from "express";
 import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
 import "reflect-metadata";
-import { CheckContextAggregator } from "../aggregator/ContextAggregator";
+import {
+	CheckContextAggregator,
+	ContextKey,
+} from "../aggregator/ContextAggregator";
 import {
 	generateContextAnalysis,
 	generateContextAnalysisSummary,
@@ -50,7 +53,10 @@ router.post("/", async (req: Request, res: Response) => {
 			},
 		});
 
-		if (exisingAlert && process.env.ALLOW_DUPLICATE_ALERTS !== "true") {
+		if (
+			(exisingAlert && !process.env.ALLOW_DUPLICATE_ALERTS) ||
+			process.env.ALLOW_DUPLICATE_ALERTS !== "true"
+		) {
 			res.status(200).json({ message: "Alert already processed" });
 		} else {
 			const aggregator = new CheckContextAggregator(alertDto);
@@ -75,6 +81,10 @@ router.post("/", async (req: Request, res: Response) => {
 					summary,
 				},
 			});
+
+			const checkResults = context.find(
+				(c) => c.key === ContextKey.ChecklyResults
+			);
 
 			const thread = await getOpenaiClient().beta.threads.create({
 				messages: [
@@ -114,21 +124,35 @@ router.post("/", async (req: Request, res: Response) => {
 						fields: [
 							{
 								type: "mrkdwn",
-								text: `🩺 *Check:* <https://app.checklyhq.com/checks/${alertDto.CHECK_ID}|${alertDto.CHECK_NAME}>`,
+								text: `:checkly-hyped-2: *Check*\n<https://app.checklyhq.com/checks/${alertDto.CHECK_ID}|${alertDto.CHECK_NAME}>`,
 							},
 							{
 								type: "mrkdwn",
-								text: `🔮 *Result:* <${alertDto.RESULT_LINK}|View>`,
+								text: `:crystal_ball: *Result*\n<${alertDto.RESULT_LINK}|Open>`,
 							},
 							{
 								type: "mrkdwn",
-								text: `📅 *When:* ${new Date(
+								text: `:date: *Date*\n${new Date(
 									alertDto.STARTED_AT
 								).toLocaleString()}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `🌍 *Location:* ${alertDto.RUN_LOCATION}`,
+								text: `:globe_with_meridians: *Location*\n${alertDto.RUN_LOCATION}`,
+							},
+							{
+								type: "mrkdwn",
+								text: `:stopwatch: *Response Time*\n${
+									(checkResults?.value as any).responseTime
+										? (checkResults?.value as any).responseTime + "ms"
+										: "unknown"
+								}`,
+							},
+							{
+								type: "mrkdwn",
+								text: `:recycle: *Attempts*\n${
+									(checkResults?.value as any).attempts ?? "unknown"
+								}`,
 							},
 						],
 					},
@@ -136,7 +160,7 @@ router.post("/", async (req: Request, res: Response) => {
 						type: "section",
 						text: {
 							type: "mrkdwn",
-							text: `*Summary*\n${summary}`,
+							text: `${summary}`,
 						},
 					},
 				],
@@ -149,26 +173,36 @@ router.post("/", async (req: Request, res: Response) => {
 			});
 
 			await assistant.addMessage(
-				`What happened? Check *GitHub* & Investigate further...`
+				`Investigate further. Use the following approach:
+- Check if other checks are failing. Is there a related incident?
+- Identify relevant github repositories that could be causing the issue
+- Check the github activity in the identified repositories
+- Try to identify the root cause of the issue or at least a good starting point
+
+Continue using your tools extensively to get a holistic view of the situation.
+Keep in mind, we are investigating check "${alertDto.CHECK_NAME}"`
 			);
 
 			const run = await assistant.runSync();
 			const responseMessages = await getRunMessages(thread.id, run.id);
 
+			const messages = responseMessages.map((msg) =>
+				msg.content
+					.filter((c) => c.type === "text")
+					.map((c) => (c as any).text.value)
+					.join("")
+			);
+
 			// Post assistant's analysis to the thread
-			await Promise.all(
-				responseMessages.map((msg) =>
+			const response = await Promise.all(
+				messages.map(async (msg) =>
 					app.client.chat.postMessage({
 						channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
 						thread_ts: oMessage.ts,
-						text: msg.content
-							.filter((c) => c.type === "text")
-							.map((c) => (c as any).text.value)
-							.join(""),
+						text: msg,
 						metadata: {
 							event_type: "alert",
 							event_payload: {
-								alertId: alert.id,
 								threadId: thread.id,
 							},
 						},
