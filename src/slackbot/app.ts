@@ -3,7 +3,7 @@ import { getOpenaiClient, getOpenaiSDKClient } from "../ai/openai";
 import { getRunMessages } from "../ai/utils";
 import { SreAssistant } from "../sre-assistant/SreAssistant";
 import { getSlackConfig, validateConfig } from "./config";
-import { getThreadMetadata } from "./utils";
+import { convertToSlackMarkdown, getThreadMetadata } from "./utils";
 import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
 import moment from "moment";
@@ -127,7 +127,7 @@ app.event("app_mention", async ({ event, context }) => {
 			app.client.chat.postMessage({
 				token: context.botToken,
 				channel: event.channel,
-				text: msg.replace(/(\*\*|__)(.*?)\1/g, "*$2*"),
+				text: convertToSlackMarkdown(msg),
 				thread_ts: threadTs,
 				...(threadId && {
 					metadata: {
