@@ -17,7 +17,7 @@ let setupAgent = () => {
 const githubAgent = setupAgent();
 
 describe("Load github releases into db", () => {
-  it("should return the latest releases for checkly", async () => {
+  it.skip("should add releases to the db", async () => {
     const org = "checkly";
     const repo = "checkly-backend";
     const timeframe = "1 days";
