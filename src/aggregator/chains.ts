@@ -5,19 +5,27 @@ import { stringify } from "yaml";
 import { ContextKey } from "./ContextAggregator";
 import { slackFormatInstructions } from "../slackbot/utils";
 
-export const generateContextAnalysis = async (context: CheckContext[]) => {
-	const checkContext = stringify(
-		context.find((c) => c.key === "checkly.check")
+const getCheckContext = (context: CheckContext[]) => {
+	const checkContext = context.find((c) => c.key === ContextKey.ChecklyCheck);
+	return stringify(
+		{
+			checkId: checkContext?.checkId,
+			data: checkContext?.value,
+		},
+		{ indent: 2 }
 	);
+};
+
+export const generateContextAnalysis = async (context: CheckContext[]) => {
+	const checkContext = getCheckContext(context);
 
 	const generateContextAnalysis = async (text: string) => {
 		const prompt = `The following check has failed: ${checkContext}
 		
-		Analyze the following context and generate a concise summary to extract the most important context. Output only the relevant context summary, no other text.
+		Analyze the following context and generate a concise summary to extract the most important information. Output only the relevant context summary, no other text.
 
 CONTEXT:
-${text}
-`;
+${text}`;
 
 		const summary = await generateText({
 			model: getOpenaiSDKClient()("gpt-4o"),
@@ -42,11 +50,10 @@ ${text}
 export const generateContextAnalysisSummary = async (
 	contextAnalysis: (CheckContext & { analysis: string })[]
 ) => {
+	const checkContext = getCheckContext(contextAnalysis);
 	const summary = await generateText({
 		model: getOpenaiSDKClient()("gpt-4o"),
-		prompt: `The following check has failed: ${stringify(
-			contextAnalysis.find((c) => c.key === ContextKey.ChecklyCheck)
-		)}
+		prompt: `The following check has failed: ${checkContext}
 	
 Anaylze the following context and generate a concise summary of the current situation.
 
@@ -63,7 +70,7 @@ ${slackFormatInstructions}
 CONTEXT:
 ${contextAnalysis
 	.filter((c) => c.key !== ContextKey.ChecklyCheck)
-	.map((c) => `${c.key}: ${c.analysis}`)
+	.map((c) => `${c.key}: ${c.value}`)
 	.join("\n\n")}
 
 Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analyisis and potential mitigations. Help the user to resolve the issue.

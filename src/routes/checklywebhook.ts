@@ -53,24 +53,19 @@ router.post("/", async (req: Request, res: Response) => {
 			},
 		});
 
-		if (
-			(exisingAlert && !process.env.ALLOW_DUPLICATE_ALERTS) ||
-			process.env.ALLOW_DUPLICATE_ALERTS !== "true"
-		) {
+		if (exisingAlert && !!process.env.ALLOW_DUPLICATE_ALERTS) {
 			res.status(200).json({ message: "Alert already processed" });
 		} else {
 			const aggregator = new CheckContextAggregator(alertDto);
 			const context = await aggregator.aggregate();
-
-			const contextAnalysis = await generateContextAnalysis(context);
-			const summary = await generateContextAnalysisSummary(contextAnalysis);
+			const summary = await generateContextAnalysisSummary(context);
 
 			const alert = await prisma.alert.create({
 				data: {
 					data: { ...alertDto } as unknown as Prisma.InputJsonValue,
 					context: {
 						createMany: {
-							data: contextAnalysis
+							data: context
 								.filter((c) => c.key && c.value)
 								.map((c) => ({
 									key: c.key,

@@ -1,3 +1,4 @@
+import { checkly } from "./client";
 import { Check, CheckResult } from "./models";
 
 export const mapCheckToContextValue = (check: Check) => {
@@ -30,4 +31,9 @@ export const mapCheckResultToContextValue = (result: CheckResult) => {
 		overMaxResponseTime: result.overMaxResponseTime,
 		resultType: result.resultType,
 	};
+};
+
+export const getLastSuccessfulCheckResult = async (checkId: string) => {
+	const results = await checkly.getCheckResults(checkId, false, 1);
+	return results[0];
 };

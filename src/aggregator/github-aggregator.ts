@@ -2,6 +2,8 @@ import GitHubAPI from "../github/github";
 import { WebhookAlertDto } from "../checkly/alertDTO";
 import { CheckContext, ContextKey } from "./ContextAggregator";
 import moment from "moment";
+import { getLastSuccessfulCheckResult } from "src/checkly/utils";
+import { prisma } from "src/prisma";
 
 const githubApi = new GitHubAPI(process.env.CHECKLY_GITHUB_TOKEN || "");
 
@@ -81,6 +83,10 @@ export const githubAggregator = {
 		console.log("Aggregating GitHub Context...");
 		try {
 			await githubApi.checkRateLimit();
+
+			const lastSuccessfulCheckResult = await getLastSuccessfulCheckResult(
+				alert.CHECK_ID
+			);
 
 			const REPOS = process.env.GITHUB_REPOS
 				? JSON.parse(process.env.GITHUB_REPOS)
