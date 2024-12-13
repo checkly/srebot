@@ -14,6 +14,7 @@ export const checklyAggregator = {
 			checkly.getCheck(alert.CHECK_ID),
 			checkly.getCheckResult(alert.CHECK_ID, alert.CHECK_RESULT_ID),
 		]);
+
 		const makeCheckContext = (key: ContextKey, value: unknown) => {
 			return {
 				checkId: alert.CHECK_ID,
@@ -27,7 +28,7 @@ export const checklyAggregator = {
 		const script = check.script;
 
 		const checklyCheckContext = [
-			makeCheckContext(ContextKey.ChecklyScript, script),
+			...(script ? [makeCheckContext(ContextKey.ChecklyScript, script)] : []),
 			makeCheckContext(ContextKey.ChecklyCheck, mapCheckToContextValue(check)),
 			makeCheckContext(
 				ContextKey.ChecklyResults,

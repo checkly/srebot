@@ -5,19 +5,27 @@ import { stringify } from "yaml";
 import { ContextKey } from "./ContextAggregator";
 import { slackFormatInstructions } from "../slackbot/utils";
 
-export const generateContextAnalysis = async (context: CheckContext[]) => {
-	const checkContext = stringify(
-		context.find((c) => c.key === "checkly.check")
+const getCheckContext = (context: CheckContext[]) => {
+	const checkContext = context.find((c) => c.key === ContextKey.ChecklyCheck);
+	return stringify(
+		{
+			checkId: checkContext?.checkId,
+			data: checkContext?.value,
+		},
+		{ indent: 2 }
 	);
+};
+
+export const generateContextAnalysis = async (context: CheckContext[]) => {
+	const checkContext = getCheckContext(context);
 
 	const generateContextAnalysis = async (text: string) => {
 		const prompt = `The following check has failed: ${checkContext}
 		
-		Analyze the following context and generate a concise summary to extract the most important context. Output only the relevant context summary, no other text.
+		Analyze the following context and generate a concise summary to extract the most important information. Output only the relevant context summary, no other text.
 
 CONTEXT:
-${text}
-`;
+${text}`;
 
 		const summary = await generateText({
 			model: getOpenaiSDKClient()("gpt-4o"),
@@ -40,13 +48,13 @@ ${text}
 };
 
 export const generateContextAnalysisSummary = async (
-	contextAnalysis: (CheckContext & { analysis: string })[]
+	contextAnalysis: CheckContext[]
 ) => {
+	const checkContext = getCheckContext(contextAnalysis);
 	const summary = await generateText({
 		model: getOpenaiSDKClient()("gpt-4o"),
-		prompt: `The following check has failed: ${stringify(
-			contextAnalysis.find((c) => c.key === ContextKey.ChecklyCheck)
-		)}
+		temperature: 1,
+		prompt: `The following check has failed: ${checkContext}
 	
 Anaylze the following context and generate a concise summary of the current situation.
 
@@ -61,14 +69,18 @@ OUTPUT FORMAT INSTRUCTIONS:
 ${slackFormatInstructions}
 
 CONTEXT:
-${contextAnalysis
-	.filter((c) => c.key !== ContextKey.ChecklyCheck)
-	.map((c) => `${c.key}: ${c.analysis}`)
-	.join("\n\n")}
+${stringify(
+	contextAnalysis
+		.filter((c) => c.key !== ContextKey.ChecklyCheck)
+		.map((c) => ({ key: c.key, source: c.source, value: c.value })),
+	{ indent: 2 }
+).slice(0, 200000)}
 
 Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analyisis and potential mitigations. Help the user to resolve the issue.
-Generate a condensed breakdown of the current situation. Focus on the essentials and provide a concise overview. Max. 100 words. Include links to relevant context if applicable.`,
-		maxTokens: 200,
+Generate a condensed summary of your root cause analysis of the current situation. Focus on the essentials, provide a concise overview and actionable insights. Provide reasoning and the source of the information. Max. 150 words. Include links to relevant context if applicable.
+
+*Summary:* `,
+		maxTokens: 500,
 	});
 
 	return summary.text;
