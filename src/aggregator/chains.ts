@@ -48,11 +48,12 @@ ${text}`;
 };
 
 export const generateContextAnalysisSummary = async (
-	contextAnalysis: (CheckContext & { analysis: string })[]
+	contextAnalysis: CheckContext[]
 ) => {
 	const checkContext = getCheckContext(contextAnalysis);
 	const summary = await generateText({
 		model: getOpenaiSDKClient()("gpt-4o"),
+		temperature: 1,
 		prompt: `The following check has failed: ${checkContext}
 	
 Anaylze the following context and generate a concise summary of the current situation.
@@ -68,15 +69,18 @@ OUTPUT FORMAT INSTRUCTIONS:
 ${slackFormatInstructions}
 
 CONTEXT:
-${contextAnalysis
-	.filter((c) => c.key !== ContextKey.ChecklyCheck)
-	.map((c) => `${c.key}: ${c.value}`)
-	.join("\n\n")
-	.slice(0, 200000)}
+${stringify(
+	contextAnalysis
+		.filter((c) => c.key !== ContextKey.ChecklyCheck)
+		.map((c) => ({ key: c.key, source: c.source, value: c.value })),
+	{ indent: 2 }
+).slice(0, 200000)}
 
 Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analyisis and potential mitigations. Help the user to resolve the issue.
-Generate a condensed root cause analysis of the current situation. Focus on the essentials, provide a concise overview and actionable insights. Max. 100 words. Include links to relevant context if applicable.`,
-		maxTokens: 300,
+Generate a condensed summary of your root cause analysis of the current situation. Focus on the essentials, provide a concise overview and actionable insights. Provide reasoning and the source of the information. Max. 150 words. Include links to relevant context if applicable.
+
+*Summary:* `,
+		maxTokens: 500,
 	});
 
 	return summary.text;
