@@ -10,6 +10,7 @@ export enum ContextKey {
 	ChecklyPrometheusStatus = "checkly.prometheusStatus",
 	ChecklyLogs = "checkly.logs",
 	GitHubRepoChanges = "github.repoChanges.$repo",
+	GitHubReleaseSummary = "github.releaseSummary.$repo",
 }
 
 export interface CheckContext {

@@ -71,11 +71,12 @@ CONTEXT:
 ${contextAnalysis
 	.filter((c) => c.key !== ContextKey.ChecklyCheck)
 	.map((c) => `${c.key}: ${c.value}`)
-	.join("\n\n")}
+	.join("\n\n")
+	.slice(0, 200000)}
 
 Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analyisis and potential mitigations. Help the user to resolve the issue.
-Generate a condensed breakdown of the current situation. Focus on the essentials and provide a concise overview. Max. 100 words. Include links to relevant context if applicable.`,
-		maxTokens: 200,
+Generate a condensed root cause analysis of the current situation. Focus on the essentials, provide a concise overview and actionable insights. Max. 100 words. Include links to relevant context if applicable.`,
+		maxTokens: 300,
 	});
 
 	return summary.text;

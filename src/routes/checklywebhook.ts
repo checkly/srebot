@@ -6,10 +6,7 @@ import {
 	CheckContextAggregator,
 	ContextKey,
 } from "../aggregator/ContextAggregator";
-import {
-	generateContextAnalysis,
-	generateContextAnalysisSummary,
-} from "../aggregator/chains";
+import { generateContextAnalysisSummary } from "../aggregator/chains";
 import { WebhookAlertDto } from "../checkly/alertDTO";
 import { prisma } from "../prisma";
 import { Prisma } from "@prisma/client";

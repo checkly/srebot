@@ -13,7 +13,7 @@ import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
 import { createReleaseBlock, releaseHeader } from "../github/slackBlock";
 import moment from "moment";
-import { prisma } from 'src/prisma';
+import { prisma } from '../prisma';
 
 const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
