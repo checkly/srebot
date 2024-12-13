@@ -52,5 +52,5 @@ model AlertContext {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  alert Alert @relation(fields: [alertId], references: [id])
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
 }
