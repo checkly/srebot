@@ -5,11 +5,11 @@ import {
 	getLastSuccessfulCheckResult,
 	mapCheckResultToContextValue,
 	mapCheckToContextValue,
-} from "../../src/checkly/utils";
-import { prisma } from "../../src/prisma";
+} from "../checkly/utils";
+import { prisma } from "../prisma";
 import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../../src/ai/openai";
-import { checkly } from "../../src/checkly/client";
+import { getOpenaiSDKClient } from "../ai/openai";
+import { checkly } from "../checkly/client";
 import { stringify } from "yaml";
 import { z } from "zod";
 import { Release } from "@prisma/client";
