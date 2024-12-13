@@ -1,3 +1,5 @@
+import { PrismaClient } from '@prisma/client';
+
 import crypto, { sign } from "crypto";
 import express, { Request, Response, NextFunction } from "express";
 import {
@@ -11,6 +13,7 @@ import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
 import { createReleaseBlock, releaseHeader } from "../github/slackBlock";
 import moment from "moment";
+import { prisma } from 'src/prisma';
 
 const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
@@ -107,6 +110,21 @@ router.post(
           authors,
           summary: release.summary,
         }).blocks;
+
+        prisma.release.create({
+          data: {
+            name: releaseName,
+            releaseUrl: releaseEvent.release.html_url,
+            publishedAt: releaseEvent.release.published_at,
+            org: releaseEvent.repository.owner.login,
+            repo: releaseEvent.repository.name,
+            repoUrl: releaseEvent.repository.html_url,
+            tag: releaseEvent.release.tag_name,
+            diffUrl: release.diff.html_url,
+            authors,
+            summary: release.summary,
+          }
+        });
 
         await app.client.chat.postMessage({
           channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
