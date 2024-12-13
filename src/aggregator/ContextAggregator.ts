@@ -1,6 +1,7 @@
 import { checklyAggregator } from "./checkly-aggregator";
 import { WebhookAlertDto } from "../checkly/alertDTO";
 import { githubAggregator } from "./github-aggregator";
+import type { $Enums } from "@prisma/client";
 
 export enum ContextKey {
 	ChecklyScript = "checkly.script",
@@ -15,7 +16,7 @@ export enum ContextKey {
 
 export interface CheckContext {
 	checkId: string;
-	source: "checkly" | "github";
+	source: $Enums.Source;
 	key: ContextKey;
 	value: unknown;
 	analysis: string;
