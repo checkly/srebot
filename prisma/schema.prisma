@@ -23,6 +23,20 @@ model Alert {
   updatedAt DateTime       @updatedAt
 }
 
+model Release {
+  id          String   @id @default(cuid())
+  name        String
+  org         String
+  repo        String
+  repoUrl     String
+  tag         String
+  releaseUrl  String
+  diffUrl     String
+  publishedAt DateTime
+  authors     String[]
+  summary     String
+}
+
 enum Source {
   custom
   checkly
