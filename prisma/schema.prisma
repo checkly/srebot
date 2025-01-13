@@ -54,3 +54,11 @@ model AlertContext {
 
   alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
 }
+
+model UserContext {
+  id                   String  @id @default(cuid())
+  username             String  @unique
+  accountId            String
+  apiKey               String?
+  checklyPrometheusKey String?
+}

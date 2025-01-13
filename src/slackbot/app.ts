@@ -115,6 +115,7 @@ app.event("app_mention", async ({ event, context }) => {
 				event.user_profile?.display_name ||
 				event.username ||
 				event.user_profile?.name ||
+				event.user ||
 				"Unknown User",
 			date: new Date().toISOString(),
 		});

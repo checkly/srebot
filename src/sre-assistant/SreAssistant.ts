@@ -6,6 +6,8 @@ import { ChecklyTool } from "./tools/ChecklyTool";
 import { GitHubTool } from "./tools/GitHubTool";
 import { prisma } from "../prisma";
 import { slackFormatInstructions } from "../slackbot/utils";
+import {UserContextTool} from "./tools/UserContextTool";
+import {ChecklyClient} from "../checkly/checklyclient";
 
 export class SreAssistant extends BaseAssistant {
 	alertId: string | undefined;
@@ -73,12 +75,24 @@ ${alertSummary.length > 0 ? `Alert Summary:\n${alertSummary}` : ""}`;
 	}
 
 	protected async getTools(): Promise<Tool[]> {
+		const userContext = await prisma.userContext.findFirst({
+			where: {
+				username: this.interactionContext.username,
+			},
+		})
+
+		const checklyClient = new ChecklyClient({
+			apiKey: userContext?.apiKey || '',
+			accountId: userContext?.accountId, // defaults are defined in the client,
+			checklyPrometheusKey: userContext?.checklyPrometheusKey || ''
+		})
+
 		if (!this.alertId) {
-			return [new ChecklyTool(this), new GitHubTool(this)];
+			return [new ChecklyTool(this, checklyClient), new GitHubTool(this), new UserContextTool(this)];
 		}
 
 		const searchContextTool = new SearchContextTool(this);
 		await searchContextTool.init();
-		return [searchContextTool, new ChecklyTool(this), new GitHubTool(this)];
+		return [searchContextTool, new ChecklyTool(this, checklyClient), new GitHubTool(this), new UserContextTool(this)];
 	}
 }

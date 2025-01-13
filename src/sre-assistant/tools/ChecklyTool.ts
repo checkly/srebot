@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { Tool, createToolParameters, createToolOutput } from "../../ai/Tool";
 import { SreAssistant } from "../SreAssistant";
-import { checkly } from "../../checkly/client";
 import { stringify } from "yaml";
 import {
 	mapCheckResultToContextValue,
 	mapCheckToContextValue,
 } from "../../checkly/utils";
+import {
+	ChecklyClient,
+} from "../../checkly/checklyclient";
 import { generateObject } from "ai";
 import { getOpenaiSDKClient } from "../../ai/openai";
 
@@ -19,7 +21,7 @@ const parameters = createToolParameters(
 				"getAllFailingChecks",
 				"searchCheck",
 			])
-			.describe("The action to perform on the Checkly API"),
+			.describe("The action to perform on the Checkly API."),
 		checkId: z
 			.string()
 			.describe(
@@ -46,8 +48,9 @@ export class ChecklyTool extends Tool<
 > {
 	static parameters = parameters;
 	static outputSchema = outputSchema;
+	checkly: ChecklyClient;
 
-	constructor(agent: SreAssistant) {
+	constructor(agent: SreAssistant, client: ChecklyClient) {
 		super({
 			name: "ChecklyAPI",
 			description:
@@ -55,6 +58,7 @@ export class ChecklyTool extends Tool<
 			parameters,
 			agent,
 		});
+		this.checkly = client;
 	}
 
 	async execute(input: z.infer<typeof parameters>) {
@@ -63,7 +67,7 @@ export class ChecklyTool extends Tool<
 				return "Check ID is required";
 			}
 
-			const check = await checkly.getCheck(input.checkId!);
+			const check = await this.checkly.getCheck(input.checkId!);
 			return stringify({
 				...mapCheckToContextValue(check),
 				script: check.script,
@@ -73,7 +77,7 @@ export class ChecklyTool extends Tool<
 				return "Check ID is required";
 			}
 
-			const results = await checkly
+			const results = await this.checkly
 				.getCheckResults(input.checkId!, undefined, 1)
 				.then((result) => {
 					return result[0];
@@ -85,10 +89,10 @@ export class ChecklyTool extends Tool<
 
 			return stringify(mapCheckResultToContextValue(results));
 		} else if (input.action === "getAllFailingChecks") {
-			const status = await checkly.getPrometheusCheckStatus();
+			const status = await this.checkly.getPrometheusCheckStatus();
 			return stringify(status.failing);
 		} else if (input.action === "searchCheck") {
-			const checks = await checkly.getChecks();
+			const checks = await this.checkly.getChecks();
 			const search = await generateObject({
 				model: getOpenaiSDKClient()("gpt-4o"),
 				prompt: `You are the Checkly Check Search Engine. You are given a query and a list of checks. Return the most relevant check that relates to the query.
