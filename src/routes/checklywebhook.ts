@@ -7,7 +7,7 @@ import {
   ContextKey,
 } from "../aggregator/ContextAggregator";
 import {generateContextAnalysisSummary} from "../aggregator/chains";
-import {WebhookAlertDto} from "../checkly/alertDTO";
+import {AlertType, WebhookAlertDto} from "../checkly/alertDTO";
 import {prisma} from "../prisma";
 import {Prisma} from "@prisma/client";
 import {app} from "../slackbot/app";
@@ -103,6 +103,9 @@ router.post("/", async (req: Request, res: Response) => {
         ],
       });
 
+      let headerText = alertDto.ALERT_TYPE === AlertType.ALERT_RECOVERY
+        ? "✅ " + alertDto.CHECK_NAME + " has recovered ✅"
+        : "🚨 " + alertDto.CHECK_NAME + " has failed 🚨"
       await app.client.chat.postMessage({
         channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
         metadata: {
@@ -117,7 +120,7 @@ router.post("/", async (req: Request, res: Response) => {
             type: "header",
             text: {
               type: "plain_text",
-              text: "🚨 " + alertDto.CHECK_NAME + " has failed 🚨",
+              text: headerText,
               emoji: true,
             },
           },
