@@ -1,19 +1,20 @@
-import { PrismaClient } from '@prisma/client';
+import {PrismaClient} from '@prisma/client';
 
-import crypto, { sign } from "crypto";
-import express, { Request, Response, NextFunction } from "express";
+import crypto, {sign} from "crypto";
+import timers from "node:timers/promises";
+import express, {Request, Response, NextFunction} from "express";
 import {
   ReleaseEvent,
   WebhookEvent,
   WebhookEventName,
 } from "@octokit/webhooks-types";
-import { App, LogLevel } from "@slack/bolt";
-import { getOpenaiSDKClient } from "../ai/openai";
+import {App, LogLevel} from "@slack/bolt";
+import {getOpenaiSDKClient} from "../ai/openai";
 import GitHubAPI from "../github/github";
-import { GithubAgent } from "../github/agent";
-import { createReleaseBlock, releaseHeader } from "../github/slackBlock";
+import {GithubAgent} from "../github/agent";
+import {createReleaseBlock, releaseHeader} from "../github/slackBlock";
 import moment from "moment";
-import { prisma } from '../prisma';
+import {prisma} from '../prisma';
 
 const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
@@ -50,8 +51,21 @@ function verifySignature(req: Request, res: Response, buf: Buffer) {
 }
 
 router.get("/", (req: Request, res: Response) => {
-	res.json({ message: "Hello from Github Webhook!" });
+  res.json({message: "Hello from Github Webhook!"});
 });
+
+
+const withRetry = async (fn, attempts = 2) => {
+  try {
+    return await fn()
+  } catch (err) {
+    if (attempts <= 0) {
+      throw err
+    }
+    await timers.setTimeout(1000)
+    return await withRetry(fn, attempts - 1)
+  }
+}
 
 
 router.post(
@@ -82,11 +96,11 @@ router.post(
           releaseEvent.repository.owner.login
         );
 
-        const previousRelease = await github.getPreviousReleaseTag(
+        const previousRelease = await withRetry(() =>github.getPreviousReleaseTag(
           releaseEvent.repository.owner.login,
           releaseEvent.repository.name,
           releaseEvent.release.tag_name
-        );
+        ));
 
         const release = await githubAgent.summarizeRelease(
           releaseEvent.repository.owner.login,
