@@ -136,8 +136,8 @@ router.post("/", async (req: Request, res: Response) => {
 							{
 								type: "mrkdwn",
 								text: `:stopwatch: *${
-									(checkResults?.value as any).responseTime
-										? (checkResults?.value as any).responseTime + "ms"
+									(checkResults?.value as any)?.responseTime
+										? (checkResults?.value as any)?.responseTime + "ms"
 										: "unknown"
 								} Response Time*`,
 							},
