@@ -53,6 +53,7 @@ router.post("/", async (req: Request, res: Response) => {
 			res.status(200).json({ message: "Alert already processed" });
 		} else {
 			console.log('Creating new alert')
+			res.json({ message: "OK" });
 			const aggregator = new CheckContextAggregator(alertDto);
 			const context = await aggregator.aggregate();
 			const summary = await generateContextAnalysisSummary(context);
@@ -158,8 +159,6 @@ router.post("/", async (req: Request, res: Response) => {
 					},
 				],
 			});
-
-			res.json({ message: "OK" });
 		}
 	} catch (error) {
 		console.error("Error parsing or validating request body:", error);
