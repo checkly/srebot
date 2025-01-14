@@ -20,7 +20,7 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 router.post("/", async (req: Request, res: Response) => {
-  if (req) {
+  if (req && res) {
     console.log('Short circuiting')
     res.json({message: "OK"});
     return
