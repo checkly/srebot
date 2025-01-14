@@ -45,7 +45,7 @@ function verifySignature(req: Request, res: Response, buf: Buffer) {
   const hmac = crypto.createHmac("sha256", GH_WEBHOOK_SECRET);
   const digest = `sha256=${hmac.update(buf).digest("hex")}`;
   console.log("digest", digest, signature, signature === digest);
-  
+
   return signature === digest;
 }
 
@@ -111,7 +111,8 @@ router.post(
           summary: release.summary,
         }).blocks;
 
-        prisma.release.create({
+        console.log('Creating a new release in the database');
+        await prisma.release.create({
           data: {
             name: releaseName,
             releaseUrl: releaseEvent.release.html_url,
@@ -125,7 +126,7 @@ router.post(
             summary: release.summary,
           }
         });
-
+        console.log('Posting a message to Slack');
         await app.client.chat.postMessage({
           channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
           text: `New release: ${releaseEvent.release.name} in ${releaseEvent.repository.owner.login}/${releaseEvent.repository.name}`,

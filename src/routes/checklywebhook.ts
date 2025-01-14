@@ -20,12 +20,6 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 router.post("/", async (req: Request, res: Response) => {
-  if (req && res) {
-    console.log('Short circuiting')
-    res.json({message: "OK"});
-    return
-  }
-
   try {
     const body = req.body;
     const alertDto = plainToInstance(WebhookAlertDto, body, {
@@ -60,13 +54,22 @@ router.post("/", async (req: Request, res: Response) => {
     } else {
       console.log('Creating new alert')
 
+      // Create the alert first with the initial data, prevent message from being processed over and over
+      const alert = await prisma.alert.create({
+        data: {
+          data: {...alertDto} as unknown as Prisma.InputJsonValue,
+          summary: 'Processing...',
+        },
+      });
+
       const aggregator = new CheckContextAggregator(alertDto);
       const context = await aggregator.aggregate();
       const summary = await generateContextAnalysisSummary(context);
 
-      const alert = await prisma.alert.create({
+      await prisma.alert.update({
+        where: { id: alert.id },
         data: {
-          data: {...alertDto} as unknown as Prisma.InputJsonValue,
+          summary,
           context: {
             createMany: {
               data: context
@@ -78,7 +81,6 @@ router.post("/", async (req: Request, res: Response) => {
                 })),
             },
           },
-          summary,
         },
       });
 
