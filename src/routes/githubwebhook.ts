@@ -141,7 +141,7 @@ router.post(
         break;
       default:
         console.log("Unhandled event received:", event);
-        res.status(404).send("Webhook received");
+        res.status(200).send("Webhook received");
     }
   }
 );

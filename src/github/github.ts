@@ -38,6 +38,7 @@ class GitHubAPI {
 
 			const releaseIndex = releases.findIndex((r) => r.tag_name === release);
 			if (releaseIndex === -1) {
+				console.log('All releases', releases)
 				throw new Error(`Release ${release} not found`);
 			} else if (releaseIndex === releases.length - 1) {
 				return "";
