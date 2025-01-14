@@ -49,8 +49,10 @@ router.post("/", async (req: Request, res: Response) => {
 		});
 
 		if (exisingAlert && !!process.env.ALLOW_DUPLICATE_ALERTS) {
+			console.log('Alert already processed')
 			res.status(200).json({ message: "Alert already processed" });
 		} else {
+			console.log('Creating new alert')
 			const aggregator = new CheckContextAggregator(alertDto);
 			const context = await aggregator.aggregate();
 			const summary = await generateContextAnalysisSummary(context);
