@@ -38,7 +38,6 @@ class GitHubAPI {
 
 			const releaseIndex = releases.findIndex((r) => r.tag_name === release);
 			if (releaseIndex === -1) {
-				console.log('All releases', releases)
 				throw new Error(`Release ${release} not found`);
 			} else if (releaseIndex === releases.length - 1) {
 				return "";
@@ -78,7 +77,6 @@ class GitHubAPI {
 	async checkRateLimit() {
 		try {
 			const response = await this.octokit.rest.rateLimit.get();
-			console.log(response.data);
 
 			if (response.data.resources.core.remaining === 0) {
 				throw new Error("Rate limit exceeded");
