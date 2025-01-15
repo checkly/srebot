@@ -1,19 +1,20 @@
-import { PrismaClient } from '@prisma/client';
+import {Prisma, PrismaClient} from '@prisma/client';
 
-import crypto, { sign } from "crypto";
-import express, { Request, Response, NextFunction } from "express";
+import crypto, {sign} from "crypto";
+import timers from "node:timers/promises";
+import express, {Request, Response, NextFunction} from "express";
 import {
   ReleaseEvent,
   WebhookEvent,
   WebhookEventName,
 } from "@octokit/webhooks-types";
-import { App, LogLevel } from "@slack/bolt";
-import { getOpenaiSDKClient } from "../ai/openai";
+import {App, LogLevel} from "@slack/bolt";
+import {getOpenaiSDKClient} from "../ai/openai";
 import GitHubAPI from "../github/github";
-import { GithubAgent } from "../github/agent";
-import { createReleaseBlock, releaseHeader } from "../github/slackBlock";
+import {GithubAgent} from "../github/agent";
+import {createReleaseBlock, releaseHeader} from "../github/slackBlock";
 import moment from "moment";
-import { prisma } from '../prisma';
+import {prisma} from '../prisma';
 
 const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
@@ -45,13 +46,26 @@ function verifySignature(req: Request, res: Response, buf: Buffer) {
   const hmac = crypto.createHmac("sha256", GH_WEBHOOK_SECRET);
   const digest = `sha256=${hmac.update(buf).digest("hex")}`;
   console.log("digest", digest, signature, signature === digest);
-  
+
   return signature === digest;
 }
 
 router.get("/", (req: Request, res: Response) => {
-	res.json({ message: "Hello from Github Webhook!" });
+  res.json({message: "Hello from Github Webhook!"});
 });
+
+
+const withRetry = async (fn, attempts = 2) => {
+  try {
+    return await fn()
+  } catch (err) {
+    if (attempts <= 0) {
+      throw err
+    }
+    await timers.setTimeout(1000)
+    return await withRetry(fn, attempts - 1)
+  }
+}
 
 
 router.post(
@@ -82,11 +96,11 @@ router.post(
           releaseEvent.repository.owner.login
         );
 
-        const previousRelease = await github.getPreviousReleaseTag(
+        const previousRelease = await withRetry(() => github.getPreviousReleaseTag(
           releaseEvent.repository.owner.login,
           releaseEvent.repository.name,
           releaseEvent.release.tag_name
-        );
+        ));
 
         const release = await githubAgent.summarizeRelease(
           releaseEvent.repository.owner.login,
@@ -111,7 +125,8 @@ router.post(
           summary: release.summary,
         }).blocks;
 
-        prisma.release.create({
+        console.log('Creating a new release in the database');
+        const createdRelease = await prisma.release.create({
           data: {
             name: releaseName,
             releaseUrl: releaseEvent.release.html_url,
@@ -125,7 +140,14 @@ router.post(
             summary: release.summary,
           }
         });
+        await prisma.rawRelease.create({
+          data: {
+            body: releaseEvent as unknown as Prisma.InputJsonValue,
+            releaseId: createdRelease.id,
+          },
+        });
 
+        console.log('Posting a message to Slack');
         await app.client.chat.postMessage({
           channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
           text: `New release: ${releaseEvent.release.name} in ${releaseEvent.repository.owner.login}/${releaseEvent.repository.name}`,
@@ -140,7 +162,7 @@ router.post(
         break;
       default:
         console.log("Unhandled event received:", event);
-        res.status(404).send("Webhook received");
+        res.status(200).send("Webhook received");
     }
   }
 );

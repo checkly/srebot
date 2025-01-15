@@ -54,7 +54,7 @@ export const generateContextAnalysisSummary = async (
 	const summary = await generateText({
 		model: getOpenaiSDKClient()("gpt-4o"),
 		temperature: 1,
-		prompt: `The following check has failed: ${checkContext}
+		prompt: `The following check has changed its state: ${checkContext}
 	
 Anaylze the following context and generate a concise summary of the current situation.
 
@@ -64,6 +64,8 @@ CONSTITUTION:
 - Focus on providing actionable information that can help reduce MTTR
 - The user is a experienced devops engineer. Don't overcomplicate it, focus on the context and provide actionable insights. They know what they are doing, don't worry about the details.
 - Don't include the check configuration or run details, focus on logs, changes and the current state of the system.
+-
+ 
 
 OUTPUT FORMAT INSTRUCTIONS:
 ${slackFormatInstructions}
@@ -76,8 +78,12 @@ ${stringify(
 	{ indent: 2 }
 ).slice(0, 200000)}
 
-Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analyisis and potential mitigations. Help the user to resolve the issue.
-Generate a condensed summary of your root cause analysis of the current situation. Focus on the essentials, provide a concise overview and actionable insights. Provide reasoning and the source of the information. Max. 150 words. Include links to relevant context if applicable.
+Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analysis and potential mitigations. Help the user to resolve the issue.
+Generate a condensed summary of your root cause analysis of the current situation. 
+Focus on the essentials, provide a concise overview and actionable insights. 
+Provide reasoning and the source of the information. Max. 100 words. Include links to relevant context if applicable.
+Be concise, insightful and actionable, skip the fluff, no yapping.
+If a recent release is the most likely root cause, provide a link to the release diff. 
 
 *Summary:* `,
 		maxTokens: 500,

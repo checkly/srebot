@@ -121,7 +121,6 @@ export class WebhookAlertDto {
       if (!value) {
         return [];
       }
-      console.log('jsonarray:' + value);
       // If the value is a valid stringified JSON array, parse it
       const parsed = typeof value === 'string' ? JSON.parse(value) : value;
 

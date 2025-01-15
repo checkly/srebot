@@ -24,7 +24,7 @@ model Alert {
 }
 
 model Release {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   org         String
   repo        String
@@ -35,6 +35,7 @@ model Release {
   publishedAt DateTime
   authors     String[]
   summary     String
+  rawRelease  RawRelease?
 }
 
 enum Source {
@@ -53,4 +54,12 @@ model AlertContext {
   updatedAt DateTime @updatedAt
 
   alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+}
+
+model RawRelease {
+  id        String @id @default(cuid())
+  body      Json
+  releaseId String @unique
+
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
 }
