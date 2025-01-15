@@ -114,7 +114,7 @@ export const githubAggregator = {
 
 			const { object: relevantReleaseIds } = await generateObject({
 				model: getOpenaiSDKClient()("gpt-4o"),
-				prompt: `Based on the following releases, which ones are most relevant to the check failure? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of release ids that are most relevant to the check.
+				prompt: `Based on the following releases, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of release ids that are most relevant to the check.
 
 Releases:
 ${stringify(
