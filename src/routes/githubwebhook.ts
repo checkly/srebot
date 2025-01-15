@@ -1,4 +1,4 @@
-import {PrismaClient} from '@prisma/client';
+import {Prisma, PrismaClient} from '@prisma/client';
 
 import crypto, {sign} from "crypto";
 import timers from "node:timers/promises";
@@ -96,7 +96,7 @@ router.post(
           releaseEvent.repository.owner.login
         );
 
-        const previousRelease = await withRetry(() =>github.getPreviousReleaseTag(
+        const previousRelease = await withRetry(() => github.getPreviousReleaseTag(
           releaseEvent.repository.owner.login,
           releaseEvent.repository.name,
           releaseEvent.release.tag_name
@@ -126,7 +126,7 @@ router.post(
         }).blocks;
 
         console.log('Creating a new release in the database');
-        await prisma.release.create({
+        const createdRelease = await prisma.release.create({
           data: {
             name: releaseName,
             releaseUrl: releaseEvent.release.html_url,
@@ -140,6 +140,13 @@ router.post(
             summary: release.summary,
           }
         });
+        await prisma.rawRelease.create({
+          data: {
+            body: releaseEvent as unknown as Prisma.InputJsonValue,
+            releaseId: createdRelease.id,
+          },
+        });
+
         console.log('Posting a message to Slack');
         await app.client.chat.postMessage({
           channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,

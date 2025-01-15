@@ -78,11 +78,12 @@ ${stringify(
 	{ indent: 2 }
 ).slice(0, 200000)}
 
-Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analyisis and potential mitigations. Help the user to resolve the issue.
+Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analysis and potential mitigations. Help the user to resolve the issue.
 Generate a condensed summary of your root cause analysis of the current situation. 
 Focus on the essentials, provide a concise overview and actionable insights. 
 Provide reasoning and the source of the information. Max. 100 words. Include links to relevant context if applicable.
 Be concise, insightful and actionable, skip the fluff, no yapping.
+If a recent release is the most likely root cause, provide a link to the release diff. 
 
 *Summary:* `,
 		maxTokens: 500,
