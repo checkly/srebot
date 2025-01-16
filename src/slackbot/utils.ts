@@ -273,26 +273,34 @@ export const getMessageText = (message: MessageElement): string => {
 	return uniqueTextParts.join("\n").trim();
 };
 
-export async function fetchHistoricalMessages(channelId: string, limit = 10) {
+export async function fetchHistoricalMessages(
+	channelId: string,
+	limit = 30,
+	fromDate?: Date
+) {
 	try {
 		const result = await web.conversations.history({
 			channel: channelId,
 			limit: limit,
+			...(fromDate ? { oldest: (fromDate.getTime() / 1000).toString() } : {}),
 		});
 
 		if (!result.messages) {
-			throw new Error("No messages found");
+			console.log("No messages in response");
+			return [];
 		}
 
+		console.log(`Found ${result.messages.length} messages`);
 		return await Promise.all(
 			result.messages.map(async (m) => ({
 				...m,
 				plaintext: getMessageText(m),
-				//username: await fetchMessageSenderUsername(m),
+				username: await fetchMessageSenderName(m),
 			}))
 		);
 	} catch (error) {
 		console.error("Error fetching historical messages:", error);
+		return [];
 	}
 }
 
@@ -304,9 +312,16 @@ export const convertSlackTimestamp = (slackTs: string): Date => {
 	return new Date(milliseconds);
 };
 
-export const fetchMessageSenderUsername = async (message: MessageElement) => {
-	const user = await web.users
-		.info({ user: message.user! })
-		.then((u) => u.user);
-	return user?.name ?? user?.real_name ?? "Unknown";
+export const fetchMessageSenderName = async (message: MessageElement) => {
+	if (message.user) {
+		const user = await web.users
+			.info({ user: message.user! })
+			.then((u) => u.user);
+		return user?.name ?? user?.real_name ?? "Unknown";
+	} else if (message.bot_id) {
+		const bot = await web.bots.info({ bot: message.bot_id! });
+		return bot.bot?.name ?? "Unknown";
+	}
+
+	return "Unknown";
 };
