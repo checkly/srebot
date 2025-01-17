@@ -1,6 +1,8 @@
 import { generateObject } from "ai";
 import { getOpenaiSDKClient } from "../ai/openai";
 import { z } from "zod";
+import { MessageElement } from "@slack/web-api/dist/types/response/ConversationsHistoryResponse";
+import { web } from "./web-client";
 
 export const getThreadMetadata = async (messages: any[]) => {
 	let threadId, alertId;
@@ -205,3 +207,121 @@ ${message}`,
 
 	return blocks;
 }
+
+export const getMessageText = (message: MessageElement): string => {
+	const textParts: string[] = [];
+
+	// Helper function to extract text from any object that might contain text
+	const extractText = (obj: any) => {
+		if (!obj) return;
+
+		// Handle direct text properties
+		if (typeof obj === "string") {
+			textParts.push(obj);
+			return;
+		}
+
+		// Handle text property
+		if (obj.text) {
+			if (typeof obj.text === "string") {
+				textParts.push(obj.text);
+			} else if (typeof obj.text === "object") {
+				extractText(obj.text);
+			}
+		}
+
+		// Handle rich text elements
+		if (obj.elements && Array.isArray(obj.elements)) {
+			obj.elements.forEach((element) => extractText(element));
+		}
+
+		// Handle fields in sections
+		if (obj.fields && Array.isArray(obj.fields)) {
+			obj.fields.forEach((field) => extractText(field));
+		}
+
+		// Handle blocks (can be at message level or in attachments)
+		if (obj.blocks && Array.isArray(obj.blocks)) {
+			obj.blocks.forEach((block) => extractText(block));
+		}
+
+		// Handle attachments
+		if (obj.attachments && Array.isArray(obj.attachments)) {
+			obj.attachments.forEach((attachment) => {
+				if (attachment.pretext) textParts.push(attachment.pretext);
+				if (attachment.title) textParts.push(attachment.title);
+				if (attachment.fallback) textParts.push(attachment.fallback);
+				extractText(attachment);
+			});
+		}
+
+		// Handle values (like in buttons)
+		if (obj.value) {
+			textParts.push(obj.value);
+		}
+	};
+
+	// Start extraction from the root message
+	extractText(message);
+
+	// Remove any duplicate entries and empty strings
+	const uniqueTextParts = [...new Set(textParts)].filter(
+		(text) => text.trim().length > 0
+	);
+
+	// Join all parts with newlines and trim whitespace
+	return uniqueTextParts.join("\n").trim();
+};
+
+export async function fetchHistoricalMessages(
+	channelId: string,
+	limit = 30,
+	fromDate?: Date
+) {
+	try {
+		const result = await web.conversations.history({
+			channel: channelId,
+			limit: limit,
+			...(fromDate ? { oldest: (fromDate.getTime() / 1000).toString() } : {}),
+		});
+
+		if (!result.messages) {
+			console.log("No messages in response");
+			return [];
+		}
+
+		console.log(`Found ${result.messages.length} messages`);
+		return await Promise.all(
+			result.messages.map(async (m) => ({
+				...m,
+				plaintext: getMessageText(m),
+				username: await fetchMessageSenderName(m),
+			}))
+		);
+	} catch (error) {
+		console.error("Error fetching historical messages:", error);
+		return [];
+	}
+}
+
+export const convertSlackTimestamp = (slackTs: string): Date => {
+	// Slack timestamps are in the format "1234567890.123456"
+	// The part before the dot is Unix seconds, after is microseconds
+	const [seconds, microseconds] = slackTs.split(".");
+	const milliseconds = parseInt(seconds) * 1000 + parseInt(microseconds) / 1000;
+	return new Date(milliseconds);
+};
+
+export const fetchMessageSenderName = async (message: MessageElement) => {
+	if (message.user) {
+		const user = await web.users
+			.info({ user: message.user! })
+			.then((u) => u.user);
+		return user?.name ?? user?.real_name ?? "Unknown";
+	} else if (message.bot_id) {
+		const bot = await web.bots.info({ bot: message.bot_id! });
+		return bot.bot?.name ?? "Unknown";
+	}
+
+	return "Unknown";
+};
