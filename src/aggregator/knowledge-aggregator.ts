@@ -13,7 +13,7 @@ const transformDocument = (fileContent: string, checkId: string): CheckContext =
   return {
     checkId,
     value: fileContent,
-    source: 'custom',
+    source: 'knowledge',
     key: ContextKey.Knowledge.replace(
       "$documentSlug",
       data.slug
