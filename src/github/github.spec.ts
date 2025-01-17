@@ -18,7 +18,7 @@ describe('GitHub API Tests', () => {
     const _24h_ago = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const releases = await githubAPI.queryLatestReleases(org, repo, _24h_ago);
-    
+
     let diff = await githubAPI.getDiffBetweenTags(org, repo, releases[0].tag, releases[1].tag);
     expect(diff).toBeDefined();
   });

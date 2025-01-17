@@ -1,13 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsString,
-  IsUUID,
-  IsNumber,
-  IsArray,
-  IsOptional,
-  IsDate,
-  IsEnum,
-} from 'class-validator';
+import { IsArray, IsDate, IsEnum, IsNumber, IsOptional, IsString, IsUUID, } from 'class-validator';
 
 /**
  * Enum representing the different alert types.
@@ -19,47 +11,47 @@ export enum AlertType {
   /**
    * Nothing to see here, keep moving.
    */
-NO_ALERT = 'NO_ALERT',
+  NO_ALERT = 'NO_ALERT',
 
-/**
- * Send directly, if threshold is “alert after 1 failure”.
- */
-ALERT_DEGRADED = 'ALERT_DEGRADED',
+  /**
+   * Send directly, if threshold is “alert after 1 failure”.
+   */
+  ALERT_DEGRADED = 'ALERT_DEGRADED',
 
-/**
- * Send directly, if threshold is “alert after 1 failure”.
- */
-ALERT_FAILURE = 'ALERT_FAILURE',
+  /**
+   * Send directly, if threshold is “alert after 1 failure”.
+   */
+  ALERT_FAILURE = 'ALERT_FAILURE',
 
-/**
- * i.e. when threshold is “alert after 2 failures” or “after 5 minutes”.
- */
-ALERT_DEGRADED_REMAIN = 'ALERT_DEGRADED_REMAIN',
+  /**
+   * i.e. when threshold is “alert after 2 failures” or “after 5 minutes”.
+   */
+  ALERT_DEGRADED_REMAIN = 'ALERT_DEGRADED_REMAIN',
 
-/**
- * Send but only if you received a degraded notification before.
- */
-ALERT_DEGRADED_RECOVERY = 'ALERT_DEGRADED_RECOVERY',
+  /**
+   * Send but only if you received a degraded notification before.
+   */
+  ALERT_DEGRADED_RECOVERY = 'ALERT_DEGRADED_RECOVERY',
 
-/**
- * This is an escalation, it overrides any threshold setting. We send this even if you already received degraded notifications.
- */
-ALERT_DEGRADED_FAILURE = 'ALERT_DEGRADED_FAILURE',
+  /**
+   * This is an escalation, it overrides any threshold setting. We send this even if you already received degraded notifications.
+   */
+  ALERT_DEGRADED_FAILURE = 'ALERT_DEGRADED_FAILURE',
 
-/**
- * i.e. when threshold is “alert after 2 failures” or “after 5 minutes”.
- */
-ALERT_FAILURE_REMAIN = 'ALERT_FAILURE_REMAIN',
+  /**
+   * i.e. when threshold is “alert after 2 failures” or “after 5 minutes”.
+   */
+  ALERT_FAILURE_REMAIN = 'ALERT_FAILURE_REMAIN',
 
-/**
- * This is a deescalation, it overrides any thresholds settings. We send this even if you already received failure notifications.
- */
-ALERT_FAILURE_DEGRADED = 'ALERT_FAILURE_DEGRADED',
+  /**
+   * This is a deescalation, it overrides any thresholds settings. We send this even if you already received failure notifications.
+   */
+  ALERT_FAILURE_DEGRADED = 'ALERT_FAILURE_DEGRADED',
 
-/**
- * Send directly.
- */
-ALERT_RECOVERY = 'ALERT_RECOVERY',
+  /**
+   * Send directly.
+   */
+  ALERT_RECOVERY = 'ALERT_RECOVERY',
 }
 
 
@@ -89,11 +81,11 @@ export class WebhookAlertDto {
   CHECK_RESULT_ID: string;
 
   @IsNumber()
-  RESPONSE_TIME: Number;
+  RESPONSE_TIME: number;
 
   @IsOptional() // This is optional because it's only for API checks
   @IsNumber()
-  API_CHECK_RESPONSE_STATUS_CODE?: Number;
+  API_CHECK_RESPONSE_STATUS_CODE?: number;
 
   @IsOptional() // This is optional because it's only for API checks
   @IsString()
@@ -107,7 +99,7 @@ export class WebhookAlertDto {
 
   @IsOptional() // This is only for ALERT_SSL alerts
   @IsNumber()
-  SSL_DAYS_REMAINING?: Number;
+  SSL_DAYS_REMAINING?: number;
 
   @IsOptional() // This is only for ALERT_SSL alerts
   @IsString()
@@ -140,7 +132,7 @@ export class WebhookAlertDto {
   TAGS: string[];
 
   @IsNumber()
-  $RANDOM_NUMBER: Number;
+  $RANDOM_NUMBER: number;
 
   @IsString()
   moment: string;

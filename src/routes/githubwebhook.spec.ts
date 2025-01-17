@@ -34,16 +34,16 @@ describe("Load github releases into db", () => {
 
       await prisma.release.create({
         data: {
-            name: release.id,
-            releaseUrl: release.link,
-            publishedAt: release.release_date,
-            org: org,
-            repo: summary.repo.name,
-            repoUrl: summary.repo.link,
-            tag: release.id,
-            diffUrl: release.diffLink,
-            authors,
-            summary: release.summary,
+          name: release.id,
+          releaseUrl: release.link,
+          publishedAt: release.release_date,
+          org: org,
+          repo: summary.repo.name,
+          repoUrl: summary.repo.link,
+          tag: release.id,
+          diffUrl: release.diffLink,
+          authors,
+          summary: release.summary,
         }
       });
     }

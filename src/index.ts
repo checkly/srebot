@@ -8,12 +8,12 @@ import { getRunMessages } from "./ai/utils";
 import { app as slackApp } from "./slackbot/app";
 
 process
-.on("unhandledRejection", (reason, promise) => {
-	console.error("Unhandled Rejection at:", promise, "reason:", reason);
-})
-.on("uncaughtException", (error) => {
-	console.error("Uncaught Exception thrown", error);
-});
+  .on("unhandledRejection", (reason, promise) => {
+    console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  })
+  .on("uncaughtException", (error) => {
+    console.error("Uncaught Exception thrown", error);
+  });
 
 // configures dotenv to work in your application
 dotenv.config();
@@ -29,42 +29,42 @@ app.use("/checkly-webhook", checklyWebhookRouter);
 app.use("/github-webhook", githubWebhookRouter);
 
 app.get("/", (request: Request, response: Response) => {
-	response.status(200).send("Hello World");
+  response.status(200).send("Hello World");
 });
 
 app.post("/test/:alertId", async (req: Request, res: Response) => {
-	const { alertId } = req.params;
-	const thread = await getOpenaiClient().beta.threads.create();
-	const assistant = new SreAssistant(thread.id, alertId, {
-		username: "Test User",
-		date: new Date().toISOString(),
-	});
-	const userMessage = await assistant.addMessage(req.body.message);
-	const responseMessages = await assistant
-		.runSync()
-		.then((run) => getRunMessages(thread.id, run.id));
+  const { alertId } = req.params;
+  const thread = await getOpenaiClient().beta.threads.create();
+  const assistant = new SreAssistant(thread.id, alertId, {
+    username: "Test User",
+    date: new Date().toISOString(),
+  });
+  const userMessage = await assistant.addMessage(req.body.message);
+  const responseMessages = await assistant
+    .runSync()
+    .then((run) => getRunMessages(thread.id, run.id));
 
-	console.log("Assistant response: ", responseMessages);
+  console.log("Assistant response: ", responseMessages);
 
-	res.status(200).send(responseMessages);
+  res.status(200).send(responseMessages);
 });
 
 app
-	.listen(PORT, () => {
-		console.log("Server running at PORT: ", PORT);
-	})
-	.on("error", (error) => {
-		// gracefully handle error
-		throw new Error(error.message);
-	});
-
-  //run slack app
-  slackApp.error(async (error) => {
-    // Check the details of the error to handle cases where you should retry sending a message or stop the app
-    console.error(error);
+  .listen(PORT, () => {
+    console.log("Server running at PORT: ", PORT);
+  })
+  .on("error", (error) => {
+    // gracefully handle error
+    throw new Error(error.message);
   });
-  
-  (async () => {
-    await slackApp.start();
-    console.log('⚡️ Bolt app is running!');
-  })();
+
+//run slack app
+slackApp.error(async (error) => {
+  // Check the details of the error to handle cases where you should retry sending a message or stop the app
+  console.error(error);
+});
+
+(async () => {
+  await slackApp.start();
+  console.log('⚡️ Bolt app is running!');
+})();

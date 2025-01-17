@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+
 export function register() {
-    console.log('Registering instrumentation');
-  }
+  console.log('Registering instrumentation');
+}

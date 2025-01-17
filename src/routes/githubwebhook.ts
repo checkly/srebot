@@ -1,20 +1,16 @@
-import {Prisma, PrismaClient} from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
-import crypto, {sign} from "crypto";
+import crypto from "crypto";
 import timers from "node:timers/promises";
-import express, {Request, Response, NextFunction} from "express";
-import {
-  ReleaseEvent,
-  WebhookEvent,
-  WebhookEventName,
-} from "@octokit/webhooks-types";
-import {App, LogLevel} from "@slack/bolt";
-import {getOpenaiSDKClient} from "../ai/openai";
+import express, { Request, Response } from "express";
+import { ReleaseEvent, WebhookEvent, WebhookEventName, } from "@octokit/webhooks-types";
+import { App, LogLevel } from "@slack/bolt";
+import { getOpenaiSDKClient } from "../ai/openai";
 import GitHubAPI from "../github/github";
-import {GithubAgent} from "../github/agent";
-import {createReleaseBlock, releaseHeader} from "../github/slackBlock";
+import { GithubAgent } from "../github/agent";
+import { createReleaseBlock } from "../github/slackBlock";
 import moment from "moment";
-import {prisma} from '../prisma';
+import { prisma } from '../prisma';
 
 const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
@@ -51,7 +47,7 @@ function verifySignature(req: Request, res: Response, buf: Buffer) {
 }
 
 router.get("/", (req: Request, res: Response) => {
-  res.json({message: "Hello from Github Webhook!"});
+  res.json({ message: "Hello from Github Webhook!" });
 });
 
 

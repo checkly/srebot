@@ -9,15 +9,15 @@ export const releaseHeader = {
 export const divider = { type: "divider" };
 
 export const createReleaseBlock = function ({
-  release,
-  releaseUrl,
-  diffUrl,
-  date,
-  repo,
-  repoUrl,
-  authors,
-  summary,
-}: {
+                                              release,
+                                              releaseUrl,
+                                              diffUrl,
+                                              date,
+                                              repo,
+                                              repoUrl,
+                                              authors,
+                                              summary,
+                                            }: {
   release: string;
   releaseUrl: string;
   diffUrl: string;
