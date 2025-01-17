@@ -1,8 +1,7 @@
 import { generateText } from "ai";
 import { getOpenaiSDKClient } from "../ai/openai";
-import { CheckContext } from "./ContextAggregator";
+import { CheckContext, ContextKey } from "./ContextAggregator";
 import { stringify } from "yaml";
-import { ContextKey } from "./ContextAggregator";
 import { slackFormatInstructions } from "../slackbot/utils";
 
 const getCheckContext = (context: CheckContext[]) => {

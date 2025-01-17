@@ -2,13 +2,13 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
-import {DynamicKnowledge} from "@prisma/client";
-import {prisma} from "../prisma";
-import {WebhookAlertDto} from "../checkly/alertDTO";
-import {CheckContext, ContextKey} from "./ContextAggregator";
+import { DynamicKnowledge } from "@prisma/client";
+import { prisma } from "../prisma";
+import { WebhookAlertDto } from "../checkly/alertDTO";
+import { CheckContext, ContextKey } from "./ContextAggregator";
 
 const transformDocument = (fileContent: string, checkId: string): CheckContext => {
-  const {data} = matter(fileContent);
+  const { data } = matter(fileContent);
 
   return {
     checkId,
@@ -24,7 +24,7 @@ const transformDocument = (fileContent: string, checkId: string): CheckContext =
 
 const loadKnowledgeDocuments = async (directory: string): Promise<string[]> => {
   const collectMarkdownFiles = (dir: string): string[] => {
-    const entries = fs.readdirSync(dir, {withFileTypes: true});
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
     const files: string[] = [];
 
     for (const entry of entries) {
@@ -46,7 +46,7 @@ const loadKnowledgeDocuments = async (directory: string): Promise<string[]> => {
   return markdownFiles.map((filePath) => fs.readFileSync(filePath, "utf-8"));
 };
 
-const loadDynamicKnowledge = async(): Promise<string[]> => {
+const loadDynamicKnowledge = async (): Promise<string[]> => {
   const documents = await prisma.dynamicKnowledge.findMany({}) as DynamicKnowledge[]
 
   return documents.map((doc) => doc.content);
