@@ -13,7 +13,7 @@ jest.setTimeout(30000);
 
 // Playground for testing the channel summary
 
-describe.skip("fetchHistoricalMessages", async () => {
+describe.skip("fetchHistoricalMessages", () => {
 	it("should fetch historical messages", async () => {
 		const messages = await fetchHistoricalMessages("CUZ7V5YKZ");
 	});
