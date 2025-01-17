@@ -313,15 +313,20 @@ export const convertSlackTimestamp = (slackTs: string): Date => {
 };
 
 export const fetchMessageSenderName = async (message: MessageElement) => {
-  if (message.user) {
-    const user = await web.users
-      .info({ user: message.user! })
-      .then((u) => u.user);
-    return user?.name ?? user?.real_name ?? "Unknown";
-  } else if (message.bot_id) {
-    const bot = await web.bots.info({ bot: message.bot_id! });
-    return bot.bot?.name ?? "Unknown";
+  try {
+    if (message.user) {
+      const user = await web.users
+        .info({ user: message.user! })
+        .then((u) => u.user);
+      return user?.name ?? user?.real_name ?? "Unknown";
+    } else if (message.bot_id) {
+      const bot = await web.bots.info({ bot: message.bot_id! });
+      return bot.bot?.name ?? "Unknown";
+    }
+    return "Unknown";
+  } catch (e) {
+    // Fetching message sender can fail if the permissions scope is missing
+    // Fallback to unique identifier in that case
+    return `Unknown/${message.user ?? message.bot_id}`;
   }
-
-  return "Unknown";
 };
