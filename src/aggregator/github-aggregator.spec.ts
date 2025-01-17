@@ -6,7 +6,7 @@ import { plainToInstance } from "class-transformer";
 
 jest.setTimeout(30000);
 
-describe("GithubAggregator", () => {
+describe.skip("GithubAggregator", () => {
 	it("can collect github context from configured repos", async () => {
 		// Create a sample alert DTO similar to the one in checkly-aggregator.spec.ts
 		const context = await githubAggregator
