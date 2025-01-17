@@ -63,3 +63,10 @@ model RawRelease {
 
   release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
 }
+
+model DynamicKnowledge {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
