@@ -23,6 +23,8 @@ API checks are designed to monitor your RESTful APIs by sending HTTP requests to
 
 4. **Result Storage:** The outcome of the check, including response times and any errors, is stored in Checkly's central database for reporting and alerting purposes.
 
+5. **Special Feature:** Only API checks support setup and teardown scripts, allowing for more advanced pre-request and post-request configurations. Other check types do not have this capability.
+
 ## Browser Checks
 
 Browser checks simulate real user interactions by running scripts in a headless browser environment. This allows you to monitor the functionality and performance of your web applications from the end-user's perspective. Checkly uses the Playwright framework to execute browser checks, enabling you to automate complex user scenarios.
