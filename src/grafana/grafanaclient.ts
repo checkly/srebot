@@ -1,13 +1,10 @@
 export class GrafanaClient {
     private readonly grafanaUrl: string;
     private readonly grafanaApiKey: string;
-    private readonly environment: string;
-    user: string;
-  
-    constructor(grafanaUrl: string, grafanaApiKey: string, user: string) {
+
+    constructor(grafanaUrl: string, grafanaApiKey: string) {
       this.grafanaUrl = grafanaUrl;
       this.grafanaApiKey = grafanaApiKey;
-      this.user = user;
     }
 
    async getDashboardUrlByName(dashboardName: string): Promise<string> {

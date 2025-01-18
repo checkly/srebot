@@ -2,18 +2,15 @@ import { GrafanaClient } from './grafanaclient';
 import 'dotenv/config';
 
 const grafanaApiKey = process.env.GRAFANA_API_KEY!;
-const user = process.env.GRAFANA_USER!;
-const grafanaUrl = "https://checklyhq.grafana.net";
+const grafanaUrl = process.env.GRAFANA_INSTANCE_URL!;
 const isGithubActions = process.env.GITHUB_ACTIONS === 'true';
 const maybe = !isGithubActions ? describe : describe.skip;
-
-jest.setTimeout(30000);
 
 maybe('GrafanaClient', () => {
   let grafanaClient: GrafanaClient;
 
   beforeAll(() => {
-    grafanaClient = new GrafanaClient(grafanaUrl, grafanaApiKey, user);
+    grafanaClient = new GrafanaClient(grafanaUrl, grafanaApiKey);
   });
 
   it('should get dashboards', async () => {
@@ -25,9 +22,6 @@ maybe('GrafanaClient', () => {
     const db = 'Runners Overview'
     const dashboard = await grafanaClient.getDashboardUrlByName(db);
     expect(dashboard).toBeDefined();
-    
-    // Add more assertions based on the expected structure of the dashboards
   });
 
-  // Add more tests for other methods if needed
 });
