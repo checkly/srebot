@@ -48,6 +48,7 @@ model Deployment {
   deploymentUrl String // URL to the deployment details
   diffUrl       String // URL to the diff between this and the previous deployment
   createdAt     DateTime @default(now()) // Timestamp when the deployment started
+  rawEvent      Json // Raw event data from the deployment provider
 }
 
 enum Source {

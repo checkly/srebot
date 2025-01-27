@@ -149,6 +149,7 @@ router.post(
           await prisma.deployment.create({
             data: {
               ...deploymentData,
+              rawEvent: deploymentEvent as unknown as Prisma.InputJsonValue,
               createdAt: new Date(deployment.created_at),
             },
           });
