@@ -38,6 +38,18 @@ model Release {
   rawRelease  RawRelease?
 }
 
+model Deployment {
+  id            String   @id @default(cuid())
+  org           String // Organization name
+  repo          String // Repository name
+  repoUrl       String // Repository URL
+  environment   String // Environment (e.g., staging, production)
+  sha           String // Commit SHA deployed
+  deploymentUrl String // URL to the deployment details
+  diffUrl       String // URL to the diff between this and the previous deployment
+  createdAt     DateTime @default(now()) // Timestamp when the deployment started
+}
+
 enum Source {
   custom
   checkly

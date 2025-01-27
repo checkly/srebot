@@ -60,3 +60,56 @@ export const createReleaseBlock = function ({
     ],
   };
 };
+
+export const createDeploymentBlock = function ({
+                                                 diffUrl,
+                                                 date,
+                                                 repo,
+                                                 repoUrl,
+                                                 authors,
+                                                 summary,
+                                                 environment,
+                                                 deploymentUrl
+                                               }: {
+  diffUrl: string;
+  date: string;
+  repo: string;
+  environment: string;
+  repoUrl: string;
+  authors: string[];
+  summary: string;
+  deploymentUrl: string
+}) {
+  return {
+    blocks: [
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `:rocket: *Deployment*\n<${deploymentUrl}|${environment}> - <${diffUrl}|Diff>`,
+          },
+          {
+            type: "mrkdwn",
+            text: `:calendar: *When*\n${date}`,
+          },
+          {
+            type: "mrkdwn",
+            text: `:package: *Repo*\n<${repoUrl}|${repo}>`,
+          },
+          {
+            type: "mrkdwn",
+            text: `:star: *Authors*\n${authors.join(", ")}`,
+          },
+        ],
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Summary*\n${summary}`,
+        },
+      },
+    ],
+  };
+}
