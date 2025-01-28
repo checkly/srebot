@@ -4,6 +4,7 @@
 /node_modules
 /build
 .next
+.run
 
 # Logs
 logs

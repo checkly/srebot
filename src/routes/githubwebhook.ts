@@ -3,12 +3,12 @@ import { Prisma } from '@prisma/client';
 import crypto from "crypto";
 import timers from "node:timers/promises";
 import express, { Request, Response } from "express";
-import { ReleaseEvent, WebhookEvent, WebhookEventName, } from "@octokit/webhooks-types";
+import { DeploymentStatusEvent, ReleaseEvent, WebhookEvent, WebhookEventName } from "@octokit/webhooks-types";
 import { App, LogLevel } from "@slack/bolt";
 import { getOpenaiSDKClient } from "../ai/openai";
 import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
-import { createReleaseBlock } from "../github/slackBlock";
+import { createDeploymentBlock, createReleaseBlock } from "../github/slackBlock";
 import moment from "moment";
 import { prisma } from '../prisma';
 
@@ -79,6 +79,115 @@ router.post(
       case "ping":
         console.log("Ping event received");
         res.status(200).send("Webhook received");
+        break;
+      case "deployment_status":
+        console.log("Deployment event received");
+        const deploymentEvent = payload as DeploymentStatusEvent;
+
+        if (deploymentEvent.deployment_status.state !== "success") {
+          res.status(200).send("Webhook received");
+          return;
+        }
+
+        try {
+          // Extract deployment details
+          const {
+            repository,
+            deployment,
+          } = deploymentEvent;
+          const repositoryName = repository.name;
+          const organizationName = deploymentEvent.organization?.login || repository.owner.login;
+          const environment = deployment.environment || "unknown";
+
+          // Check if a deployment with the same sha, repo, org, and environment already exists
+          const existingDeployment = await prisma.deployment.findFirst({
+            where: {
+              sha: deployment.sha,
+              repo: repositoryName,
+              org: repository.owner.login,
+              environment: environment,
+            },
+          });
+
+          if (existingDeployment) {
+            console.log(
+              `Deployment with sha ${deployment.sha} already exists for ${repositoryName} in ${deployment.environment}. Skipping.`
+            );
+            res.status(200).send("Duplicate deployment event, skipping.");
+            return;
+          }
+
+          const previousDeployment = await withRetry(() => github.getPreviousDeployment(
+            organizationName,
+            repositoryName,
+            deployment.environment,
+            deployment.id,
+            deployment.sha
+          ));
+
+          const diffUrl = `https://github.com/${repository.owner.login}/${repositoryName}/compare/${previousDeployment.sha || ''}...${deployment.sha}`;
+          const deploymentData = {
+            org: repository.owner.login,
+            repo: repositoryName,
+            repoUrl: repository.html_url,
+            environment: environment,
+            sha: deployment.sha,
+            deploymentUrl: deploymentEvent.deployment.url,
+            diffUrl,
+          };
+          console.log("Saving deployment to the database:", deploymentData);
+
+          const diffSummary = await githubAgent.summarizeDeployment(
+            organizationName,
+            repositoryName,
+            deployment.sha,
+            previousDeployment.sha
+          );
+
+          // Save deployment to the database
+          await prisma.deployment.create({
+            data: {
+              ...deploymentData,
+              rawEvent: deploymentEvent as unknown as Prisma.InputJsonValue,
+              summary: diffSummary.summary,
+              createdAt: new Date(deployment.created_at),
+            },
+          });
+
+          console.log("Deployment saved successfully.");
+
+          const date = moment(deployment.created_at).fromNow();
+          const authors = diffSummary.diff.commits
+            .map((c) => c.author)
+            .filter((author) => author !== null)
+            .map((author) => author.login);
+
+          const deploymentBlocks = createDeploymentBlock({
+            diffUrl,
+            authors,
+            date,
+            environment,
+            repo: repositoryName,
+            repoUrl: deploymentData.repoUrl,
+            deploymentUrl: deployment.url,
+            summary: diffSummary.summary,
+          }).blocks
+          console.log('Posting a message to Slack');
+          await app.client.chat.postMessage({
+            channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
+            text: `New Deployment in ${deployment.environment} Environment: in ${organizationName}/${repositoryName}`,
+            metadata: {
+              event_type: "deployment-summary",
+              event_payload: {},
+            },
+            blocks: deploymentBlocks
+          });
+
+          res.status(200).send("Deployment event processed successfully");
+        } catch (error) {
+          console.error("Error processing deployment event:", error);
+          res.status(500).send("Error processing deployment event");
+        }
         break;
       case "release":
         let releaseEvent = payload as ReleaseEvent;

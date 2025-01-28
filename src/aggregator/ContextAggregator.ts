@@ -14,6 +14,7 @@ export enum ContextKey {
   ChecklyLogs = "checkly.logs",
   GitHubRepoChanges = "github.repoChanges.$repo",
   GitHubReleaseSummary = "github.releaseSummary.$repo",
+  GitHubDeploymentSummary = "github.deploymentSummary.$repo",
   Knowledge = "knowledge.$documentSlug",
   SlackChannelSummary = "slack.channelSummary.$channel",
 }

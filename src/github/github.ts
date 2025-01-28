@@ -1,11 +1,15 @@
 import { Octokit } from "octokit";
 import { Endpoints } from "@octokit/types";
+import type {
+  RestEndpointMethodTypes
+} from "@octokit/plugin-rest-endpoint-methods/dist-types/generated/parameters-and-response-types";
 
 type Repository = Endpoints["GET /repos/{owner}/{repo}"]["response"]["data"];
 type ListReleasesResponse =
   Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"];
 type CompareCommitsResponse =
   Endpoints["GET /repos/{owner}/{repo}/compare/{base}...{head}"]["response"]["data"];
+export type GithubDeploymentInstance = RestEndpointMethodTypes["repos"]["listDeployments"]["response"]["data"][0]
 
 class GitHubAPI {
   private octokit: Octokit;
@@ -29,7 +33,7 @@ class GitHubAPI {
     }
   }
 
-  async getPreviousReleaseTag(org: string, repoName: string, release: string) {
+  async getPreviousReleaseTag(org: string, repoName: string, release: string):Promise<string> {
     try {
       const { data: releases } = await this.octokit.rest.repos.listReleases({
         owner: org,
@@ -46,6 +50,41 @@ class GitHubAPI {
       }
     } catch (error) {
       console.error("Error querying GitHub releases:", error);
+      throw error;
+    }
+  }
+
+  async getPreviousDeployment(
+    org: string,
+    repoName: string,
+    environment: string,
+    currentDeploymentId: number,
+    currentDeploymentSha: string
+  ): Promise<GithubDeploymentInstance|null> {
+    try {
+      const { data: deployments }  = await this.octokit.rest.repos.listDeployments({
+        owner: org,
+        repo: repoName,
+        environment,
+        per_page: 100, // Fetch up to 100 deployments at once (max allowed by GitHub)
+      });
+
+      // Find the index of the current deployment
+      const currentDeploymentIndex = deployments.findIndex(
+        (d) => d.id === currentDeploymentId
+      );
+
+      if (currentDeploymentIndex === -1) {
+        throw new Error(`Deployment with ID ${currentDeploymentId} not found`);
+      }
+
+      const previousDeployment = deployments.slice(currentDeploymentIndex).find(
+        (d => d.sha !== currentDeploymentSha),
+      )
+
+      return previousDeployment || null;
+    } catch (error) {
+      console.error("Error querying GitHub deployments:", error);
       throw error;
     }
   }

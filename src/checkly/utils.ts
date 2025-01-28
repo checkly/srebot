@@ -33,7 +33,7 @@ export const mapCheckResultToContextValue = (result: CheckResult) => {
   };
 };
 
-export const getLastSuccessfulCheckResult = async (checkId: string) => {
-  const results = await checkly.getCheckResults(checkId, false, 1);
+export const getLastCheckResult = async (checkId: string, hasFailures: boolean) => {
+  const results = await checkly.getCheckResults(checkId, hasFailures, 1);
   return results[0];
 };

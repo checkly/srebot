@@ -106,6 +106,7 @@ router.post("/", async (req: Request, res: Response) => {
           : "🚨 " + alertDto.CHECK_NAME + " has failed 🚨";
       await app.client.chat.postMessage({
         channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
+        text: headerText,
         metadata: {
           event_type: "alert",
           event_payload: {
