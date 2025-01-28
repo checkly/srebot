@@ -25,6 +25,10 @@ export const app = new App({
 
 const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
 
+// Repositories to ignore (passed as a comma-separated list, for example "repo1,repo2")
+// We can use this to narrow down the repositories we want to monitor
+const ignoredRepos = new Set(process.env.IGNORED_REPOS?.split(",") || []);
+
 const github = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
 
 let setupAgent = () => {
@@ -96,6 +100,13 @@ router.post(
             deployment,
           } = deploymentEvent;
           const repositoryName = repository.name;
+          if (ignoredRepos.has(repositoryName)) {
+            console.log(`Ignoring deployment event for repository ${repositoryName}`);
+            res.status(200).send("Ignoring deployment event");
+            return;
+          }
+
+
           const organizationName = deploymentEvent.organization?.login || repository.owner.login;
           const environment = deployment.environment || "unknown";
 
@@ -195,6 +206,12 @@ router.post(
           res.status(200).send("Webhook received");
           return;
         }
+        const repoName = releaseEvent.repository.name;
+        if (ignoredRepos.has(repoName)) {
+          console.log(`Ignoring release event for repository ${repoName}`);
+          res.status(200).send("Ignoring release event");
+          return;
+        }
 
         console.log(
           "Release event received:",
@@ -209,7 +226,7 @@ router.post(
 
         const release = await githubAgent.summarizeRelease(
           releaseEvent.repository.owner.login,
-          releaseEvent.repository.name,
+          repoName,
           releaseEvent.release.tag_name,
           previousRelease
         );
@@ -224,7 +241,7 @@ router.post(
           releaseUrl: releaseEvent.release.html_url,
           diffUrl: release.diff.html_url,
           date,
-          repo: releaseEvent.repository.name,
+          repo: repoName,
           repoUrl: releaseEvent.repository.html_url,
           authors,
           summary: release.summary,
@@ -237,7 +254,7 @@ router.post(
             releaseUrl: releaseEvent.release.html_url,
             publishedAt: releaseEvent.release.published_at,
             org: releaseEvent.repository.owner.login,
-            repo: releaseEvent.repository.name,
+            repo: repoName,
             repoUrl: releaseEvent.repository.html_url,
             tag: releaseEvent.release.tag_name,
             diffUrl: release.diff.html_url,
@@ -255,7 +272,7 @@ router.post(
         console.log('Posting a message to Slack');
         await app.client.chat.postMessage({
           channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
-          text: `New release: ${releaseEvent.release.name} in ${releaseEvent.repository.owner.login}/${releaseEvent.repository.name}`,
+          text: `New release: ${releaseEvent.release.name} in ${releaseEvent.repository.owner.login}/${repoName}`,
           metadata: {
             event_type: "release-summary",
             event_payload: {},
