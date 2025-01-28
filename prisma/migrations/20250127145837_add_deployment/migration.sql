@@ -10,6 +10,7 @@ CREATE TABLE "Deployment" (
     "diffUrl" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "rawEvent" JSONB NOT NULL,
+    "summary" TEXT NOT NULL,
 
     CONSTRAINT "Deployment_pkey" PRIMARY KEY ("id")
 );

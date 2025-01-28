@@ -1,126 +1,45 @@
 import GitHubAPI from "../github/github";
-import { WebhookAlertDto } from "../checkly/alertDTO";
+import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
 import { CheckContext, ContextKey } from "./ContextAggregator";
-import { getLastSuccessfulCheckResult, mapCheckResultToContextValue, mapCheckToContextValue, } from "../checkly/utils";
+import { getLastCheckResult, mapCheckResultToContextValue, mapCheckToContextValue, } from "../checkly/utils";
 import { prisma } from "../prisma";
 import { generateObject } from "ai";
 import { getOpenaiSDKClient } from "../ai/openai";
 import { checkly } from "../checkly/client";
 import { stringify } from "yaml";
 import { z } from "zod";
-import { Release } from "@prisma/client";
+import { Deployment, Release } from "@prisma/client";
 
 const githubApi = new GitHubAPI(process.env.CHECKLY_GITHUB_TOKEN || "");
 
-interface RepoChange {
-  repo: string;
-  commits: Array<{
-    sha: string;
-    message: string;
-    author: string;
-    date: string;
-  }>;
-  pullRequests: Array<{
-    number: number;
-    title: string;
-    state: string;
-    author: string;
-    url: string;
-  }>;
-  releases: Array<{
-    release: string;
-    diff: string;
-  }>;
-}
-
-// async function getRecentChanges(repo: string): Promise<RepoChange> {
-// 	const [owner, repoName] = repo.split("/");
-// 	const since = moment().subtract(24, "hours").toISOString();
-
-// 	// Get recent commits
-// 	const commits = await githubApi
-// 		.getCommits(owner, repoName, { since })
-// 		.catch((error) => {
-// 			console.error("Error fetching commits:", error);
-// 			return [];
-// 		});
-
-// 	// Get recent pull requests
-// 	const pullRequests = await githubApi.getPullRequests(owner, repoName);
-
-// 	// Get recent releases
-// 	const releases = await githubApi.queryLatestReleasesWithDiffs(
-// 		owner,
-// 		repoName,
-// 		new Date(since)
-// 	);
-
-// 	// Filter PRs updated in the last 24 hours
-// 	const recentPRs = pullRequests.filter((pr) =>
-// 		moment(pr.updated_at).isAfter(moment().subtract(24, "hours"))
-// 	);
-
-// 	return {
-// 		repo,
-// 		commits: commits.map((commit) => ({
-// 			sha: commit.sha,
-// 			message: commit.commit.message,
-// 			author: commit.commit.author?.name || "Unknown",
-// 			date: commit.commit.author?.date || "",
-// 		})),
-// 		pullRequests: recentPRs.map((pr) => ({
-// 			number: pr.number,
-// 			title: pr.title,
-// 			state: pr.state,
-// 			author: pr.user?.login || "Unknown",
-// 			url: pr.html_url,
-// 		})),
-// 		releases: releases.map((release) => ({
-// 			release: release.release,
-// 			diff: release.diff,
-// 		})),
-// 	};
-// }
-
 export const githubAggregator = {
   name: "GitHub",
-  fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {
-    console.log("Aggregating GitHub Context...");
-    try {
-      await githubApi.checkRateLimit();
-
-      const lastSuccessfulCheckResult = await getLastSuccessfulCheckResult(
-        alert.CHECK_ID
-      );
-
-      const failureResults = await checkly.getCheckResult(
-        alert.CHECK_ID,
-        alert.CHECK_RESULT_ID
-      );
-
-      const check = await checkly.getCheck(alert.CHECK_ID);
-
-      const releases = await prisma.release.findMany({
-        where: {
-          publishedAt: {
-            gte: new Date(lastSuccessfulCheckResult.startedAt),
-          },
+  getRelevantReleases: async ({ fromDate, check, alertCheckResult, alert }) => {
+    const releases = await prisma.release.findMany({
+      where: {
+        publishedAt: {
+          gte: new Date(fromDate),
         },
-      });
+      },
+    });
 
-      const { object: relevantReleaseIds } = await generateObject({
-        model: getOpenaiSDKClient()("gpt-4o"),
-        prompt: `Based on the following releases, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of release ids that are most relevant to the check.
+    if(releases.length === 0) {
+      return []
+    }
+
+    const { object: relevantReleaseIds } = await generateObject({
+      model: getOpenaiSDKClient()("gpt-4o"),
+      prompt: `Based on the following releases, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of release ids that are most relevant to the check.
 
 Releases:
 ${stringify(
-          releases.map((r) => ({
-            id: r.id,
-            repo: r.repoUrl,
-            release: r.name,
-            summary: r.summary,
-          }))
-        )}
+        releases.map((r) => ({
+          id: r.id,
+          repo: r.repoUrl,
+          release: r.name,
+          summary: r.summary,
+        }))
+      )}
 
 Check:
 ${stringify(mapCheckToContextValue(check))}
@@ -129,39 +48,138 @@ Check Script:
 ${check.script}
 
 Check Result:
-${stringify(mapCheckResultToContextValue(failureResults))}`,
-        schema: z.object({
-          releaseIds: z
-            .array(z.string())
-            .describe(
-              "The ids of the releases that are most relevant to the check failure."
-            ),
-        }),
-      });
+${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
+      schema: z.object({
+        releaseIds: z
+          .array(z.string())
+          .describe(
+            "The ids of the releases that are most relevant to the check failure."
+          ),
+      }),
+    });
 
-      const relevantReleases = releases.filter((r) =>
-        relevantReleaseIds.releaseIds.includes(r.id)
+    const relevantReleases = releases.filter((r) =>
+      relevantReleaseIds.releaseIds.includes(r.id)
+    );
+
+    const makeRepoReleaseContext = (release: Release) =>
+      ({
+        key: ContextKey.GitHubReleaseSummary.replace(
+          "$repo",
+          `${release.org}/${release.repo}`
+        ),
+        value: release,
+        checkId: alert.CHECK_ID,
+        source: "github",
+      } as CheckContext);
+
+    return relevantReleases.map(
+      (release) => makeRepoReleaseContext(release)
+    );
+  },
+  getRelevantDeployments: async ({ fromDate, check, alertCheckResult, alert }) => {
+    const deployments = await prisma.deployment.findMany({
+      where: {
+        createdAt: {
+          gte: new Date(fromDate),
+        },
+      },
+    });
+    if(deployments.length === 0) {
+      return []
+    }
+
+
+    const { object: relevantReleaseIds } = await generateObject({
+      model: getOpenaiSDKClient()("gpt-4o"),
+      prompt: `Based on the following deployments, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of deployment ids that are most relevant to the check.
+
+Deployments:
+${stringify(
+        deployments.map((deploy) => ({
+          id: deploy.id,
+          repo: deploy.repoUrl,
+          createdAt: deploy.createdAt,
+          summary: deploy.summary,
+        }))
+      )}
+
+Check:
+${stringify(mapCheckToContextValue(check))}
+
+Check Script:
+${check.script}
+
+Check Result:
+${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
+      schema: z.object({
+        deploymentIds: z
+          .array(z.string())
+          .describe(
+            "The ids of the releases that are most relevant to the check failure."
+          ),
+      }),
+    });
+
+    const relevantReleases = deployments.filter((deployment) =>
+      relevantReleaseIds.deploymentIds.includes(deployment.id)
+    );
+
+    const mapDeploymentToCheckContext = (deployment: Deployment) =>
+      ({
+        key: ContextKey.GitHubDeploymentSummary.replace(
+          "$repo",
+          `${deployment.org}/${deployment.repo}`
+        ),
+        value: deployment,
+        checkId: alert.CHECK_ID,
+        source: "github",
+      } as CheckContext);
+
+    return relevantReleases.map(
+      (deploy) => mapDeploymentToCheckContext(deploy)
+    )
+  },
+  fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {
+    console.log("Aggregating GitHub Context...");
+    try {
+      await githubApi.checkRateLimit();
+
+      // Identify the current state of the check
+      // This may be both a failure or a recovery
+      const hasCheckFailuresNow = alert.ALERT_TYPE !== AlertType.ALERT_RECOVERY
+
+      // For a recovery we need to find the last failure
+      // For a failure we need to find the last success
+      const hadCheckFailuresBeforeStateChange = !hasCheckFailuresNow;
+      const lastCheckResultBeforeStateChange = await getLastCheckResult(
+        alert.CHECK_ID,
+        hadCheckFailuresBeforeStateChange
       );
 
-      const makeRepoReleaseContext = (release: Release) =>
-        ({
-          key: ContextKey.GitHubReleaseSummary.replace(
-            "$repo",
-            `${release.org}/${release.repo}`
-          ),
-          value: release,
-          checkId: alert.CHECK_ID,
-          source: "github",
-        } as CheckContext);
+      const alertCheckResult = await checkly.getCheckResult(
+        alert.CHECK_ID,
+        alert.CHECK_RESULT_ID
+      );
 
-      if (relevantReleases) {
-        const context = relevantReleases.map((release) =>
-          makeRepoReleaseContext(release)
-        );
-        return context;
-      }
+      const check = await checkly.getCheck(alert.CHECK_ID);
 
-      return [];
+      const [relevantReleases, relevantDeployments] = await Promise.all([
+        githubAggregator.getRelevantReleases({
+          fromDate: lastCheckResultBeforeStateChange?.startedAt,
+          check,
+          alertCheckResult: alertCheckResult,
+          alert,
+        }),
+        githubAggregator.getRelevantDeployments({
+          fromDate: lastCheckResultBeforeStateChange?.startedAt,
+          check,
+          alertCheckResult: alertCheckResult,
+          alert,
+        }),
+      ]);
+
+      return [...relevantReleases, ...relevantDeployments];
     } catch (error) {
       console.error("Error in GitHub aggregator:", error);
       return [];

@@ -11,7 +11,6 @@ import { GithubAgent } from "../github/agent";
 import { createDeploymentBlock, createReleaseBlock } from "../github/slackBlock";
 import moment from "moment";
 import { prisma } from '../prisma';
-import { date } from "zod";
 
 const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
@@ -85,7 +84,7 @@ router.post(
         console.log("Deployment event received");
         const deploymentEvent = payload as DeploymentStatusEvent;
 
-        if(deploymentEvent.deployment_status.state !== "success") {
+        if (deploymentEvent.deployment_status.state !== "success") {
           res.status(200).send("Webhook received");
           return;
         }
@@ -150,6 +149,7 @@ router.post(
             data: {
               ...deploymentData,
               rawEvent: deploymentEvent as unknown as Prisma.InputJsonValue,
+              summary: diffSummary.summary,
               createdAt: new Date(deployment.created_at),
             },
           });
