@@ -6,6 +6,7 @@ import { ChecklyTool } from "./tools/ChecklyTool";
 import { GitHubTool } from "./tools/GitHubTool";
 import { prisma } from "../prisma";
 import { slackFormatInstructions } from "../slackbot/utils";
+import { KnowledgeTool } from "./tools/KnowledgeTool";
 
 export class SreAssistant extends BaseAssistant {
   alertId: string | undefined;
@@ -62,7 +63,7 @@ CONSTITUTION:
 7. Make active use of the tools (multiple times if needed) to get a holistic view of the situation
 8. Generate super short, concise and insightful messages. Users are experts, skip the fluff, no yapping.
 9. Context-Driven Analysis: Load the check to understand the failure context and its potential root cause. Cross-reference the alert with logs, metrics, and change histories to identify anomalies or patterns. Please remember that releases (changes) are the most common reason for alerting events, focus on analysing recent changes.
-10. Refer to the the knowledge context to build a better understanding of the product, systems and the organisation you are working for. Assume that the users have good knowledge of the systems, and do not proactively provide basic information unless explicitly asked.
+10. Refer to the the knowledge base to build a better understanding of the terminology, systems and the organisation you are working for. Assume that the users have good knowledge of the company, and do not proactively provide basic information unless explicitly asked.
 
 INTERACTION CONTEXT:
 Username: ${this.interactionContext["username"]}
@@ -76,11 +77,11 @@ ${alertSummary.length > 0 ? `Alert Summary:\n${alertSummary}` : ""}`;
 
   protected async getTools(): Promise<Tool[]> {
     if (!this.alertId) {
-      return [new ChecklyTool(this), new GitHubTool(this)];
+      return [new ChecklyTool(this), new GitHubTool(this), new KnowledgeTool(this)];
     }
 
     const searchContextTool = new SearchContextTool(this);
     await searchContextTool.init();
-    return [searchContextTool, new ChecklyTool(this), new GitHubTool(this)];
+    return [searchContextTool, new ChecklyTool(this), new GitHubTool(this), new KnowledgeTool(this)];
   }
 }
