@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { generateObject, generateText, LanguageModelV1 } from "ai";
-import GitHubAPI from "./github";
+import GitHubAPI, { CompareCommitsResponse } from "./github";
 
 export class GithubAgent {
   private model: LanguageModelV1;
@@ -63,8 +63,8 @@ export class GithubAgent {
     repo: string,
     currentSha: string,
     previousSha: string
-  ) {
-    const  diff = await this.github.getDiffBetweenTags(
+  ): Promise<{ diff: CompareCommitsResponse, summary: string }> {
+    const diff = await this.github.getDiffBetweenTags(
       org,
       repo,
       previousSha,

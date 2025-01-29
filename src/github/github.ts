@@ -7,7 +7,7 @@ import type {
 type Repository = Endpoints["GET /repos/{owner}/{repo}"]["response"]["data"];
 type ListReleasesResponse =
   Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"];
-type CompareCommitsResponse =
+export type CompareCommitsResponse =
   Endpoints["GET /repos/{owner}/{repo}/compare/{base}...{head}"]["response"]["data"];
 export type GithubDeploymentInstance = RestEndpointMethodTypes["repos"]["listDeployments"]["response"]["data"][0]
 

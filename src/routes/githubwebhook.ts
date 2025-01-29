@@ -6,7 +6,7 @@ import express, { Request, Response } from "express";
 import { DeploymentStatusEvent, ReleaseEvent, WebhookEvent, WebhookEventName } from "@octokit/webhooks-types";
 import { App, LogLevel } from "@slack/bolt";
 import { getOpenaiSDKClient } from "../ai/openai";
-import GitHubAPI from "../github/github";
+import GitHubAPI, { CompareCommitsResponse } from "../github/github";
 import { GithubAgent } from "../github/agent";
 import { createDeploymentBlock, createReleaseBlock } from "../github/slackBlock";
 import moment from "moment";
@@ -28,6 +28,9 @@ const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
 // Repositories to ignore (passed as a comma-separated list, for example "repo1,repo2")
 // We can use this to narrow down the repositories we want to monitor
 const ignoredRepos = new Set(process.env.IGNORED_REPOS?.split(",") || []);
+
+// Environments to ignore (passed as a comma-separated list, for example "staging,Preview")
+const ignoredEnvironments = new Set(process.env.IGNORED_ENVIRONMENTS?.split(",") || []);
 
 const github = new GitHubAPI(CHECKLY_GITHUB_TOKEN);
 
@@ -54,8 +57,7 @@ router.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello from Github Webhook!" });
 });
 
-
-const withRetry = async (fn, attempts = 2) => {
+const withRetry = async <T>(fn: () => Promise<T>, attempts = 2): Promise<T> => {
   try {
     return await fn()
   } catch (err) {
@@ -67,6 +69,12 @@ const withRetry = async (fn, attempts = 2) => {
   }
 }
 
+const pullAuthors = (diff: CompareCommitsResponse): string[] => {
+  return [...new Set(diff.commits
+    .map((c) => c.author)
+    .filter((author) => author !== null)
+    .map((author) => author.login))];
+}
 
 router.post(
   "/",
@@ -106,9 +114,14 @@ router.post(
             return;
           }
 
+          const environment = deployment.environment || "unknown";
+          if (ignoredEnvironments.has(environment)) {
+            console.log(`Ignoring deployment event for environment ${environment}`);
+            res.status(200).send("Ignoring deployment event");
+            return;
+          }
 
           const organizationName = deploymentEvent.organization?.login || repository.owner.login;
-          const environment = deployment.environment || "unknown";
 
           // Check if a deployment with the same sha, repo, org, and environment already exists
           const existingDeployment = await prisma.deployment.findFirst({
@@ -135,6 +148,10 @@ router.post(
             deployment.id,
             deployment.sha
           ));
+          if (previousDeployment === null) {
+            console.log(`No previous deployment found for ${repositoryName} in ${deployment.environment}.`);
+            return
+          }
 
           const diffUrl = `https://github.com/${repository.owner.login}/${repositoryName}/compare/${previousDeployment.sha || ''}...${deployment.sha}`;
           const deploymentData = {
@@ -168,10 +185,7 @@ router.post(
           console.log("Deployment saved successfully.");
 
           const date = moment(deployment.created_at).fromNow();
-          const authors = diffSummary.diff.commits
-            .map((c) => c.author)
-            .filter((author) => author !== null)
-            .map((author) => author.login);
+          const authors = pullAuthors(diffSummary.diff);
 
           const deploymentBlocks = createDeploymentBlock({
             diffUrl,
@@ -231,10 +245,7 @@ router.post(
           previousRelease
         );
         const date = moment(releaseEvent.release.published_at).fromNow();
-        const authors = release.diff.commits
-          .map((c) => c.author)
-          .filter((author) => author !== null)
-          .map((author) => author.login);
+        const authors = pullAuthors(release.diff)
         let releaseName = releaseEvent.release.name || releaseEvent.release.tag_name;
         let releaseBlocks = createReleaseBlock({
           release: releaseName,
