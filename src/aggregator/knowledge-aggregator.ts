@@ -5,7 +5,7 @@ import { getAllDocuments, KnowledgeDocument, } from "../knowledge-base/knowledge
 const transformDocument = (document: KnowledgeDocument, checkId: string): CheckContext => {
   return {
     checkId,
-    value: document.fullContent,
+    value: document.content,
     source: 'knowledge',
     key: ContextKey.Knowledge.replace(
       "$documentSlug",

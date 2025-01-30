@@ -62,7 +62,7 @@ export class KnowledgeTool extends Tool<
         return `Document for slug: ${input.documentSlug} not found`;
       }
 
-      return document.fullContent;
+      return JSON.stringify(document);
     }
 
     return "Invalid action";

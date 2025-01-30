@@ -7,6 +7,7 @@ import { GitHubTool } from "./tools/GitHubTool";
 import { prisma } from "../prisma";
 import { slackFormatInstructions } from "../slackbot/utils";
 import { KnowledgeTool } from "./tools/KnowledgeTool";
+import { TimeframeTranslationTool } from "./tools/TimeframeTranslationTool";
 
 export class SreAssistant extends BaseAssistant {
   alertId: string | undefined;
@@ -77,7 +78,7 @@ ${alertSummary.length > 0 ? `Alert Summary:\n${alertSummary}` : ""}`;
 
   protected async getTools(): Promise<Tool[]> {
     if (!this.alertId) {
-      return [new ChecklyTool(this), new GitHubTool(this), new KnowledgeTool(this)];
+      return [new ChecklyTool(this), new GitHubTool(this), new KnowledgeTool(this), new TimeframeTranslationTool(this)];
     }
 
     const searchContextTool = new SearchContextTool(this);
