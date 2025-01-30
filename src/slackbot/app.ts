@@ -8,6 +8,7 @@ import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
 import moment from "moment";
 import { createReleaseBlock, divider as releaseDivider, releaseHeader, } from "../github/slackBlock";
+import { analyseAlert } from "./ops-channel/analyse-alert";
 
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
@@ -152,3 +153,62 @@ app.event("app_mention", async ({ event, context }) => {
     });
   }
 });
+
+if (process.env.OPS_CHANNEL_ID) {
+  const targetChannel = process.env.OPS_CHANNEL_ID;
+
+  // Listen for messages in the specified channel
+  app.event("message", async ({ event, context }) => {
+    try {
+      const isTargetChannel = event.channel === targetChannel;
+      const isTopLevelMessage = !context.thread_ts;
+      const shouldRespondToMessage = isTargetChannel && !event.subtype && event.text && isTopLevelMessage
+      if (!shouldRespondToMessage) {
+        return
+      }
+
+      let senderType = "human";
+      let botName: string = '';
+
+      if (!context.bot_id && process.env.ALLOW_NON_BOT_MESSAGES === undefined) {
+        // Message is from a human
+        console.log("Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables.");
+        return;
+      }
+
+      if (context.bot_id) {
+        // Message is from a bot
+        senderType = "bot";
+
+        // Fetch bot info to get its name
+        const botInfo = await app.client.bots.info({ bot: context.bot_id });
+        botName = botInfo.bot?.name || "Unknown Bot";
+      }
+
+
+      console.log(`Message from ${senderType}: ${botName || context.userId}`);
+
+      if (isTargetChannel && !event.subtype && event.text && isTopLevelMessage) {
+        const generated = await analyseAlert(event.text);
+
+        if (generated.recommendation === 'ignore') {
+          await app.client.chat.postMessage({
+            token: context.botToken,
+            channel: event.channel,
+            text: `The alert state is: \`${generated.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${generated.reasoning}.`,
+            thread_ts: event.ts, // Replies in the same thread
+          });
+        } else {
+          await app.client.chat.postMessage({
+            token: context.botToken,
+            channel: event.channel,
+            text: `I have determined that the alert is of severity: \`${generated.severity}\`\n\nAffected components: ${generated.affectedComponents?.map(affected => `\`${affected.component}\` in "${affected.environment}"`).join('\n')}\n\n My reasoning: ${generated.reasoning}`,
+            thread_ts: event.ts, // Replies in the same thread
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error responding to message:", error);
+    }
+  });
+}
