@@ -111,5 +111,9 @@ const blockToMarkdown = async (block: any, depth: number = 0): Promise<string> =
 const DATABASE_ID = process.env.NOTION_DATABASE_ID as string;
 
 export const fetchDocumentsFromKnowledgeBase = async (databaseId = DATABASE_ID) => {
+  if (!process.env.NOTION_API_KEY) {
+    return []
+  }
+
   return fetchDatabasePages(databaseId);
 }
