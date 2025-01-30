@@ -3,7 +3,7 @@ import { getOpenaiClient, getOpenaiSDKClient } from "../ai/openai";
 import { getRunMessages } from "../ai/utils";
 import { SreAssistant } from "../sre-assistant/SreAssistant";
 import { getSlackConfig, validateConfig } from "./config";
-import { convertToSlackMarkdown, getThreadMetadata } from "./utils";
+import { convertToSlackMarkdown, getMessageText, getThreadMetadata } from "./utils";
 import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
 import moment from "moment";
@@ -161,52 +161,46 @@ if (process.env.OPS_CHANNEL_ID) {
   app.event("message", async ({ event, context }) => {
     try {
       const isTargetChannel = event.channel === targetChannel;
-      const isTopLevelMessage = !context.thread_ts;
-      const shouldRespondToMessage = isTargetChannel && !event.subtype && event.text && isTopLevelMessage
+      const isNotAThreadReply = !context.thread_ts; // not a thread reply
+      const isMessageEvent = event.type === "message"; // Ignore message edits
+
+      const shouldRespondToMessage = isTargetChannel && isNotAThreadReply && isMessageEvent
       if (!shouldRespondToMessage) {
         return
       }
+      const ev = event as any
 
-      let senderType = "human";
-      let botName: string = '';
+      const messageText = ev.text || getMessageText(ev);
+      // @ts-ignore
+      console.log("Received message:", messageText, "from:", ev.username as any);
 
-      if (!context.bot_id && process.env.ALLOW_NON_BOT_MESSAGES === undefined) {
-        // Message is from a human
-        console.log("Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables.");
+      const isMessageFromHuman = ev.subtype !== "bot_message";
+      const shouldIgnoreMessageBasedOnSender = isMessageFromHuman && process.env.ALLOW_NON_BOT_MESSAGES === undefined;
+      if (shouldIgnoreMessageBasedOnSender) {
+        console.log("Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables. Event subtype:", ev.subtype);
         return;
       }
 
-      if (context.bot_id) {
-        // Message is from a bot
-        senderType = "bot";
+      console.log('Starting to analyse the alert message')
+      const response = await analyseAlert(messageText);
+      let responseText;
 
-        // Fetch bot info to get its name
-        const botInfo = await app.client.bots.info({ bot: context.bot_id });
-        botName = botInfo.bot?.name || "Unknown Bot";
-      }
-
-
-      console.log(`Message from ${senderType}: ${botName || context.userId}`);
-
-      if (isTargetChannel && !event.subtype && event.text && isTopLevelMessage) {
-        const generated = await analyseAlert(event.text);
-
-        if (generated.recommendation === 'ignore') {
-          await app.client.chat.postMessage({
-            token: context.botToken,
-            channel: event.channel,
-            text: `The alert state is: \`${generated.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${generated.reasoning}.`,
-            thread_ts: event.ts, // Replies in the same thread
-          });
-        } else {
-          await app.client.chat.postMessage({
-            token: context.botToken,
-            channel: event.channel,
-            text: `I have determined that the alert is of severity: \`${generated.severity}\`\n\nAffected components: ${generated.affectedComponents?.map(affected => `\`${affected.component}\` in "${affected.environment}"`).join('\n')}\n\n My reasoning: ${generated.reasoning}`,
-            thread_ts: event.ts, // Replies in the same thread
-          });
+      if (response.recommendation === 'ignore') {
+        responseText = `The alert state is: \`${response.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${response.reasoning}.`
+      } else {
+        responseText = `I have determined that the alert is of severity: \`${response.severity}\`\n\n`
+        if (response.affectedComponents && response.affectedComponents?.length > 0) {
+          responseText += `Affected components:\n${response.affectedComponents?.map(affected => `- \`${affected.component}\` in \`${affected.environment}\` environment`).join('\n')}\n\n`
         }
+        responseText += `My reasoning:\n${response.reasoning}`
       }
+
+      await app.client.chat.postMessage({
+        token: context.botToken,
+        channel: ev.channel,
+        text: responseText,
+        thread_ts: ev.ts, // Replies in the same thread
+      });
     } catch (error) {
       console.error("Error responding to message:", error);
     }

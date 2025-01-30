@@ -208,7 +208,7 @@ ${message}`,
   return blocks;
 }
 
-export const getMessageText = (message: MessageElement): string => {
+export const getMessageText = (message: Object): string => {
   const textParts: string[] = [];
 
   // Helper function to extract text from any object that might contain text

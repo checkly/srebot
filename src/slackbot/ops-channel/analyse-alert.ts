@@ -24,8 +24,8 @@ export const analyseAlert = async (alertMessage: string): Promise<AnalyseAlertOu
 
   const affectedComponentsOutput = await generateObject({
     model: getOpenaiSDKClient()("gpt-4o"),
-    system: "You are an experienced on-call engineer who is responsible for determining which components are affected by an alert",
-    prompt: `Analyze the following alert message and determine which software components and environment is it coming from.
+    system: "You are an experienced on-call engineer who is responsible for determining which system components are affected by an alert",
+    prompt: `Analyze the following alert message and determine which system components and environment it is related to.
 
     Alert: "${alertMessage}"
 
