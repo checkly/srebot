@@ -107,6 +107,7 @@ app.event("app_mention", async ({ event, context }) => {
       text: responseText,
       thread_ts: event.ts, // Replies in the same thread
     });
+    return
   }
 
   try {
