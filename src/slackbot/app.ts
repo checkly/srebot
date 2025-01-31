@@ -227,10 +227,10 @@ if (process.env.OPS_CHANNEL_ID) {
   const targetChannel = process.env.OPS_CHANNEL_ID;
 
   // Listen for messages in the specified channel
-  app.event("message", async ({ event, context }) => {
+  app.event("message", async ({ event, context }: { event: any, context: any }) => {
     try {
       const isTargetChannel = event.channel === targetChannel;
-      const isNotAThreadReply = !context.thread_ts; // not a thread reply
+      const isNotAThreadReply = !event.thread_ts; // not a thread reply
       const isMessageEvent = event.type === "message"; // Ignore message edits
       const isNotMessageChangedEvent = event.subtype !== "message_changed"; // Ignore message edits
 
@@ -238,10 +238,9 @@ if (process.env.OPS_CHANNEL_ID) {
       if (!shouldRespondToMessage) {
         return
       }
-      const ev = event as any
 
-      const messageText = getMessageText(ev);
-      const sender = pullNameFromMessage(ev);
+      const messageText = getMessageText(event);
+      const sender = pullNameFromMessage(event);
       const messageTextWithSender = sender
         ? `${sender}: ${messageText}`
         : messageText
@@ -249,22 +248,22 @@ if (process.env.OPS_CHANNEL_ID) {
       // @ts-ignore
       console.log("Received message:", messageText, "from:", sender as any);
 
-      const isLikelyFromBot = ev.subtype === "bot_message" || Boolean(ev.bot_id);
+      const isLikelyFromBot = event.subtype === "bot_message" || Boolean(event.bot_id);
       const isMessageFromHuman = !isLikelyFromBot;
 
       const shouldIgnoreMessageBasedOnSender = isMessageFromHuman && process.env.ALLOW_NON_BOT_MESSAGES === undefined;
       if (shouldIgnoreMessageBasedOnSender) {
-        console.log("Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables. Event subtype:", ev.subtype);
+        console.log("Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables. Event subtype:", event.subtype);
         return;
       }
 
-      const responseText = await getAlertAnalysis(messageTextWithSender, targetChannel, ev.ts);
+      const responseText = await getAlertAnalysis(messageTextWithSender, targetChannel, event.ts);
 
       await app.client.chat.postMessage({
         token: context.botToken,
-        channel: ev.channel,
+        channel: event.channel,
         text: responseText,
-        thread_ts: ev.ts, // Replies in the same thread
+        thread_ts: event.ts, // Replies in the same thread
       });
     } catch (error) {
       console.error("Error responding to message:", error);
