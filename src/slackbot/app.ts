@@ -163,8 +163,9 @@ if (process.env.OPS_CHANNEL_ID) {
       const isTargetChannel = event.channel === targetChannel;
       const isNotAThreadReply = !context.thread_ts; // not a thread reply
       const isMessageEvent = event.type === "message"; // Ignore message edits
+      const isNotMessageChangedEvent = event.subtype !== "message_changed"; // Ignore message edits
 
-      const shouldRespondToMessage = isTargetChannel && isNotAThreadReply && isMessageEvent
+      const shouldRespondToMessage = isTargetChannel && isNotAThreadReply && isMessageEvent && isNotMessageChangedEvent;
       if (!shouldRespondToMessage) {
         return
       }
@@ -182,17 +183,35 @@ if (process.env.OPS_CHANNEL_ID) {
       }
 
       console.log('Starting to analyse the alert message')
-      const response = await analyseAlert(messageText);
+      const response = await analyseAlert(messageText, targetChannel, ev.ts);
       let responseText;
 
       if (response.recommendation === 'ignore') {
-        responseText = `The alert state is: \`${response.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${response.reasoning}.`
+        responseText = `The alert state is: \`${response.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${response.reasoning}`
       } else {
-        responseText = `I have determined that the alert is of severity: \`${response.severity}\`\n\n`
-        if (response.affectedComponents && response.affectedComponents?.length > 0) {
-          responseText += `Affected components:\n${response.affectedComponents?.map(affected => `- \`${affected.component}\` in \`${affected.environment}\` environment`).join('\n')}\n\n`
+        responseText = `I have determined that the alert is of severity: \`${response.severity}\``
+
+        if (response.escalateToIncidentResponse && process.env.SLACK_USERS_TO_TAG) {
+          const usersToTag = process.env.SLACK_USERS_TO_TAG.split(',').map(user => `<@${user}>`).join(' ')
+
+          responseText += `( tagging ${usersToTag} for further investigation)`
         }
-        responseText += `My reasoning:\n${response.reasoning}`
+
+        if (response.affectedComponents && response.affectedComponents?.length > 0) {
+          responseText += `\n\nAffected components:\n${response.affectedComponents?.map(affected => `- \`${affected.component}\` in \`${affected.environment}\` environment`).join('\n')}`
+        }
+
+        responseText += `\n\nSummary: ${response.summary}`
+
+        if (response.historyOutput && response.historyOutput.type === "recurring" && response.historyOutput.confidence > 90) {
+          responseText += `\n\nHere is the history of similar alerts in the past 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join('\n')}`
+        }
+        if (response.historyOutput && response.historyOutput.type === "escalating") {
+          responseText += `\n\nIt looks like the alert is escalating from it's normal rate in the last 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join('\n')}`
+        }
+        if (response.historyOutput && response.historyOutput.type === "new") {
+          responseText += '\n\nIt looks like a new issue, I could not find any similar alerts in the past 72h.'
+        }
       }
 
       await app.client.chat.postMessage({

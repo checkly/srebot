@@ -290,12 +290,14 @@ export async function fetchHistoricalMessages(
       return [];
     }
 
+    const nameCache = new Map<string, Promise<string>>();
+
     console.log(`Found ${result.messages.length} messages`);
     return await Promise.all(
       result.messages.map(async (m) => ({
         ...m,
         plaintext: getMessageText(m),
-        username: await fetchMessageSenderName(m),
+        username: await fetchMessageSenderName(m, nameCache),
       }))
     );
   } catch (error) {
@@ -312,21 +314,51 @@ export const convertSlackTimestamp = (slackTs: string): Date => {
   return new Date(milliseconds);
 };
 
-export const fetchMessageSenderName = async (message: MessageElement) => {
+const fetchUserName = async (userId: string): Promise<string> => {
   try {
-    if (message.user) {
-      const user = await web.users
-        .info({ user: message.user! })
-        .then((u) => u.user);
-      return user?.name ?? user?.real_name ?? "Unknown";
-    } else if (message.bot_id) {
-      const bot = await web.bots.info({ bot: message.bot_id! });
-      return bot.bot?.name ?? "Unknown";
-    }
-    return "Unknown";
+    const user = await web.users
+      .info({ user: userId })
+      .then((u) => u.user);
+    return user?.name ?? user?.real_name ?? userId;
   } catch (e) {
-    // Fetching message sender can fail if the permissions scope is missing
-    // Fallback to unique identifier in that case
-    return `Unknown/${message.user ?? message.bot_id}`;
+    return userId;
   }
+}
+
+const fetchBotName = async (botId: string): Promise<string> => {
+  try {
+    const bot = await web.bots.info({ bot: botId! });
+    return bot.bot?.name ?? botId;
+  } catch (e) {
+    return botId;
+  }
+}
+
+export const fetchMessageSenderName = async (message: MessageElement, nameCache: Map<string, Promise<string>>): Promise<string> => {
+  const isUser = Boolean(message.user);
+
+  if (message.username) {
+    return isUser
+      ? `User/${message.username}`
+      : `Bot/${message.username}`;
+  }
+
+  const cacheKey = isUser
+    ? `user:${message.user}`
+    : `bot:${message.bot_id}`
+
+  const promise = nameCache.get(cacheKey);
+  if (promise) {
+    return promise;
+  }
+
+  const namePromise = isUser
+    ? fetchUserName(message.user!)
+    : fetchBotName(message.bot_id!)
+
+  nameCache.set(cacheKey, namePromise);
+  const name = await namePromise;
+  return isUser
+    ? `User/${name}`
+    : `Bot/${name}`;
 };
