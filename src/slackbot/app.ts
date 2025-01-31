@@ -175,7 +175,9 @@ if (process.env.OPS_CHANNEL_ID) {
       // @ts-ignore
       console.log("Received message:", messageText, "from:", ev.username as any);
 
-      const isMessageFromHuman = ev.subtype !== "bot_message";
+      const isLikelyFromBot = ev.subtype === "bot_message" || Boolean(ev.bot_id);
+      const isMessageFromHuman = !isLikelyFromBot;
+
       const shouldIgnoreMessageBasedOnSender = isMessageFromHuman && process.env.ALLOW_NON_BOT_MESSAGES === undefined;
       if (shouldIgnoreMessageBasedOnSender) {
         console.log("Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables. Event subtype:", ev.subtype);
