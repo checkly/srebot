@@ -75,7 +75,40 @@ app.command("/srebot-releases", async ({ command, ack, respond }) => {
   });
 });
 
+const pullNameFromMessage = (message) => {
+  return message.username || message.bot_profile?.display_name || message.bot_profile?.name || message.user_profile?.display_name || message.user_profile?.name;
+}
+
 app.event("app_mention", async ({ event, context }) => {
+  if (event.text.includes('srebot-replay-command') && event.thread_ts) {
+    const threadMessages = await app.client.conversations.replies({
+      token: context.botToken,
+      channel: event.channel,
+      ts: event.thread_ts, // Thread timestamp
+    });
+    const firstMessage = threadMessages.messages?.[0];
+    if (!firstMessage) {
+      return
+    }
+
+    const firstMessageText = getMessageText(firstMessage)
+    const senderName = pullNameFromMessage(firstMessage)
+    const messageTextWithSender = senderName
+      ? `${senderName}: ${firstMessageText}`
+      : firstMessageText
+
+    console.log('Starting to analyse the alert message:', messageTextWithSender)
+
+    const responseText = await getAlertAnalysis(messageTextWithSender, event.channel, event.thread_ts);
+
+    await app.client.chat.postMessage({
+      token: context.botToken,
+      channel: event.channel,
+      text: responseText,
+      thread_ts: event.ts, // Replies in the same thread
+    });
+  }
+
   try {
     let threadId, alertId;
     const threadTs = (event as any).thread_ts || event.ts;
@@ -154,6 +187,41 @@ app.event("app_mention", async ({ event, context }) => {
   }
 });
 
+async function getAlertAnalysis(messageText: string, targetChannel: string, threadTs: string) {
+  console.log('Starting to analyse the alert message')
+  const response = await analyseAlert(messageText, targetChannel, threadTs);
+  let responseText;
+
+  if (response.recommendation === 'ignore') {
+    responseText = `The alert state is: \`${response.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${response.reasoning}`
+  } else {
+    responseText = `I have determined that the alert is of severity: \`${response.severity}\``
+
+    if (response.escalateToIncidentResponse && process.env.SLACK_USERS_TO_TAG) {
+      const usersToTag = process.env.SLACK_USERS_TO_TAG.split(',').map(user => `<@${user}>`).join(' ')
+
+      responseText += `( tagging ${usersToTag} for further investigation)`
+    }
+
+    if (response.affectedComponents && response.affectedComponents?.length > 0) {
+      responseText += `\n\nAffected components:\n${response.affectedComponents?.map(affected => `- \`${affected.component}\` in \`${affected.environment}\` environment`).join('\n')}`
+    }
+
+    responseText += `\n\nSummary: ${response.summary}`
+
+    if (response.historyOutput && response.historyOutput.type === "recurring" && response.historyOutput.confidence >= 80) {
+      responseText += `\n\nHere is the history of similar alerts in the past 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join('\n')}`
+    }
+    if (response.historyOutput && response.historyOutput.type === "escalating") {
+      responseText += `\n\nIt looks like the alert is escalating from it's normal rate in the last 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join('\n')}`
+    }
+    if (response.historyOutput && response.historyOutput.type === "new") {
+      responseText += '\n\nIt looks like a new issue, I could not find any similar alerts in the past 72h.'
+    }
+  }
+  return responseText;
+}
+
 if (process.env.OPS_CHANNEL_ID) {
   const targetChannel = process.env.OPS_CHANNEL_ID;
 
@@ -171,9 +239,14 @@ if (process.env.OPS_CHANNEL_ID) {
       }
       const ev = event as any
 
-      const messageText = ev.text || getMessageText(ev);
+      const messageText = getMessageText(ev);
+      const sender = pullNameFromMessage(ev);
+      const messageTextWithSender = sender
+        ? `${sender}: ${messageText}`
+        : messageText
+
       // @ts-ignore
-      console.log("Received message:", messageText, "from:", ev.username as any);
+      console.log("Received message:", messageText, "from:", sender as any);
 
       const isLikelyFromBot = ev.subtype === "bot_message" || Boolean(ev.bot_id);
       const isMessageFromHuman = !isLikelyFromBot;
@@ -184,37 +257,7 @@ if (process.env.OPS_CHANNEL_ID) {
         return;
       }
 
-      console.log('Starting to analyse the alert message')
-      const response = await analyseAlert(messageText, targetChannel, ev.ts);
-      let responseText;
-
-      if (response.recommendation === 'ignore') {
-        responseText = `The alert state is: \`${response.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${response.reasoning}`
-      } else {
-        responseText = `I have determined that the alert is of severity: \`${response.severity}\``
-
-        if (response.escalateToIncidentResponse && process.env.SLACK_USERS_TO_TAG) {
-          const usersToTag = process.env.SLACK_USERS_TO_TAG.split(',').map(user => `<@${user}>`).join(' ')
-
-          responseText += `( tagging ${usersToTag} for further investigation)`
-        }
-
-        if (response.affectedComponents && response.affectedComponents?.length > 0) {
-          responseText += `\n\nAffected components:\n${response.affectedComponents?.map(affected => `- \`${affected.component}\` in \`${affected.environment}\` environment`).join('\n')}`
-        }
-
-        responseText += `\n\nSummary: ${response.summary}`
-
-        if (response.historyOutput && response.historyOutput.type === "recurring" && response.historyOutput.confidence > 90) {
-          responseText += `\n\nHere is the history of similar alerts in the past 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join('\n')}`
-        }
-        if (response.historyOutput && response.historyOutput.type === "escalating") {
-          responseText += `\n\nIt looks like the alert is escalating from it's normal rate in the last 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join('\n')}`
-        }
-        if (response.historyOutput && response.historyOutput.type === "new") {
-          responseText += '\n\nIt looks like a new issue, I could not find any similar alerts in the past 72h.'
-        }
-      }
+      const responseText = await getAlertAnalysis(messageTextWithSender, targetChannel, ev.ts);
 
       await app.client.chat.postMessage({
         token: context.botToken,
