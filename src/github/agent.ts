@@ -52,7 +52,7 @@ export class GithubAgent {
       model: this.model,
       prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes so that another developer quickly understands what has changes: ${JSON.stringify(
         diff
-      )}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
+      ).slice(0, 1000000)}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
     });
 
     return { diff, summary: text };
