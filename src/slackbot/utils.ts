@@ -8,7 +8,7 @@ export const getThreadMetadata = async (messages: any[]) => {
   let threadId, alertId;
 
   if (messages && messages.length > 0) {
-    const firstBotMessage = messages.find((msg) => msg.bot_id);
+    const firstBotMessage = messages.find((msg) => msg.bot_id && (msg.metadata?.event_payload?.threadId || msg.metadata?.event_payload?.alertId));
     if (firstBotMessage) {
       const metadata = firstBotMessage.metadata?.event_payload as {
         threadId: string;

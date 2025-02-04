@@ -9,6 +9,8 @@ import { GithubAgent } from "../github/agent";
 import moment from "moment";
 import { createReleaseBlock, divider as releaseDivider, releaseHeader, } from "../github/slackBlock";
 import { analyseAlert } from "./ops-channel/analyse-alert";
+import { prisma } from "../prisma";
+import { ContextKey } from "../aggregator/ContextAggregator";
 
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
@@ -99,7 +101,7 @@ app.event("app_mention", async ({ event, context }) => {
 
     console.log('Starting to analyse the alert message:', messageTextWithSender)
 
-    const responseText = await getAlertAnalysis(messageTextWithSender, event.channel, event.thread_ts);
+    const { responseText } = await getAlertAnalysis(messageTextWithSender, event.channel, event.thread_ts);
 
     await app.client.chat.postMessage({
       token: context.botToken,
@@ -220,7 +222,7 @@ async function getAlertAnalysis(messageText: string, targetChannel: string, thre
       responseText += '\n\nIt looks like a new issue, I could not find any similar alerts in the past 72h.'
     }
   }
-  return responseText;
+  return { responseText, response };
 }
 
 if (process.env.OPS_CHANNEL_ID) {
@@ -230,7 +232,7 @@ if (process.env.OPS_CHANNEL_ID) {
   app.event("message", async ({ event, context }: { event: any, context: any }) => {
     try {
       const isTargetChannel = event.channel === targetChannel;
-      const isNotAThreadReply = !event.thread_ts; // not a thread reply
+      const isNotAThreadReply = !event.thread_ts; // not a openAIThread reply
       const isMessageEvent = event.type === "message"; // Ignore message edits
       const isNotMessageChangedEvent = event.subtype !== "message_changed"; // Ignore message edits
 
@@ -257,13 +259,49 @@ if (process.env.OPS_CHANNEL_ID) {
         return;
       }
 
-      const responseText = await getAlertAnalysis(messageTextWithSender, targetChannel, event.ts);
+      const { responseText, response } = await getAlertAnalysis(messageTextWithSender, targetChannel, event.ts);
+
+      const alertRecord = await prisma.alert.create({
+        data: {
+          summary: response.summary || 'No summary',
+          data: {
+            message: messageText,
+            sender: sender,
+            channel: event.channel
+          },
+          context: {
+            createMany: {
+              data: {
+                key: ContextKey.AlertAnalysis,
+                value: response
+              }
+            }
+          }
+        },
+      });
+
+      const openAIThread = await getOpenaiClient().beta.threads.create({
+        messages: [
+          {
+            role: "assistant",
+            content:
+              `*Alert:* ${messageTextWithSender}\n\n*Summary:* ${response.summary}`,
+          },
+        ],
+      });
 
       await app.client.chat.postMessage({
         token: context.botToken,
         channel: event.channel,
         text: responseText,
         thread_ts: event.ts, // Replies in the same thread
+        metadata: {
+          event_type: "alert",
+          event_payload: {
+            threadId: openAIThread.id,
+            alertId: alertRecord.id,
+          },
+        },
       });
     } catch (error) {
       console.error("Error responding to message:", error);

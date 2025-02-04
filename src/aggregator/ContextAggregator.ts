@@ -17,6 +17,7 @@ export enum ContextKey {
   GitHubDeploymentSummary = "github.deploymentSummary.$repo",
   Knowledge = "knowledge.$documentSlug",
   SlackChannelSummary = "slack.channelSummary.$channel",
+  AlertAnalysis = "alert.analysis",
 }
 
 export interface CheckContext {

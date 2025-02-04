@@ -48,8 +48,9 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
   // This way it won't explode if the document is not found
   const opsChannelGuidelines = knowledgeDocuments.filter((doc) => doc.slug === OPS_CHANNEL_GUIDELINES_SLUG);
 
+  const model = getOpenaiSDKClient()("gpt-4o-mini");
   const affectedComponentsOutput = await generateObject({
-    model: getOpenaiSDKClient()("gpt-4o"),
+    model: model,
     system: "You are an experienced on-call engineer who is responsible for determining which system components are affected by an alert",
     prompt: `Analyze the following alert message and determine which system components and environment it is related to.
 
@@ -70,7 +71,7 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
   const confidentAffectedComponents = affectedComponentsOutput.object.filter((affected) => affected.confidence >= 90);
 
   const recommendationOutput = await generateObject({
-    model: getOpenaiSDKClient()("gpt-4o"),
+    model: model,
     system: "You are an experienced on-call engineer who is responsible for recommending further actions for an alert",
     prompt: `Analyze if it is firing or recovered.
 
@@ -103,7 +104,7 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
   const messages = await fetchHistoricalMessages(channelId, 300, fromDate);
   const messageHistory = getFormattedMessages(messages, channelId, messageTs);
   const historyOutput = await generateObject({
-    model: getOpenaiSDKClient()("gpt-4o"),
+    model: model,
     system: "You are an experienced on-call engineer who is responsible for analysing previous alert in the slack channel",
     prompt: `Your task is to analyse the messages from the previous 72h.
       Determine if the alert is new, escalating or a recurring issue.
@@ -133,7 +134,7 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
   console.log(`History: ${historyOutput.object.type} My reasoning:`, historyOutput.object.reasoning, "Confidence", historyOutput.object.confidence)
 
   const severityOutput = await generateObject({
-    model: getOpenaiSDKClient()("gpt-4o"),
+    model: model,
     system: "You are an experienced on-call engineer who is responsible for determining the severity of alerts",
     prompt: `Analyze the following alert message and determine its severity level with reasoning.
 
@@ -154,7 +155,7 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
   console.log(`Severity: ${severityOutput.object.severity} My reasoning:`, severityOutput.object.reasoning)
 
   const summary = await generateObject({
-    model: getOpenaiSDKClient()("gpt-4o"),
+    model: model,
     system: "You are an experienced on-call engineer who is leading a team of engineers analysing alerts from a Slack channel",
     prompt: `Your team gathered the following information about the alert:
 
