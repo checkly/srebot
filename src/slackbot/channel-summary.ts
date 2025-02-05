@@ -3,10 +3,11 @@ import { convertSlackTimestamp, fetchHistoricalMessages } from "./utils";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { channelSummaryPrompt } from "src/prompts/slack";
+import { WebhookAlertDto } from "src/checkly/alertDTO";
 
 export const generateChannelSummary = async (
   channelId: string,
-  prompt: string,
+  alert: WebhookAlertDto,
   fromTimestamp?: string,
 ) => {
   const fromDate = fromTimestamp
@@ -19,7 +20,7 @@ export const generateChannelSummary = async (
   } = await generateObject({
     temperature: 0,
     model: openai("gpt-4o"),
-    prompt: channelSummaryPrompt(prompt, messages),
+    prompt: channelSummaryPrompt(alert, messages),
     schema: z.object({
       summary: z
         .string()
