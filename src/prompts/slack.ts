@@ -1,5 +1,10 @@
-import { WebhookAlertDto } from "src/checkly/alertDTO";
-import { convertSlackTimestamp } from "src/slackbot/utils";
+import { WebhookAlertDto } from "../checkly/alertDTO";
+import { convertSlackTimestamp } from "../slackbot/utils";
+
+export const slackFormatInstructions = `Format all output in Slack mrkdwn format.
+Generate Slack messages using the following style: *bold*, <link|text>, _italics_, > quote, \`code\`, \`\`\`code block\`\`\`.
+It's important to use the correct syntax for the output to be rendered correctly.
+E.g. Important Link: <https://link.com|*Important Link*>.`;
 
 /**
  * Represents a simplified Slack message structure used for prompt generation.
