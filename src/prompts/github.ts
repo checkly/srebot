@@ -1,9 +1,70 @@
+import { Check } from "../checkly/models";
+import { mapCheckToContextValue } from "../checkly/utils";
+import { stringify } from "yaml";
+
 const MAX_DIFF_LENGTH = 1000000;
 
 export interface GithubRepoForPrompt {
   name: string;
   description: string | null;
   link: string;
+}
+
+export interface GithubReleaseForPrompt {
+  id: string;
+  repo: string;
+  release: string;
+  summary: string;
+}
+
+export interface GithubDeploymentForPrompt {
+  id: string;
+  repo: string;
+  createdAt: Date;
+  summary: string;
+}
+
+export function generateFindRelevantReleasesPrompt(
+  check: Check,
+  checkResult: string,
+  releases: GithubReleaseForPrompt[],
+): string {
+  return `Based on the following releases, which ones are most relevant to the check state change?
+
+Analyze the check script, result and releases to determine which releases are most relevant.
+Provide a list of release ids that are most relevant to the check.
+
+Releases:
+${stringify(releases)}
+
+Check:
+${stringify(mapCheckToContextValue(check))}
+
+Check Script:
+${check.script}
+
+Check Result:
+${checkResult}`;
+}
+
+export function generateFindRelevantDeploymentsPrompt(
+  check: Check,
+  checkResult: string,
+  deployments: GithubDeploymentForPrompt[],
+): string {
+  return `Based on the following deployments, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of deployment ids that are most relevant to the check.
+
+Deployments:
+${stringify(deployments)}
+
+Check:
+${stringify(mapCheckToContextValue(check))}
+
+Check Script:
+${check.script}
+
+Check Result:
+${checkResult}`;
 }
 
 export function generateReleaseHeadlinePrompt(
