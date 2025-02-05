@@ -1,10 +1,10 @@
-import "reflect-metadata";
-import "dotenv/config";
-import dotenv from "dotenv";
-import { convertSlackTimestamp, fetchHistoricalMessages } from "./utils";
-import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { generateText } from "ai";
+import dotenv from "dotenv";
+import "dotenv/config";
+import "reflect-metadata";
 import { generateChannelSummary } from "./channel-summary";
+import { convertSlackTimestamp, fetchHistoricalMessages } from "./utils";
 
 dotenv.config();
 jest.setTimeout(30000);
@@ -56,6 +56,9 @@ describe.skip("fetchHistoricalMessages", () => {
   Message History:\n${messageHistory}
 
   Question: is anything related to the recent adhocrun-eu-west-1 check failing?`,
+      experimental_telemetry: {
+        isEnabled: true,
+      },
     });
 
     console.log(text);

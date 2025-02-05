@@ -1,14 +1,14 @@
-import express, { Request, Response } from "express";
+import { Prisma } from "@prisma/client";
 import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
+import express, { Request, Response } from "express";
 import "reflect-metadata";
 import { CheckContextAggregator, ContextKey, } from "../aggregator/ContextAggregator";
 import { generateContextAnalysisSummary } from "../aggregator/chains";
+import { getOpenaiClient } from "../ai/openai";
 import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
 import { prisma } from "../prisma";
-import { Prisma } from "@prisma/client";
 import { app } from "../slackbot/app";
-import { getOpenaiClient } from "../ai/openai";
 
 const router = express.Router();
 
@@ -45,9 +45,9 @@ router.post("/", async (req: Request, res: Response) => {
       },
     });
 
-    if (exisingAlert && !!process.env.PREVENT_DUPLICATE_ALERTS) {
-      console.log("Alert already processed");
-      res.status(200).json({ message: "Alert already processed" });
+    if (exisingAlert && !!(process.env.PREVENT_DUPLICATE_ALERTS === "true")) {
+      console.log("Alert already processed", !!(process.env.PREVENT_DUPLICATE_ALERTS === "true"));
+      res.status(200).json({ message: "Alert already processed", preventDuplicateAlerts: !!(process.env.PREVENT_DUPLICATE_ALERTS === "true")});
     } else {
       console.log("Creating new alert");
 

@@ -1,9 +1,9 @@
-import { z } from "zod";
-import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
-import { SreAssistant } from "../SreAssistant";
 import { generateObject } from "ai";
 import moment from "moment";
+import { z } from "zod";
 import { getOpenaiSDKClient } from "../../ai/openai";
+import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
+import { SreAssistant } from "../SreAssistant";
 
 // Define supported timeframe formats for better type safety and documentation
 export enum TimeframeFormat {
@@ -198,6 +198,9 @@ export class TimeframeTranslationTool extends Tool<
 
       Consider current date: ${moment().format('YYYY-MM-DD')}`,
       schema: outputSchema,
+      experimental_telemetry: {
+        isEnabled: true,
+      },
     });
 
     return generated.object

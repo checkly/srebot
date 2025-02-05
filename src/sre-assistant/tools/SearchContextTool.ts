@@ -1,10 +1,10 @@
+import { generateObject } from "ai";
 import { z } from "zod";
+import { ContextKey } from "../../aggregator/ContextAggregator";
+import { getOpenaiSDKClient } from "../../ai/openai";
 import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
 import { prisma } from "../../prisma";
 import { SreAssistant } from "../SreAssistant";
-import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../../ai/openai";
-import { ContextKey } from "../../aggregator/ContextAggregator";
 
 const parameters = createToolParameters(
   z.object({
@@ -140,6 +140,9 @@ Remember:
 - If the query asks a specific question, prioritize information that directly answers that question.
 - Be concise in your explanations, but make sure they clearly justify the relevance of the selected text.`,
       maxTokens: 1000,
+      experimental_telemetry: {
+        isEnabled: true,
+      },
     });
 
     return relevantContext.object

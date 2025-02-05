@@ -1,7 +1,7 @@
-import { generateObject } from "ai";
-import { convertSlackTimestamp, fetchHistoricalMessages } from "./utils";
 import { openai } from "@ai-sdk/openai";
+import { generateObject } from "ai";
 import { z } from "zod";
+import { convertSlackTimestamp, fetchHistoricalMessages } from "./utils";
 
 export const generateChannelSummary = async (
   channelId: string,
@@ -48,6 +48,9 @@ To complete the task, follow these steps:
           "Links that are relevant to the given question or the channel summary."
         ),
     }),
+    experimental_telemetry: {
+      isEnabled: true,
+    },
   });
 
   return { summary, relevantLinks };

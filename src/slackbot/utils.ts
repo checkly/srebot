@@ -1,7 +1,7 @@
-import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../ai/openai";
-import { z } from "zod";
 import { MessageElement } from "@slack/web-api/dist/types/response/ConversationsHistoryResponse";
+import { generateObject } from "ai";
+import { z } from "zod";
+import { getOpenaiSDKClient } from "../ai/openai";
 import { web } from "./web-client";
 
 export const getThreadMetadata = async (messages: any[]) => {
@@ -118,6 +118,9 @@ export async function generateSlackBlockKitMessage(message: string) {
         )
         .describe("The blocks of the Slack Block Kit message"),
     }),
+    experimental_telemetry: {
+      isEnabled: true,
+    },
     prompt: `Some example Slack Block Kit messages:
 
 {

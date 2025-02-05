@@ -1,8 +1,8 @@
 import { generateText } from "ai";
-import { getOpenaiSDKClient } from "../ai/openai";
-import { CheckContext, ContextKey } from "./ContextAggregator";
 import { stringify } from "yaml";
+import { getOpenaiSDKClient } from "../ai/openai";
 import { slackFormatInstructions } from "../slackbot/utils";
+import { CheckContext, ContextKey } from "./ContextAggregator";
 
 const getCheckContext = (context: CheckContext[]) => {
   const checkContext = context.find((c) => c.key === ContextKey.ChecklyCheck);
@@ -31,6 +31,9 @@ ${text}`;
       prompt: prompt,
       temperature: 0.1,
       maxTokens: 300,
+      experimental_telemetry: {
+        isEnabled: true,
+      },
     });
 
     return summary.text;
@@ -86,6 +89,9 @@ If a recent release is the most likely root cause, provide a link to the release
 
 *Summary:* `,
     maxTokens: 500,
+    experimental_telemetry: {
+      isEnabled: true,
+    },
   });
 
   return summary.text;

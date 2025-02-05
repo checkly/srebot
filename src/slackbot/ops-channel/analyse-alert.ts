@@ -1,9 +1,9 @@
-import { z } from "zod";
 import { generateObject } from "ai";
+import moment from "moment";
+import { z } from "zod";
 import { getOpenaiSDKClient } from "../../ai/openai";
 import { fetchDocumentsFromKnowledgeBase } from "../../notion/notion";
 import { convertSlackTimestamp, fetchHistoricalMessages } from "../utils";
-import moment from "moment";
 
 const OPS_CHANNEL_GUIDELINES_SLUG = process.env.OPS_CHANNEL_GUIDELINES_SLUG || "ops-channel-guidelines";
 
@@ -66,7 +66,10 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
       repository: z.string().optional().describe("The repository where the component is located, use organization/repository format"),
       reasoning: z.string().describe("Explanation of why the alert is classified at this severity level."),
       confidence: z.number().describe("Confidence level of the component identification. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation."),
-    })
+    }),
+    experimental_telemetry: {
+      isEnabled: true
+    },
   });
   const confidentAffectedComponents = affectedComponentsOutput.object.filter((affected) => affected.confidence >= 90);
 
@@ -90,6 +93,9 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
       reasoning: z.string().describe("Explanation why do you recommend this action."),
       confidence: z.number().describe("Confidence level of the recommendation. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation."),
     }),
+    experimental_telemetry: {
+      isEnabled: true,
+    },
   });
 
   if (recommendationOutput.object.recommendation === "ignore" && recommendationOutput.object.confidence > 80) {
@@ -129,6 +135,9 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
           "Slack Links to relevant past messages that indicate a recurring issue."
         ),
     }),
+    experimental_telemetry: {
+      isEnabled: true,
+    },
   });
 
   console.log(`History: ${historyOutput.object.type} My reasoning:`, historyOutput.object.reasoning, "Confidence", historyOutput.object.confidence)
@@ -150,6 +159,9 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
       severity: z.enum(["low", "medium", "high", "critical"]).describe("The severity level of the alert."),
       reasoning: z.string().describe("Explanation of why the alert is classified at this severity level."),
     }),
+    experimental_telemetry: {
+      isEnabled: true,
+    },
   });
 
   console.log(`Severity: ${severityOutput.object.severity} My reasoning:`, severityOutput.object.reasoning)
@@ -200,6 +212,9 @@ export const analyseAlert = async (alertMessage: string, channelId:string, messa
       reasoning: z.string().describe("Explain the reason behind escalatingToIncidentResponse"),
       escalateConfidence: z.number().describe("Confidence level of the recommendation. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation."),
     }),
+    experimental_telemetry: {
+      isEnabled: true,
+    },
   });
 
   console.log(`I'm recommending to escalate to the incident response team: ${summary.object.escalateToIncidentResponse} My reasoning:`, summary.object.reasoning, "Confidence:", summary.object.escalateConfidence)

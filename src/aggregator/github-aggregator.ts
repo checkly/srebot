@@ -1,14 +1,14 @@
-import GitHubAPI from "../github/github";
-import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
-import { CheckContext, ContextKey } from "./ContextAggregator";
-import { getLastCheckResult, mapCheckResultToContextValue, mapCheckToContextValue, } from "../checkly/utils";
-import { prisma } from "../prisma";
+import { Deployment, Release } from "@prisma/client";
 import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../ai/openai";
-import { checkly } from "../checkly/client";
 import { stringify } from "yaml";
 import { z } from "zod";
-import { Deployment, Release } from "@prisma/client";
+import { getOpenaiSDKClient } from "../ai/openai";
+import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
+import { checkly } from "../checkly/client";
+import { getLastCheckResult, mapCheckResultToContextValue, mapCheckToContextValue, } from "../checkly/utils";
+import GitHubAPI from "../github/github";
+import { prisma } from "../prisma";
+import { CheckContext, ContextKey } from "./ContextAggregator";
 
 const githubApi = new GitHubAPI(process.env.CHECKLY_GITHUB_TOKEN || "");
 
@@ -56,6 +56,9 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
             "The ids of the releases that are most relevant to the check failure."
           ),
       }),
+      experimental_telemetry: {
+        isEnabled: true,
+      },
     });
 
     const relevantReleases = releases.filter((r) =>
@@ -119,6 +122,9 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
             "The ids of the releases that are most relevant to the check failure."
           ),
       }),
+      experimental_telemetry: {
+        isEnabled: true,
+      },
     });
 
     const relevantReleases = deployments.filter((deployment) =>

@@ -1,11 +1,11 @@
-import express, { Request, Response } from "express";
 import dotenv from "dotenv";
+import express, { Request, Response } from "express";
+import { getOpenaiClient, telemetrySDK } from "./ai/openai";
+import { getRunMessages } from "./ai/utils";
 import checklyWebhookRouter from "./routes/checklywebhook";
 import githubWebhookRouter from "./routes/githubwebhook";
-import { SreAssistant } from "./sre-assistant/SreAssistant";
-import { getOpenaiClient } from "./ai/openai";
-import { getRunMessages } from "./ai/utils";
 import { app as slackApp } from "./slackbot/app";
+import { SreAssistant } from "./sre-assistant/SreAssistant";
 
 process
   .on("unhandledRejection", (reason, promise) => {
@@ -18,6 +18,9 @@ process
 // configures dotenv to work in your application
 dotenv.config();
 const app = express();
+
+// Start the OpenTelemetry SDK to collect traces in Langfuse
+telemetrySDK.start();
 
 const PORT = process.env.PORT || 3000;
 
