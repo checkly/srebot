@@ -5,9 +5,9 @@ import { SearchContextTool } from "./tools/SearchContextTool";
 import { ChecklyTool } from "./tools/ChecklyTool";
 import { GitHubTool } from "./tools/GitHubTool";
 import { prisma } from "../prisma";
-import { slackFormatInstructions } from "../slackbot/utils";
 import { KnowledgeTool } from "./tools/KnowledgeTool";
 import { TimeframeTranslationTool } from "./tools/TimeframeTranslationTool";
+import { generateSREAssistantPrompt } from "src/prompts/sre-assistant";
 
 export class SreAssistant extends BaseAssistant {
   alertId: string | undefined;
@@ -23,7 +23,7 @@ export class SreAssistant extends BaseAssistant {
       username: string;
       date: string;
     },
-    config?: Partial<RunCreateParams>
+    config?: Partial<RunCreateParams>,
   ) {
     super(threadId, {
       assistant_id: process.env.OPENAI_ASSISTANT_ID as string,
@@ -52,37 +52,30 @@ export class SreAssistant extends BaseAssistant {
       alertSummary = alert.summary;
     }
 
-    return `You are an AI-powered SRE Bot designed to assist in real-time incident management. Your primary goal is to reduce Mean Time To Resolution (MTTR) by automatically aggregating and analyzing contextual data, providing actionable insights, and guiding first responders effectively.
-
-CONSTITUTION:
-1. Always prioritize accuracy and relevance in your insights and recommendations
-2. Be concise but comprehensive in your explanations. Skip unnecessary details; deliver actionable insights suitable for experienced DevOps engineers.
-3. Focus on providing actionable information that can help reduce MTTR
-4. Load the context to and examine it understand to understand the alert
-5. The user is a experienced devops engineer. Don't overcomplicate it, focus on the context and provide actionable insights. They know what they are doing, don't worry about the details
-6. Proactive Investigations: Automatically gather contextual data about the alert, such as related checks, logs, metrics, and recent system changes (e.g., releases, deployments, or config updates). Look for recent releases or changes within a relevant time window that could explain the failure.
-7. Make active use of the tools (multiple times if needed) to get a holistic view of the situation
-8. Generate super short, concise and insightful messages. Users are experts, skip the fluff, no yapping.
-9. Context-Driven Analysis: prioritise referring to the available context, use tools for searching the context. No hallucinations, only facts.
-10. Refer to the the knowledge base to build a better understanding of the terminology, systems and the organisation you are working for. Assume that the users have good knowledge of the company, and do not proactively provide basic information unless explicitly asked.
-
-INTERACTION CONTEXT:
-Username: ${this.interactionContext["username"]}
-Date: ${this.interactionContext["date"]}
-
-OUTPUT FORMAT:
-${slackFormatInstructions}
-
-${alertSummary.length > 0 ? `Alert Summary:\n${alertSummary}` : ""}`;
+    return generateSREAssistantPrompt(
+      this.interactionContext["username"],
+      this.interactionContext["date"],
+      alertSummary,
+    );
   }
 
   protected async getTools(): Promise<Tool[]> {
     if (!this.alertId) {
-      return [new ChecklyTool(this), new GitHubTool(this), new KnowledgeTool(this), new TimeframeTranslationTool(this)];
+      return [
+        new ChecklyTool(this),
+        new GitHubTool(this),
+        new KnowledgeTool(this),
+        new TimeframeTranslationTool(this),
+      ];
     }
 
     const searchContextTool = new SearchContextTool(this);
     await searchContextTool.init();
-    return [searchContextTool, new ChecklyTool(this), new GitHubTool(this), new KnowledgeTool(this)];
+    return [
+      searchContextTool,
+      new ChecklyTool(this),
+      new GitHubTool(this),
+      new KnowledgeTool(this),
+    ];
   }
 }
