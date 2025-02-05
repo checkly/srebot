@@ -1,5 +1,6 @@
 import { WebhookAlertDto } from "../checkly/alertDTO";
 import { convertSlackTimestamp } from "../slackbot/utils";
+import { PromptConfig, promptConfig } from "./common";
 
 export const slackFormatInstructions = `Format all output in Slack mrkdwn format.
 Generate Slack messages using the following style: *bold*, <link|text>, _italics_, > quote, \`code\`, \`\`\`code block\`\`\`.
@@ -29,8 +30,9 @@ export interface SlackMsgForPrompt {
 export function channelSummaryPrompt(
   alert: WebhookAlertDto,
   messageHistory: SlackMsgForPrompt[],
-): string {
-  return `You are a Slack channel context collector. Your task is to analyze the given message history based on a specific prompt and provide a concise summary of the relevant context.
+): [string, PromptConfig] {
+  return [
+    `You are a Slack channel context collector. Your task is to analyze the given message history based on a specific prompt and provide a concise summary of the relevant context.
 
   What are the recent events, discussions or relevant context related to the following alert?
 
@@ -53,7 +55,9 @@ To complete the task, follow these steps:
 2. Identify the main topics, themes, or discussions that are relevant to the prompt.
 3. Create a concise summary of the channel's content related to the prompt, highlighting the most relevant and important information.
 4. Your summary should NOT be longer than 3-5 sentences.
-`;
+`,
+    promptConfig({ temperature: 0 }),
+  ];
 }
 
 /**

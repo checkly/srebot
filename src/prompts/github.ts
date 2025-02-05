@@ -1,6 +1,7 @@
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
 import { stringify } from "yaml";
+import { PromptConfig, promptConfig } from "./common";
 
 const MAX_DIFF_LENGTH = 1000000;
 
@@ -28,8 +29,9 @@ export function generateFindRelevantReleasesPrompt(
   check: Check,
   checkResult: string,
   releases: GithubReleaseForPrompt[],
-): string {
-  return `Based on the following releases, which ones are most relevant to the check state change?
+): [string, PromptConfig] {
+  return [
+    `Based on the following releases, which ones are most relevant to the check state change?
 
 Analyze the check script, result and releases to determine which releases are most relevant.
 Provide a list of release ids that are most relevant to the check.
@@ -44,15 +46,18 @@ Check Script:
 ${check.script}
 
 Check Result:
-${checkResult}`;
+${checkResult}`,
+    promptConfig(),
+  ];
 }
 
 export function generateFindRelevantDeploymentsPrompt(
   check: Check,
   checkResult: string,
   deployments: GithubDeploymentForPrompt[],
-): string {
-  return `Based on the following deployments, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of deployment ids that are most relevant to the check.
+): [string, PromptConfig] {
+  return [
+    `Based on the following deployments, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of deployment ids that are most relevant to the check.
 
 Deployments:
 ${stringify(deployments)}
@@ -64,30 +69,36 @@ Check Script:
 ${check.script}
 
 Check Result:
-${checkResult}`;
+${checkResult}`,
+    promptConfig(),
+  ];
 }
 
 export function generateReleaseHeadlinePrompt(
   prevRelease: string,
   currentRelease: string,
   diff: string,
-): string {
-  return `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
+): [string, PromptConfig] {
+  return [
+    `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
 Summarize the changes in a single sentence:
 ${JSON.stringify(diff)}
 
 Do not describe the outer context as the developer is already aware.
 Do not yap.
-Do not use any formatting rules.`;
+Do not use any formatting rules.`,
+    promptConfig(),
+  ];
 }
 
 export function generateReleaseSummaryPrompt(
   prevRelease: string,
   currentRelease: string,
   diff: string,
-): string {
-  return `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
+): [string, PromptConfig] {
+  return [
+    `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
   Summarize the changes so that another developer quickly understands what has changes:
 ${diff.slice(0, MAX_DIFF_LENGTH)}.
@@ -96,31 +107,48 @@ Do not describe the outer context as the developer is already aware.
 Do not yap.
 Format titles using *Title*, code using \`code\`.
 Do not use any other formatting rules.
-Focus on potential impact of the change and the reason for the change.`;
+Focus on potential impact of the change and the reason for the change.`,
+    promptConfig(),
+  ];
 }
 
 export function generateDeploymentSummaryPrompt(
   prevSha: string,
   currentSha: string,
   diff: string,
-): string {
-  return `The following diff describes the changes between ${prevSha} and ${currentSha}.
+): [string, PromptConfig] {
+  return [
+    `The following diff describes the changes between ${prevSha} and ${currentSha}.
 
   Summarize the changes so that another developer quickly understands what has changes:
   ${diff}
 
   Do not describe the outer context as the developer is already aware.
   Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules.
-  Focus on potential impact of the change and the reason for the change.`;
+  Focus on potential impact of the change and the reason for the change.`,
+    promptConfig(),
+  ];
 }
 
 export function generateFindRepoPrompt(
   userPrompt: string,
   allRepos: GithubRepoForPrompt[],
-): string {
-  return `Based on the following prompt: ${userPrompt} and the list of repositories
+): [string, PromptConfig] {
+  return [
+    `Based on the following prompt: ${userPrompt} and the list of repositories
 
 ${JSON.stringify(allRepos)}
 
-  Select the repository that is most relevant to the prompt.`;
+Select the repository that is most relevant to the prompt.`,
+    promptConfig(),
+  ];
+}
+
+export function generateTimeframePrompt(): [string, PromptConfig] {
+  return [
+    `A developer describes a task which is about a certain time frame.
+    Based on his prompt choose identify the date in ISO8601 format.
+    If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`,
+    promptConfig(),
+  ];
 }

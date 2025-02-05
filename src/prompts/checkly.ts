@@ -1,6 +1,7 @@
 import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { stringify } from "yaml";
 import { slackFormatInstructions } from "./slack";
+import { promptConfig, PromptConfig } from "./common";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 
@@ -20,13 +21,16 @@ const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
 export function contextAnalysisEntryPrompt(
   entry: CheckContext,
   allEntries: CheckContext[],
-): string {
-  return `The following check has failed: ${formatChecklyMonitorData(allEntries)}
+): [string, PromptConfig] {
+  return [
+    `The following check has failed: ${formatChecklyMonitorData(allEntries)}
 
 		Analyze the following context and generate a concise summary to extract the most important information. Output only the relevant context summary, no other text.
 
 CONTEXT:
-${stringify(entry)}`;
+${stringify(entry)}`,
+    promptConfig({ temperature: 0.1, maxTokens: 300 }),
+  ];
 }
 
 /**
@@ -43,10 +47,11 @@ ${stringify(entry)}`;
  */
 export function contextAnalysisSummaryPrompt(
   contextRows: CheckContext[],
-): string {
+): [string, PromptConfig] {
   const checkContext = formatChecklyMonitorData(contextRows);
 
-  return `The following check has changed its state: ${checkContext}
+  return [
+    `The following check has changed its state: ${checkContext}
 
 Anaylze the following context and generate a concise summary of the current situation.
 
@@ -72,7 +77,9 @@ Provide reasoning and the source of the information. Max. 100 words. Include lin
 Be concise, insightful and actionable, skip the fluff, no yapping.
 If a recent release is the most likely root cause, provide a link to the release diff.
 
-*Summary:*`;
+*Summary:*`,
+    promptConfig({ temperature: 1, maxTokens: 500 }),
+  ];
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   generateFindRepoPrompt,
   generateReleaseHeadlinePrompt,
   generateReleaseSummaryPrompt,
+  generateTimeframePrompt,
   GithubRepoForPrompt,
 } from "../prompts/github";
 
@@ -31,13 +32,15 @@ export class GithubAgent {
       release,
     );
 
+    const [prompt, config] = generateReleaseHeadlinePrompt(
+      previousRelease,
+      release,
+      JSON.stringify(diff),
+    );
+
     const { text } = await generateText({
-      model: this.model,
-      prompt: generateReleaseHeadlinePrompt(
-        previousRelease,
-        release,
-        JSON.stringify(diff),
-      ),
+      ...config,
+      prompt,
     });
 
     return { diff, summary: text };
@@ -56,13 +59,15 @@ export class GithubAgent {
       release,
     );
 
+    const [prompt, config] = generateReleaseSummaryPrompt(
+      previousRelease,
+      release,
+      JSON.stringify(diff),
+    );
+
     const { text } = await generateText({
-      model: this.model,
-      prompt: generateReleaseSummaryPrompt(
-        previousRelease,
-        release,
-        JSON.stringify(diff),
-      ),
+      ...config,
+      prompt,
     });
 
     return { diff, summary: text };
@@ -81,19 +86,21 @@ export class GithubAgent {
       currentSha,
     );
 
+    const [prompt, config] = generateDeploymentSummaryPrompt(
+      previousSha,
+      currentSha,
+      JSON.stringify(diff),
+    );
+
     const { text } = await generateText({
-      model: this.model,
-      prompt: generateDeploymentSummaryPrompt(
-        previousSha,
-        currentSha,
-        JSON.stringify(diff),
-      ),
+      ...config,
+      prompt,
     });
 
     return { diff, summary: text };
   }
 
-  async find_repo(org: string, prompt: string) {
+  async find_repo(org: string, userPrompt: string) {
     let repositories: GithubRepoForPrompt[] = (
       await this.github.queryRepositories(org)
     ).map((r) => ({
@@ -108,9 +115,11 @@ export class GithubAgent {
     //   prompt,
     // });
 
+    const [prompt, config] = generateFindRepoPrompt(userPrompt, repositories);
+
     const { object } = await generateObject({
-      model: this.model,
-      prompt: generateFindRepoPrompt(prompt, repositories),
+      ...config,
+      prompt,
       schema: z.object({
         repo: z.enum(repositories.map((r) => r.name) as [string, ...string[]]),
       }),
@@ -119,11 +128,13 @@ export class GithubAgent {
     return repositories.find((r) => r.name === object.repo) || undefined;
   }
 
-  async get_date(org: string, prompt: string) {
+  async get_date(org: string, userPrompt: string) {
+    const [systemPrompt, config] = generateTimeframePrompt();
+
     const { text } = await generateText({
-      model: this.model,
-      system: `A developer describes a task which is about a certain time frame. Based on his prompt choose identify the date in ISO8601 format. If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`,
-      prompt,
+      ...config,
+      system: systemPrompt,
+      prompt: userPrompt,
     });
 
     return text;

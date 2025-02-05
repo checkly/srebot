@@ -15,11 +15,11 @@ export const generateContextAnalysis = async (context: CheckContext[]) => {
   );
 
   async function generateContextAnalysisForEntry(entry: CheckContext) {
+    const [prompt, config] = contextAnalysisEntryPrompt(entry, context);
+
     const summary = await generateText({
-      model: getOpenaiSDKClient()("gpt-4o"),
-      prompt: contextAnalysisEntryPrompt(entry, context),
-      temperature: 0.1,
-      maxTokens: 300,
+      ...config,
+      prompt,
     });
 
     return summary.text;
@@ -29,11 +29,11 @@ export const generateContextAnalysis = async (context: CheckContext[]) => {
 export const generateContextAnalysisSummary = async (
   contextAnalysis: CheckContext[],
 ) => {
+  const [prompt, config] = contextAnalysisSummaryPrompt(contextAnalysis);
+
   const summary = await generateText({
-    model: getOpenaiSDKClient()("gpt-4o"),
-    temperature: 1,
-    prompt: contextAnalysisSummaryPrompt(contextAnalysis),
-    maxTokens: 500,
+    ...config,
+    prompt,
   });
 
   return summary.text;

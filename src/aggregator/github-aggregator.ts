@@ -34,18 +34,20 @@ export const githubAggregator = {
       return [];
     }
 
+    const [prompt, config] = generateFindRelevantReleasesPrompt(
+      check,
+      stringify(mapCheckResultToContextValue(alertCheckResult)),
+      releases.map((r) => ({
+        id: r.id,
+        repo: r.repoUrl,
+        release: r.name,
+        summary: r.summary,
+      })),
+    );
+
     const { object: relevantReleaseIds } = await generateObject({
-      model: getOpenaiSDKClient()("gpt-4o"),
-      prompt: generateFindRelevantReleasesPrompt(
-        check,
-        stringify(mapCheckResultToContextValue(alertCheckResult)),
-        releases.map((r) => ({
-          id: r.id,
-          repo: r.repoUrl,
-          release: r.name,
-          summary: r.summary,
-        })),
-      ),
+      ...config,
+      prompt,
       schema: z.object({
         releaseIds: z
           .array(z.string())
@@ -85,22 +87,25 @@ export const githubAggregator = {
         },
       },
     });
+
     if (deployments.length === 0) {
       return [];
     }
 
+    const [prompt, config] = generateFindRelevantDeploymentsPrompt(
+      check,
+      stringify(mapCheckResultToContextValue(alertCheckResult)),
+      deployments.map((deploy) => ({
+        id: deploy.id,
+        repo: deploy.repoUrl,
+        createdAt: deploy.createdAt,
+        summary: deploy.summary,
+      })),
+    );
+
     const { object: relevantReleaseIds } = await generateObject({
-      model: getOpenaiSDKClient()("gpt-4o"),
-      prompt: generateFindRelevantDeploymentsPrompt(
-        check,
-        stringify(mapCheckResultToContextValue(alertCheckResult)),
-        deployments.map((deploy) => ({
-          id: deploy.id,
-          repo: deploy.repoUrl,
-          createdAt: deploy.createdAt,
-          summary: deploy.summary,
-        })),
-      ),
+      ...config,
+      prompt,
       schema: z.object({
         deploymentIds: z
           .array(z.string())
