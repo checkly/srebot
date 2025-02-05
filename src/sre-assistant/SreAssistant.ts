@@ -7,7 +7,7 @@ import { GitHubTool } from "./tools/GitHubTool";
 import { prisma } from "../prisma";
 import { KnowledgeTool } from "./tools/KnowledgeTool";
 import { TimeframeTranslationTool } from "./tools/TimeframeTranslationTool";
-import { generateSREAssistantPrompt } from "src/prompts/sre-assistant";
+import { generateSREAssistantPrompt } from "../prompts/sre-assistant";
 
 export class SreAssistant extends BaseAssistant {
   alertId: string | undefined;

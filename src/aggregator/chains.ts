@@ -4,7 +4,7 @@ import { CheckContext, ContextKey } from "./ContextAggregator";
 import {
   contextAnalysisEntryPrompt,
   contextAnalysisSummaryPrompt,
-} from "src/prompts/checkly";
+} from "../prompts/checkly";
 
 export const generateContextAnalysis = async (context: CheckContext[]) => {
   return await Promise.all(
