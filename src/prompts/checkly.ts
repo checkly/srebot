@@ -2,8 +2,21 @@ import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { stringify } from "yaml";
 import { slackFormatInstructions } from "./slack";
 
+/** Maximum length for context analysis text to prevent oversized prompts */
+
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
 
+/**
+ * Generates a prompt for analyzing a single context entry when a check fails.
+ * The prompt includes the check data and the specific entry's context for analysis.
+ *
+ * @param {CheckContext} entry - The specific context entry to analyze
+ * @param {CheckContext[]} allEntries - All available context entries for the check
+ * @returns {string} A formatted prompt string for analyzing the context entry
+ *
+ * @example
+ * const prompt = contextAnalysisEntryPrompt(entry, allContextEntries);
+ */
 export function contextAnalysisEntryPrompt(
   entry: CheckContext,
   allEntries: CheckContext[],
@@ -16,6 +29,18 @@ CONTEXT:
 ${stringify(entry)}`;
 }
 
+/**
+ * Generates a comprehensive analysis prompt for multiple context entries.
+ * Creates a structured prompt for analyzing check state changes and generating
+ * actionable insights for DevOps engineers. The prompt includes specific
+ * instructions for format, analysis approach, and output requirements.
+ *
+ * @param {CheckContext[]} contextRows - Array of context entries to analyze
+ * @returns {string} A formatted prompt string for comprehensive context analysis
+ *
+ * @example
+ * const summary = contextAnalysisSummaryPrompt(contextEntries);
+ */
 export function contextAnalysisSummaryPrompt(
   contextRows: CheckContext[],
 ): string {
@@ -50,6 +75,17 @@ If a recent release is the most likely root cause, provide a link to the release
 *Summary:*`;
 }
 
+/**
+ * Formats context data for analysis by filtering out Checkly check data and
+ * converting the remaining context to YAML format. The output is truncated
+ * to prevent oversized prompts.
+ *
+ * @param {CheckContext[]} rows - Array of context entries to format
+ * @returns {string} YAML formatted string of filtered context data
+ *
+ * @example
+ * const formattedContext = formatContextAnalysis(contextRows);
+ */
 function formatContextAnalysis(rows: CheckContext[]): string {
   return stringify(
     rows
@@ -59,6 +95,16 @@ function formatContextAnalysis(rows: CheckContext[]): string {
   ).slice(0, CONTEXT_ANALYSIS_MAX_LENGTH);
 }
 
+/**
+ * Extracts and formats Checkly monitor data from context entries.
+ * Finds the Checkly check context and formats it as YAML with check ID and value.
+ *
+ * @param {CheckContext[]} rows - Array of context entries to search for Checkly data
+ * @returns {string} YAML formatted string of Checkly monitor data
+ *
+ * @example
+ * const monitorData = formatChecklyMonitorData(contextRows);
+ */
 function formatChecklyMonitorData(rows: CheckContext[]): string {
   const checkContext = rows.find((c) => c.key === ContextKey.ChecklyCheck);
   return stringify(
