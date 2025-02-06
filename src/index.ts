@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
 import express, { Request, Response } from "express";
-import { getOpenaiClient, telemetrySDK } from "./ai/openai";
+import { getOpenaiClient } from "./ai/openai";
 import { getRunMessages } from "./ai/utils";
 import checklyWebhookRouter from "./routes/checklywebhook";
 import githubWebhookRouter from "./routes/githubwebhook";
 import { app as slackApp } from "./slackbot/app";
 import { SreAssistant } from "./sre-assistant/SreAssistant";
+import { startLangfuseTelemetrySDK } from "./langfuse";
 
 process
   .on("unhandledRejection", (reason, promise) => {
@@ -20,7 +21,9 @@ dotenv.config();
 const app = express();
 
 // Start the OpenTelemetry SDK to collect traces in Langfuse
-telemetrySDK.start();
+if (process.env.ENABLE_LANGFUSE_TELEMETRY === "true") {
+  startLangfuseTelemetrySDK();
+}
 
 const PORT = process.env.PORT || 3000;
 
@@ -69,5 +72,5 @@ slackApp.error(async (error) => {
 
 (async () => {
   await slackApp.start();
-  console.log('⚡️ Bolt app is running!');
+  console.log("⚡️ Bolt app is running!");
 })();

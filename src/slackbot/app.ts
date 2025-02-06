@@ -96,8 +96,6 @@ const pullNameFromMessage = (message) => {
 };
 
 app.event("app_mention", async ({ event, context }) => {
-  console.log("app_mention event 1", event.channel);
-
   if (event.text.includes("srebot-replay-command") && event.thread_ts) {
     const threadMessages = await app.client.conversations.replies({
       token: context.botToken,
