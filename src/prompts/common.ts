@@ -7,6 +7,7 @@ export interface PromptConfig {
   model: LanguageModelV1;
   temperature?: number;
   maxTokens?: number;
+  system?: string;
 }
 
 export const defaultPromptConfig: PromptConfig = {
