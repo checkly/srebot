@@ -3,9 +3,8 @@ import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
 import { prisma } from "../../prisma";
 import { SreAssistant } from "../SreAssistant";
 import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../../ai/openai";
 import { ContextKey } from "../../aggregator/ContextAggregator";
-import { searchContextPrompt } from "src/prompts/search";
+import { searchContextPrompt } from "../../prompts/search";
 
 const parameters = createToolParameters(
   z.object({

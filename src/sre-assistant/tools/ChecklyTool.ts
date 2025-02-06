@@ -8,8 +8,7 @@ import {
   mapCheckToContextValue,
 } from "../../checkly/utils";
 import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../../ai/openai";
-import { checklyToolPrompt } from "src/prompts/checkly";
+import { checklyToolPrompt } from "../../prompts/checkly";
 
 const parameters = createToolParameters(
   z.object({

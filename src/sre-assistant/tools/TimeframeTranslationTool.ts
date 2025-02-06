@@ -3,8 +3,7 @@ import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
 import { SreAssistant } from "../SreAssistant";
 import { generateObject } from "ai";
 import moment from "moment";
-import { getOpenaiSDKClient } from "../../ai/openai";
-import { parseTimeframePrompt } from "src/prompts/timeframe";
+import { parseTimeframePrompt } from "../../prompts/timeframe";
 
 // Define supported timeframe formats for better type safety and documentation
 export enum TimeframeFormat {
