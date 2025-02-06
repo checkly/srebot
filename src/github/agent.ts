@@ -15,7 +15,7 @@ export class GithubAgent {
     org: string,
     repo: string,
     release: string,
-    previousRelease: string
+    previousRelease: string,
   ) {
     let diff = await this.github.getDiffBetweenTags(
       org,
@@ -27,19 +27,18 @@ export class GithubAgent {
     const { text } = await generateText({
       model: this.model,
       prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes in a single sentence: ${JSON.stringify(
-        diff
+        diff,
       )}. Do not describe the outer context as the developer is already aware. Do not yap. Do not use any formatting rules.`,
     });
 
     return { diff, summary: text };
   }
 
-
   async summarizeRelease(
     org: string,
     repo: string,
     release: string,
-    previousRelease: string
+    previousRelease: string,
   ) {
     let diff = await this.github.getDiffBetweenTags(
       org,
@@ -51,8 +50,11 @@ export class GithubAgent {
     const { text } = await generateText({
       model: this.model,
       prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes so that another developer quickly understands what has changes: ${JSON.stringify(
-        diff
-      ).slice(0, 1000000)}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
+        diff,
+      ).slice(
+        0,
+        1000000,
+      )}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
     });
 
     return { diff, summary: text };
@@ -62,8 +64,8 @@ export class GithubAgent {
     org: string,
     repo: string,
     currentSha: string,
-    previousSha: string
-  ): Promise<{ diff: CompareCommitsResponse, summary: string }> {
+    previousSha: string,
+  ): Promise<{ diff: CompareCommitsResponse; summary: string }> {
     const diff = await this.github.getDiffBetweenTags(
       org,
       repo,
@@ -74,7 +76,7 @@ export class GithubAgent {
     const { text } = await generateText({
       model: this.model,
       prompt: `The following diff describes the changes between ${previousSha} and ${currentSha}. Summarize the changes so that another developer quickly understands what has changes: ${JSON.stringify(
-        diff
+        diff,
       )}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
     });
 
@@ -97,7 +99,7 @@ export class GithubAgent {
     const { object } = await generateObject({
       model: this.model,
       prompt: `Based on the following prompt: ${prompt} and the list of repositories\n\n${JSON.stringify(
-        repositories
+        repositories,
       )}\n\n, select the repository that is most relevant to the prompt.`,
       schema: z.object({
         repo: z.enum(repositories.map((r) => r.name) as [string, ...string[]]),
@@ -137,7 +139,7 @@ export class GithubAgent {
           org,
           repo.name,
           release.tag,
-          previousRelease
+          previousRelease,
         );
         console.log(JSON.stringify(diff, undefined, 2));
         return {
@@ -146,9 +148,11 @@ export class GithubAgent {
           link: release.link,
           diffLink: diff.html_url,
           summary: summary,
-          authors: Array.from(new Set(diff.commits.map(commit => commit.author))),
+          authors: Array.from(
+            new Set(diff.commits.map((commit) => commit.author)),
+          ),
         };
-      })
+      }),
     );
 
     return {

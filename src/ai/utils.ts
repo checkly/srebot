@@ -1,4 +1,8 @@
-import { Message, Run, RunSubmitToolOutputsParams, } from "openai/resources/beta/threads";
+import {
+  Message,
+  Run,
+  RunSubmitToolOutputsParams,
+} from "openai/resources/beta/threads";
 import { getOpenaiClient } from "./openai";
 import { stringify } from "yaml";
 
@@ -27,7 +31,7 @@ export const cancelRun = async (threadId: string): Promise<void> => {
 
 export const formatToolOutput = (
   toolCallId: string,
-  output: unknown
+  output: unknown,
 ): RunSubmitToolOutputsParams.ToolOutput => {
   return {
     output: JSON.stringify(output),
@@ -37,7 +41,7 @@ export const formatToolOutput = (
 
 export const handleToolError = (
   toolCallId: string,
-  error: Error
+  error: Error,
 ): RunSubmitToolOutputsParams.ToolOutput => {
   return {
     output: stringify({ error: error.message ?? "Unknown error" }),
@@ -47,7 +51,7 @@ export const handleToolError = (
 
 export const getRunMessages = async (
   threadId: string,
-  runId: string
+  runId: string,
 ): Promise<Message[]> => {
   const messages = await openai.beta.threads.messages.list(threadId, {
     run_id: runId,

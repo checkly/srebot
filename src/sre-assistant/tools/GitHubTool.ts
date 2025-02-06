@@ -14,14 +14,14 @@ const parameters = createToolParameters(
     repo: z
       .string()
       .describe(
-        "The full_name of the repository to get information about (e.g. 'checkly/checkly-cli')"
+        "The full_name of the repository to get information about (e.g. 'checkly/checkly-cli')",
       )
       .optional(),
-  })
+  }),
 );
 
 const outputSchema = createToolOutput(
-  z.string().describe("The response from the GitHub API")
+  z.string().describe("The response from the GitHub API"),
 );
 
 export class GitHubTool extends Tool<
@@ -58,11 +58,11 @@ export class GitHubTool extends Tool<
             patch: f.patch,
             url: f.blob_url,
           })),
-        }))
+        })),
       ).slice(0, MAX_RESPONSE_LENGTH);
     } else if (input.action === "listRepositories") {
       const repos = await githubApi.queryRepositories(
-        process.env.GITHUB_ORG as string
+        process.env.GITHUB_ORG as string,
       );
       return stringify(
         repos.map((r) => ({
@@ -70,7 +70,7 @@ export class GitHubTool extends Tool<
           description: r.description,
           last_pushed: r.pushed_at,
           url: r.html_url,
-        }))
+        })),
       );
     }
 

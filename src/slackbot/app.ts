@@ -3,11 +3,19 @@ import { getOpenaiClient, getOpenaiSDKClient } from "../ai/openai";
 import { getRunMessages } from "../ai/utils";
 import { SreAssistant } from "../sre-assistant/SreAssistant";
 import { getSlackConfig, validateConfig } from "./config";
-import { convertToSlackMarkdown, getMessageText, getThreadMetadata } from "./utils";
+import {
+  convertToSlackMarkdown,
+  getMessageText,
+  getThreadMetadata,
+} from "./utils";
 import GitHubAPI from "../github/github";
 import { GithubAgent } from "../github/agent";
 import moment from "moment";
-import { createReleaseBlock, divider as releaseDivider, releaseHeader, } from "../github/slackBlock";
+import {
+  createReleaseBlock,
+  divider as releaseDivider,
+  releaseHeader,
+} from "../github/slackBlock";
 import { analyseAlert } from "./ops-channel/analyse-alert";
 import { prisma } from "../prisma";
 import { ContextKey } from "../aggregator/ContextAggregator";
@@ -43,7 +51,7 @@ app.command("/srebot-releases", async ({ command, ack, respond }) => {
 
   let releases = summaries.releases.sort(
     (a, b) =>
-      new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+      new Date(b.release_date).getTime() - new Date(a.release_date).getTime(),
   );
   let response = [releaseHeader].concat(
     releases
@@ -69,7 +77,7 @@ app.command("/srebot-releases", async ({ command, ack, respond }) => {
         }
 
         return prev.concat([releaseDivider]).concat(curr);
-      })
+      }),
   );
 
   await respond({
@@ -78,11 +86,17 @@ app.command("/srebot-releases", async ({ command, ack, respond }) => {
 });
 
 const pullNameFromMessage = (message) => {
-  return message.username || message.bot_profile?.display_name || message.bot_profile?.name || message.user_profile?.display_name || message.user_profile?.name;
-}
+  return (
+    message.username ||
+    message.bot_profile?.display_name ||
+    message.bot_profile?.name ||
+    message.user_profile?.display_name ||
+    message.user_profile?.name
+  );
+};
 
 app.event("app_mention", async ({ event, context }) => {
-  if (event.text.includes('srebot-replay-command') && event.thread_ts) {
+  if (event.text.includes("srebot-replay-command") && event.thread_ts) {
     const threadMessages = await app.client.conversations.replies({
       token: context.botToken,
       channel: event.channel,
@@ -90,18 +104,25 @@ app.event("app_mention", async ({ event, context }) => {
     });
     const firstMessage = threadMessages.messages?.[0];
     if (!firstMessage) {
-      return
+      return;
     }
 
-    const firstMessageText = getMessageText(firstMessage)
-    const senderName = pullNameFromMessage(firstMessage)
+    const firstMessageText = getMessageText(firstMessage);
+    const senderName = pullNameFromMessage(firstMessage);
     const messageTextWithSender = senderName
       ? `${senderName}: ${firstMessageText}`
-      : firstMessageText
+      : firstMessageText;
 
-    console.log('Starting to analyse the alert message:', messageTextWithSender)
+    console.log(
+      "Starting to analyse the alert message:",
+      messageTextWithSender,
+    );
 
-    const { responseText } = await getAlertAnalysis(messageTextWithSender, event.channel, event.thread_ts);
+    const { responseText } = await getAlertAnalysis(
+      messageTextWithSender,
+      event.channel,
+      event.thread_ts,
+    );
 
     await app.client.chat.postMessage({
       token: context.botToken,
@@ -109,7 +130,7 @@ app.event("app_mention", async ({ event, context }) => {
       text: responseText,
       thread_ts: event.ts, // Replies in the same thread
     });
-    return
+    return;
   }
 
   try {
@@ -175,9 +196,9 @@ app.event("app_mention", async ({ event, context }) => {
           msg.content
             .filter((c) => c.type === "text")
             .map((c) => (c as any).text.value)
-            .join("")
-        )
-      )
+            .join(""),
+        ),
+      ),
     );
   } catch (error) {
     console.error("Error processing app mention:", error);
@@ -190,36 +211,53 @@ app.event("app_mention", async ({ event, context }) => {
   }
 });
 
-async function getAlertAnalysis(messageText: string, targetChannel: string, threadTs: string) {
-  console.log('Starting to analyse the alert message')
+async function getAlertAnalysis(
+  messageText: string,
+  targetChannel: string,
+  threadTs: string,
+) {
+  console.log("Starting to analyse the alert message");
   const response = await analyseAlert(messageText, targetChannel, threadTs);
   let responseText;
 
-  if (response.recommendation === 'ignore') {
-    responseText = `The alert state is: \`${response.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${response.reasoning}`
+  if (response.recommendation === "ignore") {
+    responseText = `The alert state is: \`${response.state}\`, and my recommendation is to ignore this message\n\nMy reasoning: ${response.reasoning}`;
   } else {
-    responseText = `I have determined that the alert is of severity: \`${response.severity}\``
+    responseText = `I have determined that the alert is of severity: \`${response.severity}\``;
 
     if (response.escalateToIncidentResponse && process.env.SLACK_USERS_TO_TAG) {
-      const usersToTag = process.env.SLACK_USERS_TO_TAG.split(',').map(user => `<@${user}>`).join(' ')
+      const usersToTag = process.env.SLACK_USERS_TO_TAG.split(",")
+        .map((user) => `<@${user}>`)
+        .join(" ");
 
-      responseText += `( tagging ${usersToTag} for further investigation)`
+      responseText += `( tagging ${usersToTag} for further investigation)`;
     }
 
-    if (response.affectedComponents && response.affectedComponents?.length > 0) {
-      responseText += `\n\nAffected components:\n${response.affectedComponents?.map(affected => `- \`${affected.component}\` in \`${affected.environment}\` environment`).join('\n')}`
+    if (
+      response.affectedComponents &&
+      response.affectedComponents?.length > 0
+    ) {
+      responseText += `\n\nAffected components:\n${response.affectedComponents?.map((affected) => `- \`${affected.component}\` in \`${affected.environment}\` environment`).join("\n")}`;
     }
 
-    responseText += `\n\nSummary: ${response.summary}`
+    responseText += `\n\nSummary: ${response.summary}`;
 
-    if (response.historyOutput && response.historyOutput.type === "recurring" && response.historyOutput.confidence >= 80) {
-      responseText += `\n\nHere is the history of similar alerts in the past 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join('\n')}`
+    if (
+      response.historyOutput &&
+      response.historyOutput.type === "recurring" &&
+      response.historyOutput.confidence >= 80
+    ) {
+      responseText += `\n\nHere is the history of similar alerts in the past 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join("\n")}`;
     }
-    if (response.historyOutput && response.historyOutput.type === "escalating") {
-      responseText += `\n\nIt looks like the alert is escalating from it's normal rate in the last 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join('\n')}`
+    if (
+      response.historyOutput &&
+      response.historyOutput.type === "escalating"
+    ) {
+      responseText += `\n\nIt looks like the alert is escalating from it's normal rate in the last 72h:\n${response.historyOutput.pastMessageLinks.slice(0, 5).join("\n")}`;
     }
     if (response.historyOutput && response.historyOutput.type === "new") {
-      responseText += '\n\nIt looks like a new issue, I could not find any similar alerts in the past 72h.'
+      responseText +=
+        "\n\nIt looks like a new issue, I could not find any similar alerts in the past 72h.";
     }
   }
   return { responseText, response };
@@ -229,82 +267,98 @@ if (process.env.OPS_CHANNEL_ID) {
   const targetChannel = process.env.OPS_CHANNEL_ID;
 
   // Listen for messages in the specified channel
-  app.event("message", async ({ event, context }: { event: any, context: any }) => {
-    try {
-      const isTargetChannel = event.channel === targetChannel;
-      const isNotAThreadReply = !event.thread_ts; // not a openAIThread reply
-      const isMessageEvent = event.type === "message"; // Ignore message edits
-      const isNotMessageChangedEvent = event.subtype !== "message_changed"; // Ignore message edits
+  app.event(
+    "message",
+    async ({ event, context }: { event: any; context: any }) => {
+      try {
+        const isTargetChannel = event.channel === targetChannel;
+        const isNotAThreadReply = !event.thread_ts; // not a openAIThread reply
+        const isMessageEvent = event.type === "message"; // Ignore message edits
+        const isNotMessageChangedEvent = event.subtype !== "message_changed"; // Ignore message edits
 
-      const shouldRespondToMessage = isTargetChannel && isNotAThreadReply && isMessageEvent && isNotMessageChangedEvent;
-      if (!shouldRespondToMessage) {
-        return
-      }
+        const shouldRespondToMessage =
+          isTargetChannel &&
+          isNotAThreadReply &&
+          isMessageEvent &&
+          isNotMessageChangedEvent;
+        if (!shouldRespondToMessage) {
+          return;
+        }
 
-      const messageText = getMessageText(event);
-      const sender = pullNameFromMessage(event);
-      const messageTextWithSender = sender
-        ? `${sender}: ${messageText}`
-        : messageText
+        const messageText = getMessageText(event);
+        const sender = pullNameFromMessage(event);
+        const messageTextWithSender = sender
+          ? `${sender}: ${messageText}`
+          : messageText;
 
-      // @ts-ignore
-      console.log("Received message:", messageText, "from:", sender as any);
+        // @ts-ignore
+        console.log("Received message:", messageText, "from:", sender as any);
 
-      const isLikelyFromBot = event.subtype === "bot_message" || Boolean(event.bot_id);
-      const isMessageFromHuman = !isLikelyFromBot;
+        const isLikelyFromBot =
+          event.subtype === "bot_message" || Boolean(event.bot_id);
+        const isMessageFromHuman = !isLikelyFromBot;
 
-      const shouldIgnoreMessageBasedOnSender = isMessageFromHuman && process.env.ALLOW_NON_BOT_MESSAGES === undefined;
-      if (shouldIgnoreMessageBasedOnSender) {
-        console.log("Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables. Event subtype:", event.subtype);
-        return;
-      }
+        const shouldIgnoreMessageBasedOnSender =
+          isMessageFromHuman &&
+          process.env.ALLOW_NON_BOT_MESSAGES === undefined;
+        if (shouldIgnoreMessageBasedOnSender) {
+          console.log(
+            "Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables. Event subtype:",
+            event.subtype,
+          );
+          return;
+        }
 
-      const { responseText, response } = await getAlertAnalysis(messageTextWithSender, targetChannel, event.ts);
+        const { responseText, response } = await getAlertAnalysis(
+          messageTextWithSender,
+          targetChannel,
+          event.ts,
+        );
 
-      const alertRecord = await prisma.alert.create({
-        data: {
-          summary: response.summary || 'No summary',
+        const alertRecord = await prisma.alert.create({
           data: {
-            message: messageText,
-            sender: sender,
-            channel: event.channel
+            summary: response.summary || "No summary",
+            data: {
+              message: messageText,
+              sender: sender,
+              channel: event.channel,
+            },
+            context: {
+              createMany: {
+                data: {
+                  key: ContextKey.AlertAnalysis,
+                  value: response,
+                },
+              },
+            },
           },
-          context: {
-            createMany: {
-              data: {
-                key: ContextKey.AlertAnalysis,
-                value: response
-              }
-            }
-          }
-        },
-      });
+        });
 
-      const openAIThread = await getOpenaiClient().beta.threads.create({
-        messages: [
-          {
-            role: "assistant",
-            content:
-              `*Alert:* ${messageTextWithSender}\n\n*Summary:* ${response.summary}`,
-          },
-        ],
-      });
+        const openAIThread = await getOpenaiClient().beta.threads.create({
+          messages: [
+            {
+              role: "assistant",
+              content: `*Alert:* ${messageTextWithSender}\n\n*Summary:* ${response.summary}`,
+            },
+          ],
+        });
 
-      await app.client.chat.postMessage({
-        token: context.botToken,
-        channel: event.channel,
-        text: responseText,
-        thread_ts: event.ts, // Replies in the same thread
-        metadata: {
-          event_type: "alert",
-          event_payload: {
-            threadId: openAIThread.id,
-            alertId: alertRecord.id,
+        await app.client.chat.postMessage({
+          token: context.botToken,
+          channel: event.channel,
+          text: responseText,
+          thread_ts: event.ts, // Replies in the same thread
+          metadata: {
+            event_type: "alert",
+            event_payload: {
+              threadId: openAIThread.id,
+              alertId: alertRecord.id,
+            },
           },
-        },
-      });
-    } catch (error) {
-      console.error("Error responding to message:", error);
-    }
-  });
+        });
+      } catch (error) {
+        console.error("Error responding to message:", error);
+      }
+    },
+  );
 }

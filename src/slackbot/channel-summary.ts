@@ -6,7 +6,7 @@ import { z } from "zod";
 export const generateChannelSummary = async (
   channelId: string,
   prompt: string,
-  fromTimestamp?: string
+  fromTimestamp?: string,
 ) => {
   const fromDate = fromTimestamp
     ? new Date(fromTimestamp)
@@ -15,7 +15,7 @@ export const generateChannelSummary = async (
   const messageHistory = messages
     ?.map(
       (m) =>
-        `${convertSlackTimestamp(m.ts!).toISOString()} Message: ${m.plaintext}`
+        `${convertSlackTimestamp(m.ts!).toISOString()} Message: ${m.plaintext}`,
     )
     .join("\n");
 
@@ -45,7 +45,7 @@ To complete the task, follow these steps:
       relevantLinks: z
         .array(z.object({ url: z.string(), title: z.string() }))
         .describe(
-          "Links that are relevant to the given question or the channel summary."
+          "Links that are relevant to the given question or the channel summary.",
         ),
     }),
   });

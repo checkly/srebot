@@ -8,7 +8,12 @@ export const getThreadMetadata = async (messages: any[]) => {
   let threadId, alertId;
 
   if (messages && messages.length > 0) {
-    const firstBotMessage = messages.find((msg) => msg.bot_id && (msg.metadata?.event_payload?.threadId || msg.metadata?.event_payload?.alertId));
+    const firstBotMessage = messages.find(
+      (msg) =>
+        msg.bot_id &&
+        (msg.metadata?.event_payload?.threadId ||
+          msg.metadata?.event_payload?.alertId),
+    );
     if (firstBotMessage) {
       const metadata = firstBotMessage.metadata?.event_payload as {
         threadId: string;
@@ -67,7 +72,7 @@ export async function generateSlackBlockKitMessage(message: string) {
                     z.object({
                       type: z.literal("mrkdwn"),
                       text: z.string(),
-                    })
+                    }),
                   )
                   .describe("The fields of the section block"),
               })
@@ -102,19 +107,19 @@ export async function generateSlackBlockKitMessage(message: string) {
                       value: z
                         .string()
                         .describe(
-                          "The value of the quick reply button. This will be sent to the chat as a user message when the button is clicked."
+                          "The value of the quick reply button. This will be sent to the chat as a user message when the button is clicked.",
                         ),
                       action_id: z
                         .string()
                         .describe(
-                          "The action ID of the quick reply button. This should be quick-reply-<number>"
+                          "The action ID of the quick reply button. This should be quick-reply-<number>",
                         ),
-                    })
+                    }),
                   )
                   .describe("The elements of the quick reply actions block"),
               })
               .describe("An actions block with quick reply buttons"),
-          ])
+          ]),
         )
         .describe("The blocks of the Slack Block Kit message"),
     }),
@@ -266,7 +271,7 @@ export const getMessageText = (message: Object): string => {
 
   // Remove any duplicate entries and empty strings
   const uniqueTextParts = [...new Set(textParts)].filter(
-    (text) => text.trim().length > 0
+    (text) => text.trim().length > 0,
   );
 
   // Join all parts with newlines and trim whitespace
@@ -276,7 +281,7 @@ export const getMessageText = (message: Object): string => {
 export async function fetchHistoricalMessages(
   channelId: string,
   limit = 30,
-  fromDate?: Date
+  fromDate?: Date,
 ) {
   try {
     const result = await web.conversations.history({
@@ -298,7 +303,7 @@ export async function fetchHistoricalMessages(
         ...m,
         plaintext: getMessageText(m),
         username: await fetchMessageSenderName(m, nameCache),
-      }))
+      })),
     );
   } catch (error) {
     console.error("Error fetching historical messages:", error);
@@ -316,14 +321,12 @@ export const convertSlackTimestamp = (slackTs: string): Date => {
 
 const fetchUserName = async (userId: string): Promise<string> => {
   try {
-    const user = await web.users
-      .info({ user: userId })
-      .then((u) => u.user);
+    const user = await web.users.info({ user: userId }).then((u) => u.user);
     return user?.name ?? user?.real_name ?? userId;
   } catch (e) {
     return userId;
   }
-}
+};
 
 const fetchBotName = async (botId: string): Promise<string> => {
   try {
@@ -332,20 +335,19 @@ const fetchBotName = async (botId: string): Promise<string> => {
   } catch (e) {
     return botId;
   }
-}
+};
 
-export const fetchMessageSenderName = async (message: MessageElement, nameCache: Map<string, Promise<string>>): Promise<string> => {
+export const fetchMessageSenderName = async (
+  message: MessageElement,
+  nameCache: Map<string, Promise<string>>,
+): Promise<string> => {
   const isUser = Boolean(message.user);
 
   if (message.username) {
-    return isUser
-      ? `User/${message.username}`
-      : `Bot/${message.username}`;
+    return isUser ? `User/${message.username}` : `Bot/${message.username}`;
   }
 
-  const cacheKey = isUser
-    ? `user:${message.user}`
-    : `bot:${message.bot_id}`
+  const cacheKey = isUser ? `user:${message.user}` : `bot:${message.bot_id}`;
 
   const promise = nameCache.get(cacheKey);
   if (promise) {
@@ -354,11 +356,9 @@ export const fetchMessageSenderName = async (message: MessageElement, nameCache:
 
   const namePromise = isUser
     ? fetchUserName(message.user!)
-    : fetchBotName(message.bot_id!)
+    : fetchBotName(message.bot_id!);
 
   nameCache.set(cacheKey, namePromise);
   const name = await namePromise;
-  return isUser
-    ? `User/${name}`
-    : `Bot/${name}`;
+  return isUser ? `User/${name}` : `Bot/${name}`;
 };
