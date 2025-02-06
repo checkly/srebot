@@ -4,6 +4,7 @@ import { fetchDocumentsFromKnowledgeBase } from "../../notion/notion";
 import { convertSlackTimestamp, fetchHistoricalMessages } from "../utils";
 import moment from "moment";
 import {
+  affectedComponentsPrompt,
   alertHistoryPrompt,
   alertRecommendationPrompt,
   alertSeverityPrompt,
@@ -70,10 +71,11 @@ export const analyseAlert = async (
     (doc) => doc.slug === OPS_CHANNEL_GUIDELINES_SLUG,
   );
 
-  const [compPrompt, compConfig] = alertAnalysisSystemPrompt(
+  const [compPrompt, compConfig] = affectedComponentsPrompt(
     opsChannelGuidelines,
     alertMessage,
   );
+
   const affectedComponentsOutput = await generateObject({
     ...compConfig,
     prompt: compPrompt,
