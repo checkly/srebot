@@ -4,7 +4,10 @@ import { z } from "zod";
 import { getOpenaiSDKClient } from "../../ai/openai";
 import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
 import { checkly } from "../../checkly/client";
-import { mapCheckResultToContextValue, mapCheckToContextValue, } from "../../checkly/utils";
+import {
+  mapCheckResultToContextValue,
+  mapCheckToContextValue,
+} from "../../checkly/utils";
 import { SreAssistant } from "../SreAssistant";
 
 const parameters = createToolParameters(
@@ -101,6 +104,7 @@ export class ChecklyTool extends Tool<
         }),
         experimental_telemetry: {
           isEnabled: true,
+          functionId: "ChecklyTool.search",
         },
       });
 

@@ -33,6 +33,7 @@ ${text}`;
       maxTokens: 300,
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "generateContextAnalysis",
       },
     });
 
@@ -74,11 +75,11 @@ ${slackFormatInstructions}
 
 CONTEXT:
 ${stringify(
-      contextAnalysis
-        .filter((c) => c.key !== ContextKey.ChecklyCheck)
-        .map((c) => ({ key: c.key, source: c.source, value: c.value })),
-      { indent: 2 }
-    ).slice(0, 200000)}
+  contextAnalysis
+    .filter((c) => c.key !== ContextKey.ChecklyCheck)
+    .map((c) => ({ key: c.key, source: c.source, value: c.value })),
+  { indent: 2 }
+).slice(0, 200000)}
 
 Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analysis and potential mitigations. Help the user to resolve the issue.
 Generate a condensed summary of your root cause analysis of the current situation.
@@ -91,6 +92,7 @@ If a recent release is the most likely root cause, provide a link to the release
     maxTokens: 500,
     experimental_telemetry: {
       isEnabled: true,
+      functionId: "generateContextAnalysisSummary",
     },
   });
 

@@ -200,6 +200,7 @@ export class TimeframeTranslationTool extends Tool<
       schema: outputSchema,
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "TimeframeTranslationTool.parseLLM",
       },
     });
 

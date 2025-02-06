@@ -21,7 +21,7 @@ export class GithubAgent {
       org,
       repo,
       previousRelease,
-      release,
+      release
     );
 
     const { text } = await generateText({
@@ -31,12 +31,12 @@ export class GithubAgent {
       )}. Do not describe the outer context as the developer is already aware. Do not yap. Do not use any formatting rules.`,
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "githubAgent.singleSentenceReleaseSummary",
       },
     });
 
     return { diff, summary: text };
   }
-
 
   async summarizeRelease(
     org: string,
@@ -48,16 +48,20 @@ export class GithubAgent {
       org,
       repo,
       previousRelease,
-      release,
+      release
     );
 
     const { text } = await generateText({
       model: this.model,
       prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes so that another developer quickly understands what has changes: ${JSON.stringify(
         diff
-      ).slice(0, 1000000)}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
+      ).slice(
+        0,
+        1000000
+      )}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "githubAgent.summarizeRelease",
       },
     });
 
@@ -69,12 +73,12 @@ export class GithubAgent {
     repo: string,
     currentSha: string,
     previousSha: string
-  ): Promise<{ diff: CompareCommitsResponse, summary: string }> {
+  ): Promise<{ diff: CompareCommitsResponse; summary: string }> {
     const diff = await this.github.getDiffBetweenTags(
       org,
       repo,
       previousSha,
-      currentSha,
+      currentSha
     );
 
     const { text } = await generateText({
@@ -84,6 +88,7 @@ export class GithubAgent {
       )}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "githubAgent.summarizeDeployment",
       },
     });
 
@@ -113,6 +118,7 @@ export class GithubAgent {
       }),
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "githubAgent.findRepo",
       },
     });
 
@@ -126,6 +132,7 @@ export class GithubAgent {
       prompt,
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "githubAgent.getDate",
       },
     });
 
@@ -161,7 +168,9 @@ export class GithubAgent {
           link: release.link,
           diffLink: diff.html_url,
           summary: summary,
-          authors: Array.from(new Set(diff.commits.map(commit => commit.author))),
+          authors: Array.from(
+            new Set(diff.commits.map((commit) => commit.author))
+          ),
         };
       })
     );

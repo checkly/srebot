@@ -50,6 +50,7 @@ To complete the task, follow these steps:
     }),
     experimental_telemetry: {
       isEnabled: true,
+      functionId: "generateChannelSummary",
     },
   });
 

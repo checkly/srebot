@@ -5,7 +5,11 @@ import { z } from "zod";
 import { getOpenaiSDKClient } from "../ai/openai";
 import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
 import { checkly } from "../checkly/client";
-import { getLastCheckResult, mapCheckResultToContextValue, mapCheckToContextValue, } from "../checkly/utils";
+import {
+  getLastCheckResult,
+  mapCheckResultToContextValue,
+  mapCheckToContextValue,
+} from "../checkly/utils";
 import GitHubAPI from "../github/github";
 import { prisma } from "../prisma";
 import { CheckContext, ContextKey } from "./ContextAggregator";
@@ -23,8 +27,8 @@ export const githubAggregator = {
       },
     });
 
-    if(releases.length === 0) {
-      return []
+    if (releases.length === 0) {
+      return [];
     }
 
     const { object: relevantReleaseIds } = await generateObject({
@@ -33,13 +37,13 @@ export const githubAggregator = {
 
 Releases:
 ${stringify(
-        releases.map((r) => ({
-          id: r.id,
-          repo: r.repoUrl,
-          release: r.name,
-          summary: r.summary,
-        }))
-      )}
+  releases.map((r) => ({
+    id: r.id,
+    repo: r.repoUrl,
+    release: r.name,
+    summary: r.summary,
+  }))
+)}
 
 Check:
 ${stringify(mapCheckToContextValue(check))}
@@ -58,6 +62,7 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
       }),
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "githubAggregator.getRelevantReleases",
       },
     });
 
@@ -76,11 +81,14 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
         source: "github",
       } as CheckContext);
 
-    return relevantReleases.map(
-      (release) => makeRepoReleaseContext(release)
-    );
+    return relevantReleases.map((release) => makeRepoReleaseContext(release));
   },
-  getRelevantDeployments: async ({ fromDate, check, alertCheckResult, alert }) => {
+  getRelevantDeployments: async ({
+    fromDate,
+    check,
+    alertCheckResult,
+    alert,
+  }) => {
     const deployments = await prisma.deployment.findMany({
       where: {
         createdAt: {
@@ -88,10 +96,9 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
         },
       },
     });
-    if(deployments.length === 0) {
-      return []
+    if (deployments.length === 0) {
+      return [];
     }
-
 
     const { object: relevantReleaseIds } = await generateObject({
       model: getOpenaiSDKClient()("gpt-4o"),
@@ -99,13 +106,13 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
 
 Deployments:
 ${stringify(
-        deployments.map((deploy) => ({
-          id: deploy.id,
-          repo: deploy.repoUrl,
-          createdAt: deploy.createdAt,
-          summary: deploy.summary,
-        }))
-      )}
+  deployments.map((deploy) => ({
+    id: deploy.id,
+    repo: deploy.repoUrl,
+    createdAt: deploy.createdAt,
+    summary: deploy.summary,
+  }))
+)}
 
 Check:
 ${stringify(mapCheckToContextValue(check))}
@@ -124,6 +131,7 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
       }),
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "githubAggregator.getRelevantDeployments",
       },
     });
 
@@ -142,9 +150,9 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
         source: "github",
       } as CheckContext);
 
-    return relevantReleases.map(
-      (deploy) => mapDeploymentToCheckContext(deploy)
-    )
+    return relevantReleases.map((deploy) =>
+      mapDeploymentToCheckContext(deploy)
+    );
   },
   fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {
     console.log("Aggregating GitHub Context...");
@@ -153,7 +161,7 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
 
       // Identify the current state of the check
       // This may be both a failure or a recovery
-      const hasCheckFailuresNow = alert.ALERT_TYPE !== AlertType.ALERT_RECOVERY
+      const hasCheckFailuresNow = alert.ALERT_TYPE !== AlertType.ALERT_RECOVERY;
 
       // For a recovery we need to find the last failure
       // For a failure we need to find the last success

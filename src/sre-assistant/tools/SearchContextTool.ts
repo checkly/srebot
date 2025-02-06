@@ -142,6 +142,7 @@ Remember:
       maxTokens: 1000,
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "SearchContextTool.relevantContext",
       },
     });
 

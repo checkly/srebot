@@ -58,6 +58,7 @@ describe.skip("fetchHistoricalMessages", () => {
   Question: is anything related to the recent adhocrun-eu-west-1 check failing?`,
       experimental_telemetry: {
         isEnabled: true,
+        functionId: "test.generateChannelSummary",
       },
     });
 
