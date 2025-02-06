@@ -26,5 +26,5 @@ Date: ${date}
 OUTPUT FORMAT:
 ${slackFormatInstructions}
 
-${alertSummary.trim().length > 0 ? `Alert Summary:\n${alertSummary}` : ""}`;
+${alertSummary.trim().length > 0 ? `ALERT SUMMARY:\n${alertSummary}` : ""}`;
 }
