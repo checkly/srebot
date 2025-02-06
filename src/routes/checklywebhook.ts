@@ -2,10 +2,7 @@ import express, { Request, Response } from "express";
 import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
 import "reflect-metadata";
-import {
-  CheckContextAggregator,
-  ContextKey,
-} from "../aggregator/ContextAggregator";
+import { CheckContextAggregator, ContextKey, } from "../aggregator/ContextAggregator";
 import { generateContextAnalysisSummary } from "../aggregator/chains";
 import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
 import { prisma } from "../prisma";
@@ -85,7 +82,7 @@ router.post("/", async (req: Request, res: Response) => {
       });
 
       const checkResults = context.find(
-        (c) => c.key === ContextKey.ChecklyResults,
+        (c) => c.key === ContextKey.ChecklyResults
       );
 
       const thread = await getOpenaiClient().beta.threads.create({
@@ -140,7 +137,7 @@ router.post("/", async (req: Request, res: Response) => {
               {
                 type: "mrkdwn",
                 text: `:date: *${new Date(
-                  alertDto.STARTED_AT,
+                  alertDto.STARTED_AT
                 ).toLocaleString()}*`,
               },
               {

@@ -1,11 +1,7 @@
 import GitHubAPI from "../github/github";
 import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
 import { CheckContext, ContextKey } from "./ContextAggregator";
-import {
-  getLastCheckResult,
-  mapCheckResultToContextValue,
-  mapCheckToContextValue,
-} from "../checkly/utils";
+import { getLastCheckResult, mapCheckResultToContextValue, mapCheckToContextValue, } from "../checkly/utils";
 import { prisma } from "../prisma";
 import { generateObject } from "ai";
 import { getOpenaiSDKClient } from "../ai/openai";
@@ -27,8 +23,8 @@ export const githubAggregator = {
       },
     });
 
-    if (releases.length === 0) {
-      return [];
+    if(releases.length === 0) {
+      return []
     }
 
     const { object: relevantReleaseIds } = await generateObject({
@@ -37,13 +33,13 @@ export const githubAggregator = {
 
 Releases:
 ${stringify(
-  releases.map((r) => ({
-    id: r.id,
-    repo: r.repoUrl,
-    release: r.name,
-    summary: r.summary,
-  })),
-)}
+        releases.map((r) => ({
+          id: r.id,
+          repo: r.repoUrl,
+          release: r.name,
+          summary: r.summary,
+        }))
+      )}
 
 Check:
 ${stringify(mapCheckToContextValue(check))}
@@ -57,34 +53,31 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
         releaseIds: z
           .array(z.string())
           .describe(
-            "The ids of the releases that are most relevant to the check failure.",
+            "The ids of the releases that are most relevant to the check failure."
           ),
       }),
     });
 
     const relevantReleases = releases.filter((r) =>
-      relevantReleaseIds.releaseIds.includes(r.id),
+      relevantReleaseIds.releaseIds.includes(r.id)
     );
 
     const makeRepoReleaseContext = (release: Release) =>
       ({
         key: ContextKey.GitHubReleaseSummary.replace(
           "$repo",
-          `${release.org}/${release.repo}`,
+          `${release.org}/${release.repo}`
         ),
         value: release,
         checkId: alert.CHECK_ID,
         source: "github",
-      }) as CheckContext;
+      } as CheckContext);
 
-    return relevantReleases.map((release) => makeRepoReleaseContext(release));
+    return relevantReleases.map(
+      (release) => makeRepoReleaseContext(release)
+    );
   },
-  getRelevantDeployments: async ({
-    fromDate,
-    check,
-    alertCheckResult,
-    alert,
-  }) => {
+  getRelevantDeployments: async ({ fromDate, check, alertCheckResult, alert }) => {
     const deployments = await prisma.deployment.findMany({
       where: {
         createdAt: {
@@ -92,9 +85,10 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
         },
       },
     });
-    if (deployments.length === 0) {
-      return [];
+    if(deployments.length === 0) {
+      return []
     }
+
 
     const { object: relevantReleaseIds } = await generateObject({
       model: getOpenaiSDKClient()("gpt-4o"),
@@ -102,13 +96,13 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
 
 Deployments:
 ${stringify(
-  deployments.map((deploy) => ({
-    id: deploy.id,
-    repo: deploy.repoUrl,
-    createdAt: deploy.createdAt,
-    summary: deploy.summary,
-  })),
-)}
+        deployments.map((deploy) => ({
+          id: deploy.id,
+          repo: deploy.repoUrl,
+          createdAt: deploy.createdAt,
+          summary: deploy.summary,
+        }))
+      )}
 
 Check:
 ${stringify(mapCheckToContextValue(check))}
@@ -122,29 +116,29 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
         deploymentIds: z
           .array(z.string())
           .describe(
-            "The ids of the releases that are most relevant to the check failure.",
+            "The ids of the releases that are most relevant to the check failure."
           ),
       }),
     });
 
     const relevantReleases = deployments.filter((deployment) =>
-      relevantReleaseIds.deploymentIds.includes(deployment.id),
+      relevantReleaseIds.deploymentIds.includes(deployment.id)
     );
 
     const mapDeploymentToCheckContext = (deployment: Deployment) =>
       ({
         key: ContextKey.GitHubDeploymentSummary.replace(
           "$repo",
-          `${deployment.org}/${deployment.repo}`,
+          `${deployment.org}/${deployment.repo}`
         ),
         value: deployment,
         checkId: alert.CHECK_ID,
         source: "github",
-      }) as CheckContext;
+      } as CheckContext);
 
-    return relevantReleases.map((deploy) =>
-      mapDeploymentToCheckContext(deploy),
-    );
+    return relevantReleases.map(
+      (deploy) => mapDeploymentToCheckContext(deploy)
+    )
   },
   fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {
     console.log("Aggregating GitHub Context...");
@@ -153,19 +147,19 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
 
       // Identify the current state of the check
       // This may be both a failure or a recovery
-      const hasCheckFailuresNow = alert.ALERT_TYPE !== AlertType.ALERT_RECOVERY;
+      const hasCheckFailuresNow = alert.ALERT_TYPE !== AlertType.ALERT_RECOVERY
 
       // For a recovery we need to find the last failure
       // For a failure we need to find the last success
       const hadCheckFailuresBeforeStateChange = !hasCheckFailuresNow;
       const lastCheckResultBeforeStateChange = await getLastCheckResult(
         alert.CHECK_ID,
-        hadCheckFailuresBeforeStateChange,
+        hadCheckFailuresBeforeStateChange
       );
 
       const alertCheckResult = await checkly.getCheckResult(
         alert.CHECK_ID,
-        alert.CHECK_RESULT_ID,
+        alert.CHECK_RESULT_ID
       );
 
       const check = await checkly.getCheck(alert.CHECK_ID);

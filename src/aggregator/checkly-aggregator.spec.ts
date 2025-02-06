@@ -34,8 +34,8 @@ describe("ChecklyService", () => {
           $UUID: "380b94c2-2c56-4f1d-904a-a6122d96722a",
           moment: "January 15, 2025",
         },
-        { enableImplicitConversion: true },
-      ),
+        { enableImplicitConversion: true }
+      )
     );
 
     expect(context).toBeDefined();

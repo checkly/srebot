@@ -11,7 +11,7 @@ const getCheckContext = (context: CheckContext[]) => {
       checkId: checkContext?.checkId,
       data: checkContext?.value,
     },
-    { indent: 2 },
+    { indent: 2 }
   );
 };
 
@@ -40,14 +40,14 @@ ${text}`;
     context.map(async (c) => {
       const analysis = await generateContextAnalysis(stringify(c));
       return { ...c, analysis };
-    }),
+    })
   );
 
   return contextAnalysis;
 };
 
 export const generateContextAnalysisSummary = async (
-  contextAnalysis: CheckContext[],
+  contextAnalysis: CheckContext[]
 ) => {
   const checkContext = getCheckContext(contextAnalysis);
   const summary = await generateText({
@@ -71,11 +71,11 @@ ${slackFormatInstructions}
 
 CONTEXT:
 ${stringify(
-  contextAnalysis
-    .filter((c) => c.key !== ContextKey.ChecklyCheck)
-    .map((c) => ({ key: c.key, source: c.source, value: c.value })),
-  { indent: 2 },
-).slice(0, 200000)}
+      contextAnalysis
+        .filter((c) => c.key !== ContextKey.ChecklyCheck)
+        .map((c) => ({ key: c.key, source: c.source, value: c.value })),
+      { indent: 2 }
+    ).slice(0, 200000)}
 
 Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analysis and potential mitigations. Help the user to resolve the issue.
 Generate a condensed summary of your root cause analysis of the current situation.

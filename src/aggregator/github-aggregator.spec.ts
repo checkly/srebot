@@ -34,8 +34,8 @@ describe.skip("GithubAggregator", () => {
             $UUID: "test-uuid",
             moment: "March 15, 2024",
           },
-          { enableImplicitConversion: true },
-        ),
+          { enableImplicitConversion: true }
+        )
       )
       .catch((error) => {
         console.error("Error fetching context:", error);

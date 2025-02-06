@@ -11,13 +11,13 @@ const parameters = createToolParameters(
     query: z
       .string()
       .describe(
-        "A concise and specific search query or request for information in natural language.",
+        "A concise and specific search query or request for information in natural language."
       ),
     contextKey: z
       .enum(Object.values(ContextKey) as [string, ...string[]])
       .optional()
       .describe("A specific context key to filter the search results."),
-  }),
+  })
 );
 
 const outputSchema = createToolOutput(
@@ -25,8 +25,8 @@ const outputSchema = createToolOutput(
     z.object({
       relevance: z.number(),
       context: z.string(),
-    }),
-  ),
+    })
+  )
 );
 
 export class SearchContextTool extends Tool<
@@ -75,7 +75,7 @@ export class SearchContextTool extends Tool<
     this.contextKeys = contextKeys;
 
     this.description = `Search for relevant context based on the given query. Extract the most relevant information from the context that relates to the query. Available context keys: ${contextKeys.join(
-      ", ",
+      ", "
     )}`;
     this.parameters = createToolParameters(
       z.object({
@@ -84,7 +84,7 @@ export class SearchContextTool extends Tool<
           .enum(contextKeys.map((c) => c) as [string, ...string[]])
           .optional()
           .describe("The context key to search in."),
-      }),
+      })
     );
   }
 

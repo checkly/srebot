@@ -66,5 +66,5 @@ slackApp.error(async (error) => {
 
 (async () => {
   await slackApp.start();
-  console.log("⚡️ Bolt app is running!");
+  console.log('⚡️ Bolt app is running!');
 })();

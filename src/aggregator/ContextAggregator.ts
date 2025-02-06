@@ -30,12 +30,7 @@ export interface CheckContext {
 
 export class CheckContextAggregator {
   alert: WebhookAlertDto;
-  plugins = [
-    checklyAggregator,
-    githubAggregator,
-    slackChannelAggregator,
-    knowledgeAggregator,
-  ];
+  plugins = [checklyAggregator, githubAggregator, slackChannelAggregator, knowledgeAggregator];
 
   constructor(alert: WebhookAlertDto) {
     this.alert = alert;
@@ -47,11 +42,11 @@ export class CheckContextAggregator {
         return plugin.fetchContext(this.alert).catch((error) => {
           console.error(
             `Error fetching context from ${plugin.name ?? "unknown plugin"}:`,
-            error,
+            error
           );
           return [];
         });
-      }),
+      })
     ).then((results) => results.flat());
   }
 }

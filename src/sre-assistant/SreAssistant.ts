@@ -23,7 +23,7 @@ export class SreAssistant extends BaseAssistant {
       username: string;
       date: string;
     },
-    config?: Partial<RunCreateParams>,
+    config?: Partial<RunCreateParams>
   ) {
     super(threadId, {
       assistant_id: process.env.OPENAI_ASSISTANT_ID as string,
@@ -78,21 +78,11 @@ ${alertSummary.length > 0 ? `Alert Summary:\n${alertSummary}` : ""}`;
 
   protected async getTools(): Promise<Tool[]> {
     if (!this.alertId) {
-      return [
-        new ChecklyTool(this),
-        new GitHubTool(this),
-        new KnowledgeTool(this),
-        new TimeframeTranslationTool(this),
-      ];
+      return [new ChecklyTool(this), new GitHubTool(this), new KnowledgeTool(this), new TimeframeTranslationTool(this)];
     }
 
     const searchContextTool = new SearchContextTool(this);
     await searchContextTool.init();
-    return [
-      searchContextTool,
-      new ChecklyTool(this),
-      new GitHubTool(this),
-      new KnowledgeTool(this),
-    ];
+    return [searchContextTool, new ChecklyTool(this), new GitHubTool(this), new KnowledgeTool(this)];
   }
 }

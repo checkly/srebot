@@ -1,7 +1,7 @@
 import { getOpenaiClient } from "../src/ai/openai";
 import { initConfig } from "../src/lib/init-config";
 
-initConfig();
+initConfig()
 
 const openai = getOpenaiClient();
 
@@ -20,7 +20,7 @@ async function main() {
     await createAssistant("sre-assistant");
   } else {
     const sreAssistant = assistants.data.find(
-      (assistant) => assistant.name === "sre-assistant",
+      (assistant) => assistant.name === "sre-assistant"
     );
 
     if (!sreAssistant) {

@@ -16,9 +16,9 @@ const parameters = createToolParameters(
     request: z
       .string()
       .describe(
-        "A request for the GitHub NLP agent. For example: what changed in the ui since yesterday",
+        "A request for the GitHub NLP agent. For example: what changed in the ui since yesterday"
       ),
-  }),
+  })
 );
 
 const outputSchema = createToolOutput(z.string());

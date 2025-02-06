@@ -3,10 +3,7 @@ import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
 import { SreAssistant } from "../SreAssistant";
 import { checkly } from "../../checkly/client";
 import { stringify } from "yaml";
-import {
-  mapCheckResultToContextValue,
-  mapCheckToContextValue,
-} from "../../checkly/utils";
+import { mapCheckResultToContextValue, mapCheckToContextValue, } from "../../checkly/utils";
 import { generateObject } from "ai";
 import { getOpenaiSDKClient } from "../../ai/openai";
 
@@ -23,20 +20,20 @@ const parameters = createToolParameters(
     checkId: z
       .string()
       .describe(
-        "The ID of the Check to get information about. Omit this field for the 'getChecksStatus' action. Required for the 'getCheck' and 'getCheckResult' actions.",
+        "The ID of the Check to get information about. Omit this field for the 'getChecksStatus' action. Required for the 'getCheck' and 'getCheckResult' actions."
       )
       .optional(),
     query: z
       .string()
       .describe(
-        "A query to search for checks. Use this field only for the 'searchCheck' action.",
+        "A query to search for checks. Use this field only for the 'searchCheck' action."
       )
       .optional(),
-  }),
+  })
 );
 
 const outputSchema = createToolOutput(
-  z.string().describe("The response from the Checkly API"),
+  z.string().describe("The response from the Checkly API")
 );
 
 export class ChecklyTool extends Tool<
@@ -94,7 +91,7 @@ export class ChecklyTool extends Tool<
         prompt: `You are the Checkly Check Search Engine. You are given a query and a list of checks. Return the most relevant check that relates to the query.
 
 				Available checks: ${stringify(
-          checks.map((c) => ({ ...mapCheckToContextValue(c) })),
+          checks.map((c) => ({ ...mapCheckToContextValue(c) }))
         )}
 
 				Search Query: ${input.query ?? ""}`,
