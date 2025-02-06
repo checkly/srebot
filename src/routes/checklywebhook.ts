@@ -3,7 +3,10 @@ import { plainToInstance } from "class-transformer";
 import { validateOrReject } from "class-validator";
 import express, { Request, Response } from "express";
 import "reflect-metadata";
-import { CheckContextAggregator, ContextKey, } from "../aggregator/ContextAggregator";
+import {
+  CheckContextAggregator,
+  ContextKey,
+} from "../aggregator/ContextAggregator";
 import { generateContextAnalysisSummary } from "../aggregator/chains";
 import { getOpenaiClient } from "../ai/openai";
 import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
@@ -46,8 +49,16 @@ router.post("/", async (req: Request, res: Response) => {
     });
 
     if (exisingAlert && !!(process.env.PREVENT_DUPLICATE_ALERTS === "true")) {
-      console.log("Alert already processed", !!(process.env.PREVENT_DUPLICATE_ALERTS === "true"));
-      res.status(200).json({ message: "Alert already processed", preventDuplicateAlerts: !!(process.env.PREVENT_DUPLICATE_ALERTS === "true")});
+      console.log(
+        "Alert already processed",
+        !!(process.env.PREVENT_DUPLICATE_ALERTS === "true")
+      );
+      res.status(200).json({
+        message: "Alert already processed",
+        preventDuplicateAlerts: !!(
+          process.env.PREVENT_DUPLICATE_ALERTS === "true"
+        ),
+      });
     } else {
       console.log("Creating new alert");
 
@@ -59,116 +70,122 @@ router.post("/", async (req: Request, res: Response) => {
         },
       });
 
-      const aggregator = new CheckContextAggregator(alertDto);
-      const context = await aggregator.aggregate();
-      const summary = await generateContextAnalysisSummary(context);
+      const handleAlert = async () => {
+        const aggregator = new CheckContextAggregator(alertDto);
+        const context = await aggregator.aggregate();
+        const summary = await generateContextAnalysisSummary(context);
 
-      await prisma.alert.update({
-        where: { id: alert.id },
-        data: {
-          summary,
-          context: {
-            createMany: {
-              data: context
-                .filter((c) => c.key && c.value)
-                .map((c) => ({
-                  key: c.key,
-                  value: c.value as any,
-                  source: c.source,
-                })),
+        await prisma.alert.update({
+          where: { id: alert.id },
+          data: {
+            summary,
+            context: {
+              createMany: {
+                data: context
+                  .filter((c) => c.key && c.value)
+                  .map((c) => ({
+                    key: c.key,
+                    value: c.value as any,
+                    source: c.source,
+                  })),
+              },
             },
           },
-        },
-      });
+        });
 
-      const checkResults = context.find(
-        (c) => c.key === ContextKey.ChecklyResults
-      );
+        const checkResults = context.find(
+          (c) => c.key === ContextKey.ChecklyResults
+        );
 
-      const thread = await getOpenaiClient().beta.threads.create({
-        messages: [
-          {
-            role: "assistant",
-            content:
-              "*Alert:* <https://app.checklyhq.com/checks/" +
-              alertDto.CHECK_ID +
-              "|" +
-              alertDto.CHECK_NAME +
-              ">\n\n*Summary:* " +
-              summary,
-          },
-        ],
-      });
+        const thread = await getOpenaiClient().beta.threads.create({
+          messages: [
+            {
+              role: "assistant",
+              content:
+                "*Alert:* <https://app.checklyhq.com/checks/" +
+                alertDto.CHECK_ID +
+                "|" +
+                alertDto.CHECK_NAME +
+                ">\n\n*Summary:* " +
+                summary,
+            },
+          ],
+        });
 
-      let headerText =
-        alertDto.ALERT_TYPE === AlertType.ALERT_RECOVERY
-          ? "✅ " + alertDto.CHECK_NAME + " has recovered ✅"
-          : "🚨 " + alertDto.CHECK_NAME + " has failed 🚨";
-      await app.client.chat.postMessage({
-        channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
-        text: headerText,
-        metadata: {
-          event_type: "alert",
-          event_payload: {
-            alertId: alert.id,
-            threadId: thread.id,
-          },
-        },
-        blocks: [
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: headerText,
-              emoji: true,
+        let headerText =
+          alertDto.ALERT_TYPE === AlertType.ALERT_RECOVERY
+            ? "✅ " + alertDto.CHECK_NAME + " has recovered ✅"
+            : "🚨 " + alertDto.CHECK_NAME + " has failed 🚨";
+        await app.client.chat.postMessage({
+          channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
+          text: headerText,
+          metadata: {
+            event_type: "alert",
+            event_payload: {
+              alertId: alert.id,
+              threadId: thread.id,
             },
           },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `:checkly-hyped-2: <https://app.checklyhq.com/checks/${alertDto.CHECK_ID}|*${alertDto.CHECK_NAME}*>`,
+          blocks: [
+            {
+              type: "header",
+              text: {
+                type: "plain_text",
+                text: headerText,
+                emoji: true,
               },
-              {
-                type: "mrkdwn",
-                text: `:crystal_ball: <${alertDto.RESULT_LINK}|*View Result*>`,
-              },
-              {
-                type: "mrkdwn",
-                text: `:date: *${new Date(
-                  alertDto.STARTED_AT
-                ).toLocaleString()}*`,
-              },
-              {
-                type: "mrkdwn",
-                text: `:globe_with_meridians: *${alertDto.RUN_LOCATION}*`,
-              },
-              {
-                type: "mrkdwn",
-                text: `:stopwatch: *${
-                  (checkResults?.value as any)?.responseTime
-                    ? (checkResults?.value as any)?.responseTime + "ms"
-                    : "unknown"
-                } Response Time*`,
-              },
-              {
-                type: "mrkdwn",
-                text: `:recycle: *${
-                  (checkResults?.value as any)?.attempts ?? "unknown"
-                } Attempts*`,
-              },
-            ],
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `${summary}`,
             },
-          },
-        ],
-      });
+            {
+              type: "section",
+              fields: [
+                {
+                  type: "mrkdwn",
+                  text: `:checkly-hyped-2: <https://app.checklyhq.com/checks/${alertDto.CHECK_ID}|*${alertDto.CHECK_NAME}*>`,
+                },
+                {
+                  type: "mrkdwn",
+                  text: `:crystal_ball: <${alertDto.RESULT_LINK}|*View Result*>`,
+                },
+                {
+                  type: "mrkdwn",
+                  text: `:date: *${new Date(
+                    alertDto.STARTED_AT
+                  ).toLocaleString()}*`,
+                },
+                {
+                  type: "mrkdwn",
+                  text: `:globe_with_meridians: *${alertDto.RUN_LOCATION}*`,
+                },
+                {
+                  type: "mrkdwn",
+                  text: `:stopwatch: *${
+                    (checkResults?.value as any)?.responseTime
+                      ? (checkResults?.value as any)?.responseTime + "ms"
+                      : "unknown"
+                  } Response Time*`,
+                },
+                {
+                  type: "mrkdwn",
+                  text: `:recycle: *${
+                    (checkResults?.value as any)?.attempts ?? "unknown"
+                  } Attempts*`,
+                },
+              ],
+            },
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `${summary}`,
+              },
+            },
+          ],
+        });
+      };
+
+      handleAlert();
+
+      res.status(200).json({ message: "Alert processed: " + alert.id });
     }
   } catch (error) {
     console.error("Error parsing or validating request body:", error);
