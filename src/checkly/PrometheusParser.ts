@@ -1,39 +1,45 @@
-import { PrometheusMetric, PrometheusMetricValue } from './PrometheusMetric';
+import { PrometheusMetric, PrometheusMetricValue } from "./PrometheusMetric";
 
 export class PrometheusParser {
   static parse(input: string): PrometheusMetric[] {
-    const lines = input.split('\n');
+    const lines = input.split("\n");
     const metrics: PrometheusMetric[] = [];
     let currentMetric: PrometheusMetric | null = null;
 
     for (const line of lines) {
-      if (line.startsWith('# HELP')) {
-        const parts = line.split(' ');
+      if (line.startsWith("# HELP")) {
+        const parts = line.split(" ");
         const metricName = parts[2];
-        const help = parts.slice(3).join(' ');
-        currentMetric = new PrometheusMetric(metricName, help, '');
+        const help = parts.slice(3).join(" ");
+        currentMetric = new PrometheusMetric(metricName, help, "");
         metrics.push(currentMetric);
-      } else if (line.startsWith('# TYPE')) {
-        const parts = line.split(' ');
+      } else if (line.startsWith("# TYPE")) {
+        const parts = line.split(" ");
         const metricName = parts[2];
         const type = parts[3];
-        currentMetric = metrics.find(m => m.metricName === metricName) || null;
+        currentMetric =
+          metrics.find((m) => m.metricName === metricName) || null;
         if (currentMetric) {
           currentMetric.type = type;
         }
-      } else if (line.trim() !== '') {
-        const lastSpaceIndex = line.lastIndexOf(' ');
+      } else if (line.trim() !== "") {
+        const lastSpaceIndex = line.lastIndexOf(" ");
         const valuePart = line.substring(lastSpaceIndex + 1);
         const metricPart = line.substring(0, lastSpaceIndex);
 
-        const metricName = metricPart.split('{')[0];
-        const labelsPart = metricPart.split('{')[1]?.split('}')[0];
+        const metricName = metricPart.split("{")[0];
+        const labelsPart = metricPart.split("{")[1]?.split("}")[0];
         const labels = labelsPart
-          ? Object.fromEntries(labelsPart.split(',').map(l => l.split('=').map(s => s.replace(/"/g, ''))))
+          ? Object.fromEntries(
+              labelsPart
+                .split(",")
+                .map((l) => l.split("=").map((s) => s.replace(/"/g, ""))),
+            )
           : {};
         const value = parseFloat(valuePart);
 
-        currentMetric = metrics.find(m => m.metricName === metricName) || null;
+        currentMetric =
+          metrics.find((m) => m.metricName === metricName) || null;
         if (currentMetric) {
           currentMetric.addValue(new PrometheusMetricValue(labels, value));
         }

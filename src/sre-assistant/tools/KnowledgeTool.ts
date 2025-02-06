@@ -6,22 +6,19 @@ import { getAllDocuments } from "../../knowledge-base/knowledgeBase";
 const parameters = createToolParameters(
   z.object({
     action: z
-      .enum([
-        "listDocuments",
-        "getOneDocument",
-      ])
+      .enum(["listDocuments", "getOneDocument"])
       .describe("The action to perform on the Knowledge Base"),
     documentSlug: z
       .string()
       .describe(
-        "The slug of the Document to get information about. Omit this field for the 'listDocuments' action. Required for the 'getOneDocument'"
+        "The slug of the Document to get information about. Omit this field for the 'listDocuments' action. Required for the 'getOneDocument'",
       )
       .optional(),
-  })
+  }),
 );
 
 const outputSchema = createToolOutput(
-  z.string().describe("The response from the Knowledge Base")
+  z.string().describe("The response from the Knowledge Base"),
 );
 
 export class KnowledgeTool extends Tool<
@@ -46,17 +43,21 @@ export class KnowledgeTool extends Tool<
     if (input.action === "listDocuments") {
       const documents = await getAllDocuments();
 
-      return JSON.stringify(documents.map((doc) => ({
-        slug: doc.slug,
-        title: doc.title,
-        summary: doc.summary,
-      })));
+      return JSON.stringify(
+        documents.map((doc) => ({
+          slug: doc.slug,
+          title: doc.title,
+          summary: doc.summary,
+        })),
+      );
     } else if (input.action === "getOneDocument") {
       if (!input.documentSlug) {
         return "Document slug is required";
       }
 
-      const document = await getAllDocuments().then(docs => docs.find(doc => doc.slug === input.documentSlug));
+      const document = await getAllDocuments().then((docs) =>
+        docs.find((doc) => doc.slug === input.documentSlug),
+      );
 
       if (!document) {
         return `Document for slug: ${input.documentSlug} not found`;

@@ -51,7 +51,7 @@ app.command("/srebot-releases", async ({ command, ack, respond }) => {
 
   let releases = summaries.releases.sort(
     (a, b) =>
-      new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+      new Date(b.release_date).getTime() - new Date(a.release_date).getTime(),
   );
   let response = [releaseHeader].concat(
     releases
@@ -77,7 +77,7 @@ app.command("/srebot-releases", async ({ command, ack, respond }) => {
         }
 
         return prev.concat([releaseDivider]).concat(curr);
-      })
+      }),
   );
 
   await respond({
@@ -115,13 +115,13 @@ app.event("app_mention", async ({ event, context }) => {
 
     console.log(
       "Starting to analyse the alert message:",
-      messageTextWithSender
+      messageTextWithSender,
     );
 
     const { responseText } = await getAlertAnalysis(
       messageTextWithSender,
       event.channel,
-      event.thread_ts
+      event.thread_ts,
     );
 
     await app.client.chat.postMessage({
@@ -196,9 +196,9 @@ app.event("app_mention", async ({ event, context }) => {
           msg.content
             .filter((c) => c.type === "text")
             .map((c) => (c as any).text.value)
-            .join("")
-        )
-      )
+            .join(""),
+        ),
+      ),
     );
   } catch (error) {
     console.error("Error processing app mention:", error);
@@ -214,7 +214,7 @@ app.event("app_mention", async ({ event, context }) => {
 async function getAlertAnalysis(
   messageText: string,
   targetChannel: string,
-  threadTs: string
+  threadTs: string,
 ) {
   console.log("Starting to analyse the alert message");
   const response = await analyseAlert(messageText, targetChannel, threadTs);
@@ -240,7 +240,7 @@ async function getAlertAnalysis(
       responseText += `\n\nAffected components:\n${response.affectedComponents
         ?.map(
           (affected) =>
-            `- \`${affected.component}\` in \`${affected.environment}\` environment`
+            `- \`${affected.component}\` in \`${affected.environment}\` environment`,
         )
         .join("\n")}`;
     }
@@ -313,7 +313,7 @@ if (process.env.OPS_CHANNEL_ID) {
         if (shouldIgnoreMessageBasedOnSender) {
           console.log(
             "Ignoring message from non-bot user. If you want to allow messages from non-bot users, set ALLOW_NON_BOT_MESSAGES=true in your environment variables. Event subtype:",
-            event.subtype
+            event.subtype,
           );
           return;
         }
@@ -321,7 +321,7 @@ if (process.env.OPS_CHANNEL_ID) {
         const { responseText, response } = await getAlertAnalysis(
           messageTextWithSender,
           targetChannel,
-          event.ts
+          event.ts,
         );
 
         const alertRecord = await prisma.alert.create({
@@ -368,6 +368,6 @@ if (process.env.OPS_CHANNEL_ID) {
       } catch (error) {
         console.error("Error responding to message:", error);
       }
-    }
+    },
   );
 }

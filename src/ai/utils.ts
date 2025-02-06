@@ -32,7 +32,7 @@ export const cancelRun = async (threadId: string): Promise<void> => {
 
 export const formatToolOutput = (
   toolCallId: string,
-  output: unknown
+  output: unknown,
 ): RunSubmitToolOutputsParams.ToolOutput => {
   return {
     output: JSON.stringify(output),
@@ -42,7 +42,7 @@ export const formatToolOutput = (
 
 export const handleToolError = (
   toolCallId: string,
-  error: Error
+  error: Error,
 ): RunSubmitToolOutputsParams.ToolOutput => {
   return {
     output: stringify({ error: error.message ?? "Unknown error" }),
@@ -52,7 +52,7 @@ export const handleToolError = (
 
 export const getRunMessages = async (
   threadId: string,
-  runId: string
+  runId: string,
 ): Promise<Message[]> => {
   const messages = await openai.beta.threads.messages.list(threadId, {
     run_id: runId,
@@ -64,7 +64,7 @@ export const getRunMessages = async (
 export const getMessageHistory = async (
   threadId: string,
   cursor: string,
-  limit: number = 30
+  limit: number = 30,
 ): Promise<Message[]> => {
   const messages = await openai.beta.threads.messages.list(threadId, {
     after: cursor,
@@ -76,7 +76,7 @@ export const getMessageHistory = async (
 
 export const getRunSteps = async (
   threadId: string,
-  runId: string
+  runId: string,
 ): Promise<RunStep[]> => {
   const steps = await openai.beta.threads.runs.steps.list(threadId, runId, {
     order: "asc",
@@ -86,7 +86,7 @@ export const getRunSteps = async (
 
 export const getThreadRuns = async (
   threadId: string,
-  limit: number = 30
+  limit: number = 30,
 ): Promise<Run[]> => {
   const runs = await openai.beta.threads.runs.list(threadId, {
     limit,
@@ -100,7 +100,7 @@ export const getThreadSteps = async (threadId: string): Promise<RunStep[]> => {
     runs.map(async (run) => {
       const steps = await getRunSteps(threadId, run.id);
       return steps.map((step) => ({ ...step, runId: run.id }));
-    })
+    }),
   );
   return steps.flat();
 };

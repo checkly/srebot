@@ -26,7 +26,7 @@ export const startLangfuseTelemetrySDK = () => {
     telemetrySDK.start();
   } else {
     console.warn(
-      "LANGFUSE_SECRET_KEY, LANGFUSE_BASEURL and LANGFUSE_PUBLIC_KEY are not set. Langfuse observability will not be available."
+      "LANGFUSE_SECRET_KEY, LANGFUSE_BASEURL and LANGFUSE_PUBLIC_KEY are not set. Langfuse observability will not be available.",
     );
   }
 };
