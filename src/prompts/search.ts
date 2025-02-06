@@ -12,6 +12,10 @@ export function searchContextPrompt(
 ): [string, PromptConfig] {
   const config = promptConfig({
     maxTokens: 1000,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: "searchContext",
+    },
   });
 
   return [

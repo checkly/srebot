@@ -19,10 +19,6 @@ export const generateContextAnalysis = async (context: CheckContext[]) => {
     const summary = await generateText({
       ...config,
       prompt,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "generateContextAnalysis",
-      },
     });
 
     return summary.text;
@@ -37,10 +33,6 @@ export const generateContextAnalysisSummary = async (
   const summary = await generateText({
     ...config,
     prompt,
-    experimental_telemetry: {
-      isEnabled: true,
-      functionId: "generateContextAnalysisSummary",
-    },
   });
 
   return summary.text;
