@@ -1,13 +1,13 @@
 import { generateObject } from "ai";
 import { stringify } from "yaml";
 import { z } from "zod";
-import { getOpenaiSDKClient } from "../../ai/openai";
 import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
 import { checkly } from "../../checkly/client";
 import {
   mapCheckResultToContextValue,
   mapCheckToContextValue,
 } from "../../checkly/utils";
+import { checklyToolPrompt } from "../../prompts/checkly";
 import { SreAssistant } from "../SreAssistant";
 
 const parameters = createToolParameters(
@@ -23,20 +23,20 @@ const parameters = createToolParameters(
     checkId: z
       .string()
       .describe(
-        "The ID of the Check to get information about. Omit this field for the 'getChecksStatus' action. Required for the 'getCheck' and 'getCheckResult' actions."
+        "The ID of the Check to get information about. Omit this field for the 'getChecksStatus' action. Required for the 'getCheck' and 'getCheckResult' actions.",
       )
       .optional(),
     query: z
       .string()
       .describe(
-        "A query to search for checks. Use this field only for the 'searchCheck' action."
+        "A query to search for checks. Use this field only for the 'searchCheck' action.",
       )
       .optional(),
-  })
+  }),
 );
 
 const outputSchema = createToolOutput(
-  z.string().describe("The response from the Checkly API")
+  z.string().describe("The response from the Checkly API"),
 );
 
 export class ChecklyTool extends Tool<
@@ -89,23 +89,14 @@ export class ChecklyTool extends Tool<
       return stringify(status.failing);
     } else if (input.action === "searchCheck") {
       const checks = await checkly.getChecks();
+      const [prompt, config] = checklyToolPrompt(checks, input.query);
       const search = await generateObject({
-        model: getOpenaiSDKClient()("gpt-4o"),
-        prompt: `You are the Checkly Check Search Engine. You are given a query and a list of checks. Return the most relevant check that relates to the query.
-
-				Available checks: ${stringify(
-          checks.map((c) => ({ ...mapCheckToContextValue(c) }))
-        )}
-
-				Search Query: ${input.query ?? ""}`,
+        ...config,
+        prompt,
         schema: z.object({
           checkName: z.string(),
           checkId: z.string(),
         }),
-        experimental_telemetry: {
-          isEnabled: true,
-          functionId: "ChecklyTool.search",
-        },
       });
 
       const relevantCheck = checks.find((c) => c.id === search.object.checkId);

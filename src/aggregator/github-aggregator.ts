@@ -2,16 +2,18 @@ import { Deployment, Release } from "@prisma/client";
 import { generateObject } from "ai";
 import { stringify } from "yaml";
 import { z } from "zod";
-import { getOpenaiSDKClient } from "../ai/openai";
 import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
 import { checkly } from "../checkly/client";
 import {
   getLastCheckResult,
   mapCheckResultToContextValue,
-  mapCheckToContextValue,
 } from "../checkly/utils";
 import GitHubAPI from "../github/github";
 import { prisma } from "../prisma";
+import {
+  generateFindRelevantDeploymentsPrompt,
+  generateFindRelevantReleasesPrompt,
+} from "../prompts/github";
 import { CheckContext, ContextKey } from "./ContextAggregator";
 
 const githubApi = new GitHubAPI(process.env.CHECKLY_GITHUB_TOKEN || "");
@@ -31,33 +33,25 @@ export const githubAggregator = {
       return [];
     }
 
+    const [prompt, config] = generateFindRelevantReleasesPrompt(
+      check,
+      stringify(mapCheckResultToContextValue(alertCheckResult)),
+      releases.map((r) => ({
+        id: r.id,
+        repo: r.repoUrl,
+        release: r.name,
+        summary: r.summary,
+      })),
+    );
+
     const { object: relevantReleaseIds } = await generateObject({
-      model: getOpenaiSDKClient()("gpt-4o"),
-      prompt: `Based on the following releases, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of release ids that are most relevant to the check.
-
-Releases:
-${stringify(
-  releases.map((r) => ({
-    id: r.id,
-    repo: r.repoUrl,
-    release: r.name,
-    summary: r.summary,
-  }))
-)}
-
-Check:
-${stringify(mapCheckToContextValue(check))}
-
-Check Script:
-${check.script}
-
-Check Result:
-${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
+      ...config,
+      prompt,
       schema: z.object({
         releaseIds: z
           .array(z.string())
           .describe(
-            "The ids of the releases that are most relevant to the check failure."
+            "The ids of the releases that are most relevant to the check failure.",
           ),
       }),
       experimental_telemetry: {
@@ -67,19 +61,19 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
     });
 
     const relevantReleases = releases.filter((r) =>
-      relevantReleaseIds.releaseIds.includes(r.id)
+      relevantReleaseIds.releaseIds.includes(r.id),
     );
 
     const makeRepoReleaseContext = (release: Release) =>
       ({
         key: ContextKey.GitHubReleaseSummary.replace(
           "$repo",
-          `${release.org}/${release.repo}`
+          `${release.org}/${release.repo}`,
         ),
         value: release,
         checkId: alert.CHECK_ID,
         source: "github",
-      } as CheckContext);
+      }) as CheckContext;
 
     return relevantReleases.map((release) => makeRepoReleaseContext(release));
   },
@@ -96,37 +90,30 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
         },
       },
     });
+
     if (deployments.length === 0) {
       return [];
     }
 
+    const [prompt, config] = generateFindRelevantDeploymentsPrompt(
+      check,
+      stringify(mapCheckResultToContextValue(alertCheckResult)),
+      deployments.map((deploy) => ({
+        id: deploy.id,
+        repo: deploy.repoUrl,
+        createdAt: deploy.createdAt,
+        summary: deploy.summary,
+      })),
+    );
+
     const { object: relevantReleaseIds } = await generateObject({
-      model: getOpenaiSDKClient()("gpt-4o"),
-      prompt: `Based on the following deployments, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of deployment ids that are most relevant to the check.
-
-Deployments:
-${stringify(
-  deployments.map((deploy) => ({
-    id: deploy.id,
-    repo: deploy.repoUrl,
-    createdAt: deploy.createdAt,
-    summary: deploy.summary,
-  }))
-)}
-
-Check:
-${stringify(mapCheckToContextValue(check))}
-
-Check Script:
-${check.script}
-
-Check Result:
-${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
+      ...config,
+      prompt,
       schema: z.object({
         deploymentIds: z
           .array(z.string())
           .describe(
-            "The ids of the releases that are most relevant to the check failure."
+            "The ids of the releases that are most relevant to the check failure.",
           ),
       }),
       experimental_telemetry: {
@@ -136,22 +123,22 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
     });
 
     const relevantReleases = deployments.filter((deployment) =>
-      relevantReleaseIds.deploymentIds.includes(deployment.id)
+      relevantReleaseIds.deploymentIds.includes(deployment.id),
     );
 
     const mapDeploymentToCheckContext = (deployment: Deployment) =>
       ({
         key: ContextKey.GitHubDeploymentSummary.replace(
           "$repo",
-          `${deployment.org}/${deployment.repo}`
+          `${deployment.org}/${deployment.repo}`,
         ),
         value: deployment,
         checkId: alert.CHECK_ID,
         source: "github",
-      } as CheckContext);
+      }) as CheckContext;
 
     return relevantReleases.map((deploy) =>
-      mapDeploymentToCheckContext(deploy)
+      mapDeploymentToCheckContext(deploy),
     );
   },
   fetchContext: async (alert: WebhookAlertDto): Promise<CheckContext[]> => {
@@ -168,12 +155,12 @@ ${stringify(mapCheckResultToContextValue(alertCheckResult))}`,
       const hadCheckFailuresBeforeStateChange = !hasCheckFailuresNow;
       const lastCheckResultBeforeStateChange = await getLastCheckResult(
         alert.CHECK_ID,
-        hadCheckFailuresBeforeStateChange
+        hadCheckFailuresBeforeStateChange,
       );
 
       const alertCheckResult = await checkly.getCheckResult(
         alert.CHECK_ID,
-        alert.CHECK_RESULT_ID
+        alert.CHECK_RESULT_ID,
       );
 
       const check = await checkly.getCheck(alert.CHECK_ID);
