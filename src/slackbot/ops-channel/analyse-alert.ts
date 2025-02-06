@@ -1,11 +1,9 @@
 import { z } from "zod";
 import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../../ai/openai";
 import { fetchDocumentsFromKnowledgeBase } from "../../notion/notion";
 import { convertSlackTimestamp, fetchHistoricalMessages } from "../utils";
 import moment from "moment";
 import {
-  alertAnalysisSystemPrompt,
   alertHistoryPrompt,
   alertRecommendationPrompt,
   alertSeverityPrompt,
