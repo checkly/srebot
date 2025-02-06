@@ -2,6 +2,7 @@ import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
 import { stringify } from "yaml";
 import { PromptConfig, promptConfig } from "./common";
+import { validObjectList, validObject, validString } from "./validation";
 
 const MAX_DIFF_LENGTH = 1000000;
 
@@ -30,6 +31,10 @@ export function generateFindRelevantReleasesPrompt(
   checkResult: string,
   releases: GithubReleaseForPrompt[],
 ): [string, PromptConfig] {
+  validObject.parse(check);
+  validString.parse(checkResult);
+  validObjectList.parse(releases);
+
   return [
     `Based on the following releases, which ones are most relevant to the check state change?
 
@@ -56,6 +61,10 @@ export function generateFindRelevantDeploymentsPrompt(
   checkResult: string,
   deployments: GithubDeploymentForPrompt[],
 ): [string, PromptConfig] {
+  validObject.parse(check);
+  validString.parse(checkResult);
+  validObjectList.parse(deployments);
+
   return [
     `Based on the following deployments, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of deployment ids that are most relevant to the check.
 
@@ -79,6 +88,10 @@ export function generateReleaseHeadlinePrompt(
   currentRelease: string,
   diff: string,
 ): [string, PromptConfig] {
+  validString.parse(prevRelease);
+  validString.parse(currentRelease);
+  validString.parse(diff);
+
   return [
     `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
@@ -97,6 +110,10 @@ export function generateReleaseSummaryPrompt(
   currentRelease: string,
   diff: string,
 ): [string, PromptConfig] {
+  validString.parse(prevRelease);
+  validString.parse(currentRelease);
+  validString.parse(diff);
+
   return [
     `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
@@ -117,6 +134,10 @@ export function generateDeploymentSummaryPrompt(
   currentSha: string,
   diff: string,
 ): [string, PromptConfig] {
+  validString.parse(prevSha);
+  validString.parse(currentSha);
+  validString.parse(diff);
+
   return [
     `The following diff describes the changes between ${prevSha} and ${currentSha}.
 
@@ -134,6 +155,9 @@ export function generateFindRepoPrompt(
   userPrompt: string,
   allRepos: GithubRepoForPrompt[],
 ): [string, PromptConfig] {
+  validString.parse(userPrompt);
+  validObjectList.parse(allRepos);
+
   return [
     `Based on the following prompt: ${userPrompt} and the list of repositories
 

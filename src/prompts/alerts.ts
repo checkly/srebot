@@ -1,11 +1,15 @@
 import { NotionPage } from "../notion/notion";
 import { PromptConfig, promptConfig } from "./common";
 import { getOpenaiSDKClient } from "../ai/openai";
+import { validObjectList, validString } from "./validation";
 
 export function affectedComponentsPrompt(
   guidelines: NotionPage[], // guidelines for ops channel
   alertMessage: string,
 ): [string, PromptConfig] {
+  validObjectList.parse(guidelines);
+  validString.parse(alertMessage);
+
   const model = getOpenaiSDKClient()("gpt-4o-mini");
   const systemPrompt = `You are an experienced on-call engineer who is responsible for determining which system components are affected by an alert`;
 
@@ -25,6 +29,10 @@ export function alertRecommendationPrompt(
   alertMessage: string,
   affectedComponents: { component: string; environment: string }[],
 ): [string, PromptConfig] {
+  validObjectList.parse(guidelines);
+  validString.parse(alertMessage);
+  validObjectList.parse(affectedComponents);
+
   const model = getOpenaiSDKClient()("gpt-4o-mini");
   const system =
     "You are an experienced on-call engineer who is responsible for recommending further actions for an alert";
@@ -48,6 +56,9 @@ export function alertHistoryPrompt(
   alertMessage: string,
   messageHistory: string,
 ): [string, PromptConfig] {
+  validString.parse(alertMessage);
+  validString.parse(messageHistory);
+
   const system =
     "You are an experienced on-call engineer who is responsible for analysing previous alert in the slack channel";
 
@@ -78,6 +89,9 @@ export function alertSeverityPrompt(
   alertMessage: string,
   affectedComponents: { component: string; environment: string }[],
 ): [string, PromptConfig] {
+  validString.parse(alertMessage);
+  validObjectList.parse(affectedComponents);
+
   const system =
     "You are an experienced on-call engineer who is responsible for determining the severity of alerts";
 
@@ -109,6 +123,17 @@ export function alertSummaryPrompt(
   historyInfo: { type: string; reasoning: string },
   guidelines: NotionPage[],
 ): [string, PromptConfig] {
+  validObjectList.parse(affectedComponents);
+  [
+    alertMessage,
+    severityInfo.severity,
+    severityInfo.reasoning,
+    stateInfo.state,
+    stateInfo.reasoning,
+    historyInfo.type,
+    historyInfo.reasoning,
+  ].forEach((s) => validString.parse(s));
+
   const system =
     "You are an experienced on-call engineer who is leading a team of engineers analysing alerts from a Slack channel";
 
