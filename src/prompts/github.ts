@@ -1,6 +1,6 @@
+import { stringify } from "yaml";
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
-import { stringify } from "yaml";
 import { PromptConfig, promptConfig } from "./common";
 import { validObjectList, validObject, validString } from "./validation";
 
@@ -52,7 +52,12 @@ ${check.script}
 
 Check Result:
 ${checkResult}`,
-    promptConfig(),
+    promptConfig({
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "findRelevantReleases",
+      },
+    }),
   ];
 }
 
@@ -79,7 +84,12 @@ ${check.script}
 
 Check Result:
 ${checkResult}`,
-    promptConfig(),
+    promptConfig({
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "findRelevantDeployments",
+      },
+    }),
   ];
 }
 
@@ -101,7 +111,12 @@ ${diff}
 Do not describe the outer context as the developer is already aware.
 Do not yap.
 Do not use any formatting rules.`,
-    promptConfig(),
+    promptConfig({
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "releaseHeadline",
+      },
+    }),
   ];
 }
 
@@ -125,7 +140,12 @@ Do not yap.
 Format titles using *Title*, code using \`code\`.
 Do not use any other formatting rules.
 Focus on potential impact of the change and the reason for the change.`,
-    promptConfig(),
+    promptConfig({
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "releaseSummary",
+      },
+    }),
   ];
 }
 
@@ -147,7 +167,12 @@ export function generateDeploymentSummaryPrompt(
   Do not describe the outer context as the developer is already aware.
   Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules.
   Focus on potential impact of the change and the reason for the change.`,
-    promptConfig(),
+    promptConfig({
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "deploymentSummary",
+      },
+    }),
   ];
 }
 
@@ -164,7 +189,12 @@ export function generateFindRepoPrompt(
 ${JSON.stringify(allRepos)}
 
 Select the repository that is most relevant to the prompt.`,
-    promptConfig(),
+    promptConfig({
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "findRepo",
+      },
+    }),
   ];
 }
 
@@ -173,6 +203,11 @@ export function generateTimeframePrompt(): [string, PromptConfig] {
     `A developer describes a task which is about a certain time frame.
     Based on his prompt choose identify the date in ISO8601 format.
     If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`,
-    promptConfig(),
+    promptConfig({
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "timeframe",
+      },
+    }),
   ];
 }

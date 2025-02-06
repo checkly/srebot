@@ -54,10 +54,6 @@ export const githubAggregator = {
             "The ids of the releases that are most relevant to the check failure.",
           ),
       }),
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "githubAggregator.getRelevantReleases",
-      },
     });
 
     const relevantReleases = releases.filter((r) =>
@@ -116,10 +112,6 @@ export const githubAggregator = {
             "The ids of the releases that are most relevant to the check failure.",
           ),
       }),
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "githubAggregator.getRelevantDeployments",
-      },
     });
 
     const relevantReleases = deployments.filter((deployment) =>

@@ -26,7 +26,7 @@ export function formatMessageContent(message: Message): MessageContent {
  */
 export function createBaseInput(
   run: Run,
-  history: Message[]
+  history: Message[],
 ): MessageContent[] {
   return [
     { role: "system", content: run.instructions },
@@ -39,7 +39,7 @@ export function createBaseInput(
  */
 export function processStepOutput(
   step: RunStep,
-  messages: Message[]
+  messages: Message[],
 ): MessageContent[] {
   const output: MessageContent[] = [];
 
@@ -71,7 +71,7 @@ export function processStepOutput(
  */
 export async function traceRunSteps(
   runTrace: LangfuseTraceClient,
-  run: Run
+  run: Run,
 ): Promise<void> {
   const messages = await getRunMessages(run.thread_id, run.id);
   const historyCall = getMessageHistory(run.thread_id, messages[0].id);

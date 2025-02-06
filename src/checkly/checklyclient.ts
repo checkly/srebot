@@ -1,8 +1,8 @@
-import { plainToClass, plainToInstance } from 'class-transformer';
-import * as fs from 'fs';
-import fetch from 'node-fetch';
-import { Check, CheckGroup, CheckResult } from './models';
-import { PrometheusParser } from './PrometheusParser';
+import { plainToClass, plainToInstance } from "class-transformer";
+import * as fs from "fs";
+import fetch from "node-fetch";
+import { Check, CheckGroup, CheckResult } from "./models";
+import { PrometheusParser } from "./PrometheusParser";
 
 interface ChecklyClientOptions {
   accountId?: string;
@@ -35,10 +35,13 @@ export class ChecklyClient {
   constructor(options: ChecklyClientOptions = {}) {
     this.accountId = options.accountId || process.env.CHECKLY_ACCOUNT_ID!;
     this.apiKey = options.apiKey || process.env.CHECKLY_API_KEY!;
-    this.checklyApiUrl = options.checklyApiUrl || 'https://api.checklyhq.com/v1/';
-    this.checklyPrometheusKey = options.checklyPrometheusKey || process.env.PROMETHEUS_INTEGRATION_KEY!;
-    this.prometheusIntegrationUrl = options.prometheusIntegrationUrl || `https://api.checklyhq.com/accounts/${this.accountId}/v2/prometheus/metrics`;
-
+    this.checklyApiUrl =
+      options.checklyApiUrl || "https://api.checklyhq.com/v1/";
+    this.checklyPrometheusKey =
+      options.checklyPrometheusKey || process.env.PROMETHEUS_INTEGRATION_KEY!;
+    this.prometheusIntegrationUrl =
+      options.prometheusIntegrationUrl ||
+      `https://api.checklyhq.com/accounts/${this.accountId}/v2/prometheus/metrics`;
   }
 
   async getCheck(checkid: string): Promise<Check> {
@@ -47,20 +50,20 @@ export class ChecklyClient {
   }
 
   async getChecks(): Promise<Check[]> {
-    return this.getPaginatedDownload('checks', Check);
+    return this.getPaginatedDownload("checks", Check);
   }
 
   async getActivatedChecks(): Promise<Check[]> {
     const results = await Promise.all([
-      this.getPaginatedDownload('checks', Check),
-      this.getPaginatedDownload('check-groups', CheckGroup)
-    ])
+      this.getPaginatedDownload("checks", Check),
+      this.getPaginatedDownload("check-groups", CheckGroup),
+    ]);
     const groups = results[1];
     const groupMap = new Map<number, CheckGroup>();
-    groups.forEach(group => {
+    groups.forEach((group) => {
       groupMap.set(group.id, group);
     });
-    const s = results[0].map(check => {
+    const s = results[0].map((check) => {
       if (check.activated && !check.groupId) {
         return check;
       }
@@ -70,17 +73,20 @@ export class ChecklyClient {
           return check;
         }
       }
-    })
+    });
     return s.filter((x) => x !== undefined) as Check[];
   }
 
-  async getPaginatedDownload<T>(path: string, type: { new(): T }): Promise<T[]> {
+  async getPaginatedDownload<T>(
+    path: string,
+    type: { new (): T },
+  ): Promise<T[]> {
     const limit = 100;
     let page = 1;
     const result = Array<T>();
     while (true) {
       let url = `${this.checklyApiUrl}${path}?limit=${limit}&page=${page}`;
-      const checks = await this.makeRequest(url, type) as T[];
+      const checks = (await this.makeRequest(url, type)) as T[];
       result.push(...checks);
       if (checks.length < 100) {
         break;
@@ -98,13 +104,13 @@ export class ChecklyClient {
     return this.makeRequest(url, CheckResult) as Promise<CheckResult>;
   }
 
-  async makeRequest<T>(url: string, type: { new(): T }): Promise<T | T[]> {
+  async makeRequest<T>(url: string, type: { new (): T }): Promise<T | T[]> {
     try {
       const response = await fetch(url, {
-        method: 'GET', // Optional, default is 'GET'
+        method: "GET", // Optional, default is 'GET'
         headers: {
           Authorization: `Bearer ${this.apiKey}`, // Add Authorization header
-          'X-Checkly-Account': this.accountId, // Add custom X-Checkly-Account header
+          "X-Checkly-Account": this.accountId, // Add custom X-Checkly-Account header
         },
       });
       if (!response.ok) {
@@ -126,10 +132,10 @@ export class ChecklyClient {
   async downloadAsset(assetUrl: string, outputFilePath: string): Promise<void> {
     const url = assetUrl;
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
-        'X-Checkly-Account': this.accountId,
+        "X-Checkly-Account": this.accountId,
       },
     });
 
@@ -140,29 +146,33 @@ export class ChecklyClient {
     const fileStream = fs.createWriteStream(outputFilePath);
     return new Promise((resolve, reject) => {
       response!.body!.pipe(fileStream);
-      response!.body!.on('error', (err: Error) => {
+      response!.body!.on("error", (err: Error) => {
         reject(err);
       });
-      fileStream.on('finish', () => {
+      fileStream.on("finish", () => {
         resolve();
       });
     });
   }
 
   // Uses the last 6 hours as a time frame
-  async getCheckResults(checkid: string, hasFailures?: boolean, limit?: number): Promise<CheckResult[]> {
+  async getCheckResults(
+    checkid: string,
+    hasFailures?: boolean,
+    limit?: number,
+  ): Promise<CheckResult[]> {
     limit = limit || 100;
-    let hasFailuresQuery = '';
+    let hasFailuresQuery = "";
     if (hasFailures !== undefined) {
       hasFailuresQuery = `hasFailures=${hasFailures}&`;
     }
     const url = `https://api.checklyhq.com/v1/check-results/${checkid}?limit=${limit}&page=1&${hasFailuresQuery}resultType=FINAL`;
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        accept: 'application/json',
+        accept: "application/json",
         Authorization: `Bearer ${this.apiKey}`,
-        'X-Checkly-Account': this.accountId,
+        "X-Checkly-Account": this.accountId,
       },
     });
 
@@ -177,11 +187,11 @@ export class ChecklyClient {
   async getPrometheusCheckStatus() {
     try {
       const response = await fetch(this.prometheusIntegrationUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${this.checklyPrometheusKey}`
-        }
-      })
+          Authorization: `Bearer ${this.checklyPrometheusKey}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -189,17 +199,27 @@ export class ChecklyClient {
 
       const text = await response.text();
       const metrics = PrometheusParser.parse(text);
-      const statusmetric = metrics.filter(m => m.metricName === 'checkly_check_status')[0];
+      const statusmetric = metrics.filter(
+        (m) => m.metricName === "checkly_check_status",
+      )[0];
 
-      const ac = statusmetric.values.filter(v => v.labels.activated === 'true');
+      const ac = statusmetric.values.filter(
+        (v) => v.labels.activated === "true",
+      );
       // status is either failing, passing or degraded
       // the value is 1 if status is true, 0 if false
-      const failing = ac.filter(v => v.labels.status === 'failing' && v.value === 1);
-      const passing = ac.filter(v => v.labels.status === 'passing' && v.value === 1);
-      const degraded = ac.filter(v => v.labels.status === 'degraded' && v.value === 1);
+      const failing = ac.filter(
+        (v) => v.labels.status === "failing" && v.value === 1,
+      );
+      const passing = ac.filter(
+        (v) => v.labels.status === "passing" && v.value === 1,
+      );
+      const degraded = ac.filter(
+        (v) => v.labels.status === "degraded" && v.value === 1,
+      );
       return { failing, passing, degraded };
     } catch (error) {
-      console.error('Error fetching Prometheus metrics:', error);
+      console.error("Error fetching Prometheus metrics:", error);
       throw error;
     }
   }
