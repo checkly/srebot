@@ -1,9 +1,12 @@
 import moment from "moment";
 import { PromptConfig, promptConfig } from "./common";
+import { validString } from "./validation";
 
 export function parseTimeframePrompt(
   timeframe: string,
 ): [string, PromptConfig] {
+  validString.parse(timeframe);
+
   return [
     `Parse the following timeframe into a precise timestamp range with  and interpretation.
 

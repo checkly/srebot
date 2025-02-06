@@ -1,6 +1,7 @@
 import { WebhookAlertDto } from "../checkly/alertDTO";
 import { convertSlackTimestamp } from "../slackbot/utils";
 import { PromptConfig, promptConfig } from "./common";
+import { validObjectList, validObject, validString } from "./validation";
 
 export const slackFormatInstructions = `Format all output in Slack mrkdwn format.
 Generate Slack messages using the following style: *bold*, <link|text>, _italics_, > quote, \`code\`, \`\`\`code block\`\`\`.
@@ -31,6 +32,9 @@ export function channelSummaryPrompt(
   alert: WebhookAlertDto,
   messageHistory: SlackMsgForPrompt[],
 ): [string, PromptConfig] {
+  validObject.parse(alert);
+  validObjectList.parse(messageHistory);
+
   return [
     `You are a Slack channel context collector. Your task is to analyze the given message history based on a specific prompt and provide a concise summary of the relevant context.
 

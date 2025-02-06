@@ -1,5 +1,6 @@
 import { JsonValue } from "@prisma/client/runtime/library";
 import { PromptConfig, promptConfig } from "./common";
+import { validObjectList, validString } from "./validation";
 
 interface SearchContextRowForPrompt {
   key: string;
@@ -10,6 +11,9 @@ export function searchContextPrompt(
   query: string,
   contextRows: SearchContextRowForPrompt[],
 ): [string, PromptConfig] {
+  validString.parse(query);
+  validObjectList.parse(contextRows);
+
   const config = promptConfig({
     maxTokens: 1000,
     experimental_telemetry: {

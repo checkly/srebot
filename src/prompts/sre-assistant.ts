@@ -1,10 +1,15 @@
 import { slackFormatInstructions } from "./slack";
+import { validString } from "./validation";
 
 export function generateSREAssistantPrompt(
   username: string,
   date: string,
   alertSummary: string,
 ): string {
+  validString.parse(username);
+  validString.parse(date);
+  validString.parse(alertSummary);
+
   return `You are an AI-powered SRE Bot designed to assist in real-time incident management. Your primary goal is to reduce Mean Time To Resolution (MTTR) by automatically aggregating and analyzing contextual data, providing actionable insights, and guiding first responders effectively.
 
 CONSTITUTION:
