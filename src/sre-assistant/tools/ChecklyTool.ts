@@ -1,14 +1,14 @@
+import { generateObject } from "ai";
+import { stringify } from "yaml";
 import { z } from "zod";
 import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
-import { SreAssistant } from "../SreAssistant";
 import { checkly } from "../../checkly/client";
-import { stringify } from "yaml";
 import {
   mapCheckResultToContextValue,
   mapCheckToContextValue,
 } from "../../checkly/utils";
-import { generateObject } from "ai";
 import { checklyToolPrompt } from "../../prompts/checkly";
+import { SreAssistant } from "../SreAssistant";
 
 const parameters = createToolParameters(
   z.object({

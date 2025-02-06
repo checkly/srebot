@@ -1,10 +1,10 @@
+import { generateObject } from "ai";
 import { z } from "zod";
+import { ContextKey } from "../../aggregator/ContextAggregator";
 import { createToolOutput, createToolParameters, Tool } from "../../ai/Tool";
 import { prisma } from "../../prisma";
-import { SreAssistant } from "../SreAssistant";
-import { generateObject } from "ai";
-import { ContextKey } from "../../aggregator/ContextAggregator";
 import { searchContextPrompt } from "../../prompts/search";
+import { SreAssistant } from "../SreAssistant";
 
 const parameters = createToolParameters(
   z.object({

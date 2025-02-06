@@ -1,8 +1,8 @@
 import { generateObject } from "ai";
-import { fetchHistoricalMessages } from "./utils";
 import { z } from "zod";
-import { channelSummaryPrompt } from "../prompts/slack";
 import { WebhookAlertDto } from "../checkly/alertDTO";
+import { channelSummaryPrompt } from "../prompts/slack";
+import { fetchHistoricalMessages } from "./utils";
 
 export const generateChannelSummary = async (
   channelId: string,

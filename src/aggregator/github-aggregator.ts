@@ -1,21 +1,20 @@
-import GitHubAPI from "../github/github";
+import { Deployment, Release } from "@prisma/client";
+import { generateObject } from "ai";
+import { stringify } from "yaml";
+import { z } from "zod";
 import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
-import { CheckContext, ContextKey } from "./ContextAggregator";
+import { checkly } from "../checkly/client";
 import {
   getLastCheckResult,
   mapCheckResultToContextValue,
 } from "../checkly/utils";
+import GitHubAPI from "../github/github";
 import { prisma } from "../prisma";
-import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../ai/openai";
-import { checkly } from "../checkly/client";
-import { stringify } from "yaml";
-import { z } from "zod";
-import { Deployment, Release } from "@prisma/client";
 import {
   generateFindRelevantDeploymentsPrompt,
   generateFindRelevantReleasesPrompt,
 } from "../prompts/github";
+import { CheckContext, ContextKey } from "./ContextAggregator";
 
 const githubApi = new GitHubAPI(process.env.CHECKLY_GITHUB_TOKEN || "");
 
@@ -55,6 +54,10 @@ export const githubAggregator = {
             "The ids of the releases that are most relevant to the check failure.",
           ),
       }),
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "githubAggregator.getRelevantReleases",
+      },
     });
 
     const relevantReleases = releases.filter((r) =>
@@ -113,6 +116,10 @@ export const githubAggregator = {
             "The ids of the releases that are most relevant to the check failure.",
           ),
       }),
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "githubAggregator.getRelevantDeployments",
+      },
     });
 
     const relevantReleases = deployments.filter((deployment) =>

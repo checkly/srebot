@@ -1,10 +1,9 @@
 import { generateText } from "ai";
-import { getOpenaiSDKClient } from "../ai/openai";
-import { CheckContext, ContextKey } from "./ContextAggregator";
 import {
   contextAnalysisEntryPrompt,
   contextAnalysisSummaryPrompt,
 } from "../prompts/checkly";
+import { CheckContext } from "./ContextAggregator";
 
 export const generateContextAnalysis = async (context: CheckContext[]) => {
   return await Promise.all(
@@ -20,6 +19,10 @@ export const generateContextAnalysis = async (context: CheckContext[]) => {
     const summary = await generateText({
       ...config,
       prompt,
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "generateContextAnalysis",
+      },
     });
 
     return summary.text;
@@ -34,6 +37,10 @@ export const generateContextAnalysisSummary = async (
   const summary = await generateText({
     ...config,
     prompt,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: "generateContextAnalysisSummary",
+    },
   });
 
   return summary.text;

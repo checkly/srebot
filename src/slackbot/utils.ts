@@ -1,14 +1,19 @@
-import { generateObject } from "ai";
-import { getOpenaiSDKClient } from "../ai/openai";
-import { z } from "zod";
 import { MessageElement } from "@slack/web-api/dist/types/response/ConversationsHistoryResponse";
+import { generateObject } from "ai";
+import { z } from "zod";
+import { getOpenaiSDKClient } from "../ai/openai";
 import { web } from "./web-client";
 
 export const getThreadMetadata = async (messages: any[]) => {
   let threadId, alertId;
 
   if (messages && messages.length > 0) {
-    const firstBotMessage = messages.find((msg) => msg.bot_id && (msg.metadata?.event_payload?.threadId || msg.metadata?.event_payload?.alertId));
+    const firstBotMessage = messages.find(
+      (msg) =>
+        msg.bot_id &&
+        (msg.metadata?.event_payload?.threadId ||
+          msg.metadata?.event_payload?.alertId)
+    );
     if (firstBotMessage) {
       const metadata = firstBotMessage.metadata?.event_payload as {
         threadId: string;
@@ -118,6 +123,10 @@ export async function generateSlackBlockKitMessage(message: string) {
         )
         .describe("The blocks of the Slack Block Kit message"),
     }),
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: "generateSlackBlockKitMessage",
+    },
     prompt: `Some example Slack Block Kit messages:
 
 {
@@ -316,14 +325,12 @@ export const convertSlackTimestamp = (slackTs: string): Date => {
 
 const fetchUserName = async (userId: string): Promise<string> => {
   try {
-    const user = await web.users
-      .info({ user: userId })
-      .then((u) => u.user);
+    const user = await web.users.info({ user: userId }).then((u) => u.user);
     return user?.name ?? user?.real_name ?? userId;
   } catch (e) {
     return userId;
   }
-}
+};
 
 const fetchBotName = async (botId: string): Promise<string> => {
   try {
@@ -332,20 +339,19 @@ const fetchBotName = async (botId: string): Promise<string> => {
   } catch (e) {
     return botId;
   }
-}
+};
 
-export const fetchMessageSenderName = async (message: MessageElement, nameCache: Map<string, Promise<string>>): Promise<string> => {
+export const fetchMessageSenderName = async (
+  message: MessageElement,
+  nameCache: Map<string, Promise<string>>
+): Promise<string> => {
   const isUser = Boolean(message.user);
 
   if (message.username) {
-    return isUser
-      ? `User/${message.username}`
-      : `Bot/${message.username}`;
+    return isUser ? `User/${message.username}` : `Bot/${message.username}`;
   }
 
-  const cacheKey = isUser
-    ? `user:${message.user}`
-    : `bot:${message.bot_id}`
+  const cacheKey = isUser ? `user:${message.user}` : `bot:${message.bot_id}`;
 
   const promise = nameCache.get(cacheKey);
   if (promise) {
@@ -354,11 +360,9 @@ export const fetchMessageSenderName = async (message: MessageElement, nameCache:
 
   const namePromise = isUser
     ? fetchUserName(message.user!)
-    : fetchBotName(message.bot_id!)
+    : fetchBotName(message.bot_id!);
 
   nameCache.set(cacheKey, namePromise);
   const name = await namePromise;
-  return isUser
-    ? `User/${name}`
-    : `Bot/${name}`;
+  return isUser ? `User/${name}` : `Bot/${name}`;
 };

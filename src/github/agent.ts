@@ -1,6 +1,5 @@
-import { z } from "zod";
 import { generateObject, generateText, LanguageModelV1 } from "ai";
-import GitHubAPI, { CompareCommitsResponse } from "./github";
+import { z } from "zod";
 import {
   generateDeploymentSummaryPrompt,
   generateFindRepoPrompt,
@@ -9,6 +8,7 @@ import {
   generateTimeframePrompt,
   GithubRepoForPrompt,
 } from "../prompts/github";
+import GitHubAPI, { CompareCommitsResponse } from "./github";
 
 export class GithubAgent {
   private model: LanguageModelV1;

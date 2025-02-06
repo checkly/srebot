@@ -1,8 +1,7 @@
-import { z } from "zod";
 import { generateObject } from "ai";
-import { fetchDocumentsFromKnowledgeBase } from "../../notion/notion";
-import { convertSlackTimestamp, fetchHistoricalMessages } from "../utils";
 import moment from "moment";
+import { z } from "zod";
+import { fetchDocumentsFromKnowledgeBase } from "../../notion/notion";
 import {
   affectedComponentsPrompt,
   alertHistoryPrompt,
@@ -10,6 +9,7 @@ import {
   alertSeverityPrompt,
   alertSummaryPrompt,
 } from "../../prompts/alerts";
+import { convertSlackTimestamp, fetchHistoricalMessages } from "../utils";
 
 const OPS_CHANNEL_GUIDELINES_SLUG =
   process.env.OPS_CHANNEL_GUIDELINES_SLUG || "ops-channel-guidelines";

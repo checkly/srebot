@@ -1,3 +1,8 @@
+import { AssistantMessage, DataMessage } from "ai";
+import { LangfuseTraceClient } from "langfuse";
+import { toFile } from "openai";
+import type { AssistantStream } from "openai/lib/AssistantStream.js";
+import { FileObject } from "openai/resources";
 import type {
   Message,
   MessageCreateParams,
@@ -7,32 +12,30 @@ import type {
   RunCreateParamsNonStreaming,
   RunSubmitToolOutputsParams,
 } from "openai/resources/beta/threads";
-import type { Tool } from "./Tool";
-import type { AssistantStream } from "openai/lib/AssistantStream.js";
-import { AssistantMessage, DataMessage } from "ai";
+import { langfuse } from "../langfuse";
+import { traceRunSteps } from "../langfuse/utils";
 import { getOpenaiClient } from "./openai";
+import type { Tool } from "./Tool";
 import {
   cancelRun,
   formatToolOutput,
-  getRunMessages,
   handleToolError,
   isThreadLockError,
   requiresToolAction,
 } from "./utils";
-import { toFile } from "openai";
-import { FileObject } from "openai/resources";
 
 const openai = getOpenaiClient();
 
 // Enhanced types for better type safety
 export interface RunContext {
-  forwardStream: (runStream: AssistantStream) => Promise<Run | undefined>;
-  sendDataMessage: (message: DataMessage) => void;
-  sendMessage: (message: AssistantMessage) => void;
+  forwardStream?: (runStream: AssistantStream) => Promise<Run | undefined>;
+  sendDataMessage?: (message: DataMessage) => void;
+  sendMessage?: (message: AssistantMessage) => void;
   threadId: string;
-  messageId: string;
+  messageId?: string;
   config?: Partial<RunCreateParams>;
   toolCallStack: ToolCallWithOutput[];
+  runTrace?: LangfuseTraceClient;
 }
 
 interface ToolCallWithOutput extends RequiredActionFunctionToolCall {
@@ -78,16 +81,22 @@ export class BaseAssistant {
     runContext?: RunContext | null,
     runConfig?: Partial<RunCreateParams>
   ): Promise<AssistantStream> {
-    this.runContext = runContext ?? this.runContext;
+    this.runContext = runContext ??
+      this.runContext ?? {
+        threadId: this.threadId,
+        toolCallStack: [],
+      };
     await this.onBeforeRun();
     const config = await this.prepareRunConfig();
-
+    this.traceRun(config);
     return openai.beta.threads.runs.stream(this.threadId, {
       ...config,
       ...runConfig,
       stream: true,
     });
   }
+
+  private traceRun(config: RunCreateParams) {}
 
   /**
    * Execute a synchronous run
@@ -96,10 +105,15 @@ export class BaseAssistant {
     runContext?: RunContext | null,
     runConfig?: Partial<RunCreateParams>
   ): Promise<Run> {
-    this.runContext = runContext ?? this.runContext;
+    this.runContext = runContext ??
+      this.runContext ?? {
+        threadId: this.threadId,
+        toolCallStack: [],
+      };
     await this.onBeforeRun();
     const config = await this.prepareRunConfig();
 
+    this.traceRun(config);
     const run = await openai.beta.threads.runs.createAndPoll(this.threadId, {
       ...(config as RunCreateParamsNonStreaming),
       ...runConfig,
@@ -117,7 +131,7 @@ export class BaseAssistant {
     options: RunOptions = { stream: true }
   ): Promise<Run> {
     if (!requiresToolAction(runResult)) {
-      await this.onAfterRun(runResult);
+      await this._onAfterRun(runResult);
       return runResult;
     }
 
@@ -193,14 +207,36 @@ export class BaseAssistant {
   /**
    * Hook called after run completion - override in subclass
    */
-  protected async onAfterRun(run: Run): Promise<void> {
-    const messages = await getRunMessages(this.threadId, run.id);
+  async onAfterRun(run: Run): Promise<void> {}
+
+  /**
+   * Hook called after run completion
+   */
+  protected async _onAfterRun(run: Run): Promise<void> {
+    if (this.runContext?.runTrace) {
+      await traceRunSteps(this.runContext.runTrace, run);
+    }
+
+    await this.onAfterRun(run);
   }
 
   /**
    * Hook called before run execution - override in subclass
    */
   protected async onBeforeRun(): Promise<void> {
+    const runTrace = langfuse.trace({
+      name: "assistant",
+      timestamp: new Date(),
+      sessionId: this.threadId,
+      tags: ["assistant"],
+    });
+
+    if (this.runContext) {
+      this.runContext = {
+        ...this.runContext,
+        runTrace,
+      };
+    }
   }
 
   /**
@@ -292,7 +328,7 @@ export class BaseAssistant {
   ): Promise<Run> {
     if (options.stream) {
       const runStream = await this.submitToolOutputsStream(run.id, toolOutputs);
-      const nextRun = await this.runContext?.forwardStream(runStream);
+      const nextRun = await this.runContext?.forwardStream?.(runStream);
       if (!nextRun) throw new Error("Next run result is undefined");
 
       return this.handleRunResult(nextRun, options);
@@ -311,7 +347,7 @@ export class BaseAssistant {
     toolCall: RequiredActionFunctionToolCall,
     toolOutput: RunSubmitToolOutputsParams.ToolOutput
   ): void {
-    this.runContext?.sendDataMessage({
+    this.runContext?.sendDataMessage?.({
       id: toolOutput.tool_call_id,
       role: "data",
       data: JSON.stringify({
