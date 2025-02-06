@@ -1,6 +1,6 @@
-import { NotionPage } from "src/notion/notion";
+import { NotionPage } from "../notion/notion";
 import { PromptConfig, promptConfig } from "./common";
-import { getOpenaiSDKClient } from "src/ai/openai";
+import { getOpenaiSDKClient } from "../ai/openai";
 
 export function affectedComponentsPrompt(
   guidelines: NotionPage[], // guidelines for ops channel

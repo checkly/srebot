@@ -2,9 +2,8 @@ import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { stringify } from "yaml";
 import { slackFormatInstructions } from "./slack";
 import { promptConfig, PromptConfig } from "./common";
-import { getOpenaiSDKClient } from "src/ai/openai";
-import { Check } from "src/checkly/models";
-import { mapCheckToContextValue } from "src/checkly/utils";
+import { Check } from "../checkly/models";
+import { mapCheckToContextValue } from "../checkly/utils";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 
