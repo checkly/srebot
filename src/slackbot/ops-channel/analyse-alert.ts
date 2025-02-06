@@ -9,7 +9,7 @@ import {
   alertRecommendationPrompt,
   alertSeverityPrompt,
   alertSummaryPrompt,
-} from "src/prompts/alerts";
+} from "../../prompts/alerts";
 
 const OPS_CHANNEL_GUIDELINES_SLUG =
   process.env.OPS_CHANNEL_GUIDELINES_SLUG || "ops-channel-guidelines";
