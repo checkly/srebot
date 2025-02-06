@@ -8,6 +8,10 @@ export interface PromptConfig {
   temperature?: number;
   maxTokens?: number;
   system?: string;
+  experimental_telemetry?: {
+    isEnabled: boolean;
+    functionId: string;
+  };
 }
 
 export const defaultPromptConfig: PromptConfig = {

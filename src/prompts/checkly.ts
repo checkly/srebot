@@ -1,9 +1,9 @@
-import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { stringify } from "yaml";
-import { slackFormatInstructions } from "./slack";
-import { promptConfig, PromptConfig } from "./common";
+import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
+import { promptConfig, PromptConfig } from "./common";
+import { slackFormatInstructions } from "./slack";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 
@@ -80,7 +80,14 @@ Be concise, insightful and actionable, skip the fluff, no yapping.
 If a recent release is the most likely root cause, provide a link to the release diff.
 
 *Summary:*`,
-    promptConfig({ temperature: 1, maxTokens: 500 }),
+    promptConfig({
+      temperature: 1,
+      maxTokens: 500,
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "contextAnalysisSummary",
+      },
+    }),
   ];
 }
 

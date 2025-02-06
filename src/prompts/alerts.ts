@@ -1,6 +1,6 @@
+import { getOpenaiSDKClient } from "../ai/openai";
 import { NotionPage } from "../notion/notion";
 import { PromptConfig, promptConfig } from "./common";
-import { getOpenaiSDKClient } from "../ai/openai";
 
 export function affectedComponentsPrompt(
   guidelines: NotionPage[], // guidelines for ops channel
@@ -16,7 +16,14 @@ export function affectedComponentsPrompt(
 
     Here are the guidelines for determining the affected components and environment:
     ${JSON.stringify(guidelines)}`,
-    promptConfig({ model, system: systemPrompt }),
+    promptConfig({
+      model,
+      system: systemPrompt,
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "affectedComponents",
+      },
+    }),
   ];
 }
 
@@ -40,7 +47,14 @@ export function alertRecommendationPrompt(
     Below you will find the guidelines for alerts:
     - Determine the course of action based on alert state
     ${JSON.stringify(guidelines)}`,
-    promptConfig({ model, system }),
+    promptConfig({
+      model,
+      system,
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "alertRecommendation",
+      },
+    }),
   ];
 }
 
@@ -54,6 +68,10 @@ export function alertHistoryPrompt(
   const config = promptConfig({
     model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: "alertHistory",
+    },
   });
 
   return [
@@ -84,6 +102,10 @@ export function alertSeverityPrompt(
   const config = promptConfig({
     model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: "alertSeverity",
+    },
   });
 
   return [
@@ -115,6 +137,10 @@ export function alertSummaryPrompt(
   const config = promptConfig({
     model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: "alertSummary",
+    },
   });
 
   return [
