@@ -51,7 +51,7 @@ router.post("/", async (req: Request, res: Response) => {
     if (exisingAlert && !!(process.env.PREVENT_DUPLICATE_ALERTS === "true")) {
       console.log(
         "Alert already processed",
-        !!(process.env.PREVENT_DUPLICATE_ALERTS === "true")
+        !!(process.env.PREVENT_DUPLICATE_ALERTS === "true"),
       );
       res.status(200).json({
         message: "Alert already processed",
@@ -94,7 +94,7 @@ router.post("/", async (req: Request, res: Response) => {
         });
 
         const checkResults = context.find(
-          (c) => c.key === ContextKey.ChecklyResults
+          (c) => c.key === ContextKey.ChecklyResults,
         );
 
         const thread = await getOpenaiClient().beta.threads.create({
@@ -149,7 +149,7 @@ router.post("/", async (req: Request, res: Response) => {
                 {
                   type: "mrkdwn",
                   text: `:date: *${new Date(
-                    alertDto.STARTED_AT
+                    alertDto.STARTED_AT,
                   ).toLocaleString()}*`,
                 },
                 {

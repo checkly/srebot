@@ -79,7 +79,7 @@ export class BaseAssistant {
    */
   public async runStream(
     runContext?: RunContext | null,
-    runConfig?: Partial<RunCreateParams>
+    runConfig?: Partial<RunCreateParams>,
   ): Promise<AssistantStream> {
     this.runContext = runContext ??
       this.runContext ?? {
@@ -103,7 +103,7 @@ export class BaseAssistant {
    */
   public async runSync(
     runContext?: RunContext | null,
-    runConfig?: Partial<RunCreateParams>
+    runConfig?: Partial<RunCreateParams>,
   ): Promise<Run> {
     this.runContext = runContext ??
       this.runContext ?? {
@@ -128,7 +128,7 @@ export class BaseAssistant {
    */
   public async handleRunResult(
     runResult: Run,
-    options: RunOptions = { stream: true }
+    options: RunOptions = { stream: true },
   ): Promise<Run> {
     if (!requiresToolAction(runResult)) {
       await this._onAfterRun(runResult);
@@ -144,7 +144,7 @@ export class BaseAssistant {
    */
   public async addMessage(
     message: string,
-    options?: Partial<MessageCreateParams>
+    options?: Partial<MessageCreateParams>,
   ): Promise<Message> {
     try {
       return await openai.beta.threads.messages.create(this.threadId, {
@@ -166,7 +166,7 @@ export class BaseAssistant {
    */
   public async addFile(
     file: Buffer,
-    purpose: "vision" | "assistants"
+    purpose: "vision" | "assistants",
   ): Promise<FileObject> {
     return await openai.files.create({
       file: await toFile(file, "screenshot.png", {
@@ -244,7 +244,7 @@ export class BaseAssistant {
    */
   private async submitToolOutputsStream(
     runId: string,
-    toolOutputs: RunSubmitToolOutputsParams.ToolOutput[]
+    toolOutputs: RunSubmitToolOutputsParams.ToolOutput[],
   ): Promise<AssistantStream> {
     return openai.beta.threads.runs.submitToolOutputsStream(
       this.threadId,
@@ -252,7 +252,7 @@ export class BaseAssistant {
       {
         tool_outputs: toolOutputs,
         stream: true,
-      }
+      },
     );
   }
 
@@ -260,7 +260,7 @@ export class BaseAssistant {
    * Execute a tool call
    */
   private async runTool(
-    toolCall: RequiredActionFunctionToolCall
+    toolCall: RequiredActionFunctionToolCall,
   ): Promise<unknown> {
     try {
       const parameters = JSON.parse(toolCall.function.arguments);
@@ -297,7 +297,7 @@ export class BaseAssistant {
    * Process tool calls and generate outputs
    */
   private async processToolCalls(
-    run: Run
+    run: Run,
   ): Promise<RunSubmitToolOutputsParams.ToolOutput[]> {
     if (!run.required_action?.submit_tool_outputs.tool_calls) {
       return [];
@@ -313,8 +313,8 @@ export class BaseAssistant {
           const toolOutput = formatToolOutput(toolCall.id, output);
           this.sendToolDataMessage(toolCall, toolOutput);
           return toolOutput;
-        }
-      )
+        },
+      ),
     );
   }
 
@@ -324,7 +324,7 @@ export class BaseAssistant {
   private async submitToolOutputsAndContinue(
     run: Run,
     toolOutputs: RunSubmitToolOutputsParams.ToolOutput[],
-    options: RunOptions
+    options: RunOptions,
   ): Promise<Run> {
     if (options.stream) {
       const runStream = await this.submitToolOutputsStream(run.id, toolOutputs);
@@ -336,7 +336,7 @@ export class BaseAssistant {
       const nextRun = await openai.beta.threads.runs.submitToolOutputsAndPoll(
         this.threadId,
         run.id,
-        { tool_outputs: toolOutputs }
+        { tool_outputs: toolOutputs },
       );
 
       return this.handleRunResult(nextRun, options);
@@ -345,7 +345,7 @@ export class BaseAssistant {
 
   private sendToolDataMessage(
     toolCall: RequiredActionFunctionToolCall,
-    toolOutput: RunSubmitToolOutputsParams.ToolOutput
+    toolOutput: RunSubmitToolOutputsParams.ToolOutput,
   ): void {
     this.runContext?.sendDataMessage?.({
       id: toolOutput.tool_call_id,

@@ -6,7 +6,10 @@ import { BaseAssistant } from "./Assistant";
 
 // Custom error class for tool-related errors
 export class ToolError extends Error {
-  constructor(message: string, public readonly code: string) {
+  constructor(
+    message: string,
+    public readonly code: string,
+  ) {
     super(message);
     this.name = "ToolError";
   }
@@ -18,7 +21,7 @@ export class ToolError extends Error {
 export abstract class Tool<
   TParams extends z.ZodType = z.ZodType,
   TOutput extends z.ZodType = z.ZodType,
-  TAgent extends BaseAssistant = BaseAssistant
+  TAgent extends BaseAssistant = BaseAssistant,
 > {
   description: string;
   parameters: TParams;
@@ -118,7 +121,7 @@ export abstract class Tool<
    * Abstract method to implement tool's core functionality
    */
   protected abstract execute(
-    input: z.infer<TParams>
+    input: z.infer<TParams>,
   ): Promise<z.infer<TOutput>> | z.infer<TOutput>;
 
   /**
@@ -136,13 +139,13 @@ export abstract class Tool<
     if (!config.description?.trim()) {
       throw new ToolError(
         "Tool description is required",
-        "INVALID_DESCRIPTION"
+        "INVALID_DESCRIPTION",
       );
     }
     if (!config.parameters) {
       throw new ToolError(
         "Tool parameters schema is required",
-        "INVALID_PARAMETERS"
+        "INVALID_PARAMETERS",
       );
     }
     if (!config.agent) {
@@ -155,7 +158,7 @@ export abstract class Tool<
    */
   private async executeWithRetry(
     input: z.infer<TParams>,
-    attempt: number = 1
+    attempt: number = 1,
   ): Promise<z.infer<TOutput>> {
     try {
       if (this.timeout) {
@@ -168,7 +171,7 @@ export abstract class Tool<
       }
       // Exponential backoff
       await new Promise((resolve) =>
-        setTimeout(resolve, Math.pow(2, attempt) * 1000)
+        setTimeout(resolve, Math.pow(2, attempt) * 1000),
       );
       return this.executeWithRetry(input, attempt + 1);
     }
@@ -178,7 +181,7 @@ export abstract class Tool<
    * Execute with timeout
    */
   private async executeWithTimeout(
-    input: z.infer<TParams>
+    input: z.infer<TParams>,
   ): Promise<z.infer<TOutput>> {
     if (!this.timeout) return this.execute(input);
 
@@ -187,8 +190,8 @@ export abstract class Tool<
       new Promise<never>((_, reject) =>
         setTimeout(
           () => reject(new ToolError("Execution timeout", "TIMEOUT")),
-          this.timeout
-        )
+          this.timeout,
+        ),
       ),
     ]);
   }

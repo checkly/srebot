@@ -201,7 +201,7 @@ export class CheckResult {
 
     return jobLog
       .map(
-        (logEntry) => `${logEntry.time} - ${logEntry.level}: ${logEntry.msg}`
+        (logEntry) => `${logEntry.time} - ${logEntry.level}: ${logEntry.msg}`,
       )
       .join("\n");
   }

@@ -9,15 +9,15 @@ export const releaseHeader = {
 export const divider = { type: "divider" };
 
 export const createReleaseBlock = function ({
-                                              release,
-                                              releaseUrl,
-                                              diffUrl,
-                                              date,
-                                              repo,
-                                              repoUrl,
-                                              authors,
-                                              summary,
-                                            }: {
+  release,
+  releaseUrl,
+  diffUrl,
+  date,
+  repo,
+  repoUrl,
+  authors,
+  summary,
+}: {
   release: string;
   releaseUrl: string;
   diffUrl: string;
@@ -62,15 +62,15 @@ export const createReleaseBlock = function ({
 };
 
 export const createDeploymentBlock = function ({
-                                                 diffUrl,
-                                                 date,
-                                                 repo,
-                                                 repoUrl,
-                                                 authors,
-                                                 summary,
-                                                 environment,
-                                                 deploymentUrl
-                                               }: {
+  diffUrl,
+  date,
+  repo,
+  repoUrl,
+  authors,
+  summary,
+  environment,
+  deploymentUrl,
+}: {
   diffUrl: string;
   date: string;
   repo: string;
@@ -78,7 +78,7 @@ export const createDeploymentBlock = function ({
   repoUrl: string;
   authors: string[];
   summary: string;
-  deploymentUrl: string
+  deploymentUrl: string;
 }) {
   return {
     blocks: [
@@ -112,4 +112,4 @@ export const createDeploymentBlock = function ({
       },
     ],
   };
-}
+};

@@ -1,15 +1,14 @@
 import { Octokit } from "octokit";
 import { Endpoints } from "@octokit/types";
-import type {
-  RestEndpointMethodTypes
-} from "@octokit/plugin-rest-endpoint-methods/dist-types/generated/parameters-and-response-types";
+import type { RestEndpointMethodTypes } from "@octokit/plugin-rest-endpoint-methods/dist-types/generated/parameters-and-response-types";
 
 type Repository = Endpoints["GET /repos/{owner}/{repo}"]["response"]["data"];
 type ListReleasesResponse =
   Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"];
 export type CompareCommitsResponse =
   Endpoints["GET /repos/{owner}/{repo}/compare/{base}...{head}"]["response"]["data"];
-export type GithubDeploymentInstance = RestEndpointMethodTypes["repos"]["listDeployments"]["response"]["data"][0]
+export type GithubDeploymentInstance =
+  RestEndpointMethodTypes["repos"]["listDeployments"]["response"]["data"][0];
 
 class GitHubAPI {
   private octokit: Octokit;
@@ -33,7 +32,11 @@ class GitHubAPI {
     }
   }
 
-  async getPreviousReleaseTag(org: string, repoName: string, release: string):Promise<string> {
+  async getPreviousReleaseTag(
+    org: string,
+    repoName: string,
+    release: string,
+  ): Promise<string> {
     try {
       const { data: releases } = await this.octokit.rest.repos.listReleases({
         owner: org,
@@ -59,28 +62,29 @@ class GitHubAPI {
     repoName: string,
     environment: string,
     currentDeploymentId: number,
-    currentDeploymentSha: string
-  ): Promise<GithubDeploymentInstance|null> {
+    currentDeploymentSha: string,
+  ): Promise<GithubDeploymentInstance | null> {
     try {
-      const { data: deployments }  = await this.octokit.rest.repos.listDeployments({
-        owner: org,
-        repo: repoName,
-        environment,
-        per_page: 100, // Fetch up to 100 deployments at once (max allowed by GitHub)
-      });
+      const { data: deployments } =
+        await this.octokit.rest.repos.listDeployments({
+          owner: org,
+          repo: repoName,
+          environment,
+          per_page: 100, // Fetch up to 100 deployments at once (max allowed by GitHub)
+        });
 
       // Find the index of the current deployment
       const currentDeploymentIndex = deployments.findIndex(
-        (d) => d.id === currentDeploymentId
+        (d) => d.id === currentDeploymentId,
       );
 
       if (currentDeploymentIndex === -1) {
         throw new Error(`Deployment with ID ${currentDeploymentId} not found`);
       }
 
-      const previousDeployment = deployments.slice(currentDeploymentIndex).find(
-        (d => d.sha !== currentDeploymentSha),
-      )
+      const previousDeployment = deployments
+        .slice(currentDeploymentIndex)
+        .find((d) => d.sha !== currentDeploymentSha);
 
       return previousDeployment || null;
     } catch (error) {
@@ -140,7 +144,7 @@ class GitHubAPI {
     org: string,
     repo: string,
     baseTag: string,
-    headTag: string
+    headTag: string,
   ): Promise<CompareCommitsResponse> {
     try {
       const { data: diff } = await this.octokit.rest.repos.compareCommits({
@@ -159,7 +163,7 @@ class GitHubAPI {
   async queryLatestReleasesWithDiffs(
     org: string,
     repoName: string,
-    since: Date
+    since: Date,
   ) {
     const releases = await this.queryLatestReleases(org, repoName, since);
 
@@ -174,10 +178,10 @@ class GitHubAPI {
           org,
           repoName,
           previousRelease.tag,
-          release.tag
+          release.tag,
         );
         return { release, diff };
-      })
+      }),
     );
 
     return releaseDiffs;
@@ -186,7 +190,7 @@ class GitHubAPI {
   async getCommits(
     owner: string,
     repo: string,
-    options: { since?: string } = {}
+    options: { since?: string } = {},
   ) {
     try {
       const { data: commits } = await this.octokit.rest.repos.listCommits({
@@ -204,7 +208,7 @@ class GitHubAPI {
   async getPullRequests(
     owner: string,
     repo: string,
-    options: { state?: "open" | "closed" | "all" } = { state: "all" }
+    options: { state?: "open" | "closed" | "all" } = { state: "all" },
   ) {
     try {
       const { data: pullRequests } = await this.octokit.rest.pulls.list({

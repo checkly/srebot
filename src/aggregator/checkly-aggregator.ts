@@ -1,7 +1,10 @@
 import { CheckContext, ContextKey } from "./ContextAggregator";
 import { checkly } from "../checkly/client";
 import { WebhookAlertDto } from "../checkly/alertDTO";
-import { mapCheckResultToContextValue, mapCheckToContextValue, } from "../checkly/utils";
+import {
+  mapCheckResultToContextValue,
+  mapCheckToContextValue,
+} from "../checkly/utils";
 
 export const checklyAggregator = {
   name: "Checkly",
@@ -29,7 +32,7 @@ export const checklyAggregator = {
       makeCheckContext(ContextKey.ChecklyCheck, mapCheckToContextValue(check)),
       makeCheckContext(
         ContextKey.ChecklyResults,
-        mapCheckResultToContextValue(results)
+        mapCheckResultToContextValue(results),
       ),
       makeCheckContext(ContextKey.ChecklyLogs, logs),
     ] as CheckContext[];

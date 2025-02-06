@@ -24,7 +24,7 @@ describe("Load github releases into db", () => {
 
     let summary = await githubAgent.summarizeReleases(
       `what has changed in the ${repo} within the last ${timeframe}`,
-      org
+      org,
     );
 
     for (const release of summary.releases) {
@@ -44,7 +44,7 @@ describe("Load github releases into db", () => {
           diffUrl: release.diffLink,
           authors,
           summary: release.summary,
-        }
+        },
       });
     }
   }, 600000000);
