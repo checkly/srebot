@@ -2,6 +2,9 @@ import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { stringify } from "yaml";
 import { slackFormatInstructions } from "./slack";
 import { promptConfig, PromptConfig } from "./common";
+import { getOpenaiSDKClient } from "src/ai/openai";
+import { Check } from "src/checkly/models";
+import { mapCheckToContextValue } from "src/checkly/utils";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 
@@ -79,6 +82,22 @@ If a recent release is the most likely root cause, provide a link to the release
 
 *Summary:*`,
     promptConfig({ temperature: 1, maxTokens: 500 }),
+  ];
+}
+
+export function checklyToolPrompt(
+  checks: Check[],
+  query: string | undefined,
+): [string, PromptConfig] {
+  return [
+    `You are the Checkly Check Search Engine. You are given a query and a list of checks. Return the most relevant check that relates to the query.
+
+Available checks: ${stringify(
+      checks.map((c) => ({ ...mapCheckToContextValue(c) })),
+    )}
+
+Search Query: ${query ?? ""}`,
+    promptConfig(),
   ];
 }
 
