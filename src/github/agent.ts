@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { generateObject, generateText, LanguageModelV1 } from "ai";
 import GitHubAPI, { CompareCommitsResponse } from "./github";
+import {
+  generateDeploymentSummaryPrompt,
+  generateFindRepoPrompt,
+  generateReleaseHeadlinePrompt,
+  generateReleaseSummaryPrompt,
+  generateTimeframePrompt,
+  GithubRepoForPrompt,
+} from "../prompts/github";
 
 export class GithubAgent {
   private model: LanguageModelV1;
@@ -15,7 +23,7 @@ export class GithubAgent {
     org: string,
     repo: string,
     release: string,
-    previousRelease: string
+    previousRelease: string,
   ) {
     let diff = await this.github.getDiffBetweenTags(
       org,
@@ -24,22 +32,25 @@ export class GithubAgent {
       release,
     );
 
+    const [prompt, config] = generateReleaseHeadlinePrompt(
+      previousRelease,
+      release,
+      JSON.stringify(diff),
+    );
+
     const { text } = await generateText({
-      model: this.model,
-      prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes in a single sentence: ${JSON.stringify(
-        diff
-      )}. Do not describe the outer context as the developer is already aware. Do not yap. Do not use any formatting rules.`,
+      ...config,
+      prompt,
     });
 
     return { diff, summary: text };
   }
 
-
   async summarizeRelease(
     org: string,
     repo: string,
     release: string,
-    previousRelease: string
+    previousRelease: string,
   ) {
     let diff = await this.github.getDiffBetweenTags(
       org,
@@ -48,11 +59,15 @@ export class GithubAgent {
       release,
     );
 
+    const [prompt, config] = generateReleaseSummaryPrompt(
+      previousRelease,
+      release,
+      JSON.stringify(diff),
+    );
+
     const { text } = await generateText({
-      model: this.model,
-      prompt: `The following diff describes the changes between ${previousRelease} and ${release}. Summarize the changes so that another developer quickly understands what has changes: ${JSON.stringify(
-        diff
-      ).slice(0, 1000000)}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
+      ...config,
+      prompt,
     });
 
     return { diff, summary: text };
@@ -62,8 +77,8 @@ export class GithubAgent {
     org: string,
     repo: string,
     currentSha: string,
-    previousSha: string
-  ): Promise<{ diff: CompareCommitsResponse, summary: string }> {
+    previousSha: string,
+  ): Promise<{ diff: CompareCommitsResponse; summary: string }> {
     const diff = await this.github.getDiffBetweenTags(
       org,
       repo,
@@ -71,18 +86,24 @@ export class GithubAgent {
       currentSha,
     );
 
+    const [prompt, config] = generateDeploymentSummaryPrompt(
+      previousSha,
+      currentSha,
+      JSON.stringify(diff),
+    );
+
     const { text } = await generateText({
-      model: this.model,
-      prompt: `The following diff describes the changes between ${previousSha} and ${currentSha}. Summarize the changes so that another developer quickly understands what has changes: ${JSON.stringify(
-        diff
-      )}. Do not describe the outer context as the developer is already aware. Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules. Focus on potential impact of the change and the reason for the change.`,
+      ...config,
+      prompt,
     });
 
     return { diff, summary: text };
   }
 
-  async find_repo(org: string, prompt: string) {
-    let repositories = (await this.github.queryRepositories(org)).map((r) => ({
+  async find_repo(org: string, userPrompt: string) {
+    let repositories: GithubRepoForPrompt[] = (
+      await this.github.queryRepositories(org)
+    ).map((r) => ({
       name: r.name,
       description: r.description,
       link: r.html_url,
@@ -94,11 +115,11 @@ export class GithubAgent {
     //   prompt,
     // });
 
+    const [prompt, config] = generateFindRepoPrompt(userPrompt, repositories);
+
     const { object } = await generateObject({
-      model: this.model,
-      prompt: `Based on the following prompt: ${prompt} and the list of repositories\n\n${JSON.stringify(
-        repositories
-      )}\n\n, select the repository that is most relevant to the prompt.`,
+      ...config,
+      prompt,
       schema: z.object({
         repo: z.enum(repositories.map((r) => r.name) as [string, ...string[]]),
       }),
@@ -107,11 +128,13 @@ export class GithubAgent {
     return repositories.find((r) => r.name === object.repo) || undefined;
   }
 
-  async get_date(org: string, prompt: string) {
+  async get_date(org: string, userPrompt: string) {
+    const [systemPrompt, config] = generateTimeframePrompt();
+
     const { text } = await generateText({
-      model: this.model,
-      system: `A developer describes a task which is about a certain time frame. Based on his prompt choose identify the date in ISO8601 format. If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`,
-      prompt,
+      ...config,
+      system: systemPrompt,
+      prompt: userPrompt,
     });
 
     return text;
@@ -137,7 +160,7 @@ export class GithubAgent {
           org,
           repo.name,
           release.tag,
-          previousRelease
+          previousRelease,
         );
         console.log(JSON.stringify(diff, undefined, 2));
         return {
@@ -146,9 +169,11 @@ export class GithubAgent {
           link: release.link,
           diffLink: diff.html_url,
           summary: summary,
-          authors: Array.from(new Set(diff.commits.map(commit => commit.author))),
+          authors: Array.from(
+            new Set(diff.commits.map((commit) => commit.author)),
+          ),
         };
-      })
+      }),
     );
 
     return {

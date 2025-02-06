@@ -33,7 +33,7 @@ describe.skip("fetchHistoricalMessages", () => {
         (m) =>
           `${convertSlackTimestamp(m.ts!).toISOString()} Message: ${
             m.plaintext
-          }`
+          }`,
       )
       .join("\n");
 
@@ -60,11 +60,11 @@ describe.skip("fetchHistoricalMessages", () => {
 
     console.log(text);
   });
-  it("should generateChannelSummary", async () => {
+  /*it("should generateChannelSummary", async () => {
     const summary = await generateChannelSummary(
       "CUZ7V5YKZ",
       "Create a concise summary recent alerts and notifications."
     );
     console.log(summary);
-  });
+    });*/
 });
