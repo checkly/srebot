@@ -83,7 +83,7 @@ export function generateReleaseHeadlinePrompt(
     `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
 Summarize the changes in a single sentence:
-${JSON.stringify(diff)}
+${diff}
 
 Do not describe the outer context as the developer is already aware.
 Do not yap.
