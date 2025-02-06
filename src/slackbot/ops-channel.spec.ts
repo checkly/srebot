@@ -1,10 +1,9 @@
-import "reflect-metadata";
-import "dotenv/config";
-import dotenv from "dotenv";
-import { convertSlackTimestamp, fetchHistoricalMessages } from "./utils";
-import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { generateChannelSummary } from "./channel-summary";
+import { generateText } from "ai";
+import dotenv from "dotenv";
+import "dotenv/config";
+import "reflect-metadata";
+import { convertSlackTimestamp, fetchHistoricalMessages } from "./utils";
 
 dotenv.config();
 jest.setTimeout(30000);
@@ -33,7 +32,7 @@ describe.skip("fetchHistoricalMessages", () => {
         (m) =>
           `${convertSlackTimestamp(m.ts!).toISOString()} Message: ${
             m.plaintext
-          }`
+          }`,
       )
       .join("\n");
 
@@ -60,11 +59,11 @@ describe.skip("fetchHistoricalMessages", () => {
 
     console.log(text);
   });
-  it("should generateChannelSummary", async () => {
+  /*it("should generateChannelSummary", async () => {
     const summary = await generateChannelSummary(
       "CUZ7V5YKZ",
       "Create a concise summary recent alerts and notifications."
     );
     console.log(summary);
-  });
+    });*/
 });

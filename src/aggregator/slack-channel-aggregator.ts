@@ -12,11 +12,11 @@ const makeChannelContext = (
   channelId: string,
   summary: string,
   relevantLinks: Array<{ url: string; title: string }>,
-  checkId: string
+  checkId: string,
 ): CheckContext => ({
   key: ContextKey.SlackChannelSummary.replace(
     "$channel",
-    channelId
+    channelId,
   ) as ContextKey,
   value: {
     summary,
@@ -38,36 +38,28 @@ export const slackChannelAggregator = {
           try {
             const { summary, relevantLinks } = await generateChannelSummary(
               channelId,
-              "What are the recent events, discussions or relevant context related to the following alert?" +
-              JSON.stringify({
-                title: alert.ALERT_TITLE,
-                type: alert.ALERT_TYPE,
-                name: alert.CHECK_NAME,
-                runLocation: alert.RUN_LOCATION,
-                responseTime: alert.RESPONSE_TIME,
-                tags: alert.TAGS,
-              })
+              alert,
             );
 
             return makeChannelContext(
               channelId,
               summary,
               relevantLinks,
-              alert.CHECK_ID
+              alert.CHECK_ID,
             );
           } catch (error) {
             console.error(
               `Error fetching summary for channel ${channelId}:`,
-              error
+              error,
             );
             return null;
           }
-        })
+        }),
       );
 
       // Filter out any failed channel summaries
       return channelSummaries.filter(
-        (context): context is CheckContext => context !== null
+        (context): context is CheckContext => context !== null,
       );
     } catch (error) {
       console.error("Error in Slack Channel aggregator:", error);
