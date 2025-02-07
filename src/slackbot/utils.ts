@@ -362,3 +362,15 @@ export const fetchMessageSenderName = async (
   const name = await namePromise;
   return isUser ? `User/${name}` : `Bot/${name}`;
 };
+
+export const generateSlackMessageLink = (
+  channel: string,
+  ts: string,
+): string => {
+  if (!process.env.SLACK_TEAM_DOMAIN) {
+    return "";
+  }
+
+  const formattedTs = ts.replace(".", ""); // Convert ts to Slack's format
+  return `https://${process.env.SLACK_TEAM_DOMAIN}.slack.com/archives/${channel}/p${formattedTs}`;
+};

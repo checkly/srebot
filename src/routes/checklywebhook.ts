@@ -12,6 +12,7 @@ import { getOpenaiClient } from "../ai/openai";
 import { AlertType, WebhookAlertDto } from "../checkly/alertDTO";
 import { prisma } from "../prisma";
 import { app } from "../slackbot/app";
+import { saveResponseAndAskForFeedback } from "../slackbot/feedback";
 
 const router = express.Router();
 
@@ -116,7 +117,7 @@ router.post("/", async (req: Request, res: Response) => {
           alertDto.ALERT_TYPE === AlertType.ALERT_RECOVERY
             ? "✅ " + alertDto.CHECK_NAME + " has recovered ✅"
             : "🚨 " + alertDto.CHECK_NAME + " has failed 🚨";
-        await app.client.chat.postMessage({
+        const postMessageResponse = await app.client.chat.postMessage({
           channel: process.env.SLACK_ALERT_CHANNEL_ID as string,
           text: headerText,
           metadata: {
@@ -148,9 +149,7 @@ router.post("/", async (req: Request, res: Response) => {
                 },
                 {
                   type: "mrkdwn",
-                  text: `:date: *${new Date(
-                    alertDto.STARTED_AT,
-                  ).toLocaleString()}*`,
+                  text: `:date: *${new Date(alertDto.STARTED_AT).toLocaleString()}*`,
                 },
                 {
                   type: "mrkdwn",
@@ -166,9 +165,7 @@ router.post("/", async (req: Request, res: Response) => {
                 },
                 {
                   type: "mrkdwn",
-                  text: `:recycle: *${
-                    (checkResults?.value as any)?.attempts ?? "unknown"
-                  } Attempts*`,
+                  text: `:recycle: *${(checkResults?.value as any)?.attempts ?? "unknown"} Attempts*`,
                 },
               ],
             },
@@ -181,6 +178,7 @@ router.post("/", async (req: Request, res: Response) => {
             },
           ],
         });
+        await saveResponseAndAskForFeedback(postMessageResponse);
       };
 
       handleAlert();
