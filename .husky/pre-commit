@@ -1,1 +1,8 @@
-bunx lint-staged
+if command -v bunx &> /dev/null
+then
+  echo "Using bunx to run lint-staged..."
+  bunx lint-staged
+else
+  echo "Bun not found—falling back to npm (npx lint-staged)..."
+  npx lint-staged
+fi
