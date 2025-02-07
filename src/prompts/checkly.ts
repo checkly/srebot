@@ -2,11 +2,11 @@ import { stringify } from "yaml";
 import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
+import { validObjectList, validObject } from "./validation";
 import { promptConfig, PromptConfig } from "./common";
 import { slackFormatInstructions } from "./slack";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
-
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
 
 /**
@@ -24,6 +24,9 @@ export function contextAnalysisEntryPrompt(
   entry: CheckContext,
   allEntries: CheckContext[],
 ): [string, PromptConfig] {
+  validObject.parse(entry);
+  validObjectList.parse(allEntries);
+
   return [
     `The following check has failed: ${formatChecklyMonitorData(allEntries)}
 
@@ -50,6 +53,8 @@ ${stringify(entry)}`,
 export function contextAnalysisSummaryPrompt(
   contextRows: CheckContext[],
 ): [string, PromptConfig] {
+  validObjectList.parse(contextRows);
+
   const checkContext = formatChecklyMonitorData(contextRows);
 
   return [
@@ -95,6 +100,8 @@ export function checklyToolPrompt(
   checks: Check[],
   query: string | undefined,
 ): [string, PromptConfig] {
+  validObjectList.parse(checks);
+
   return [
     `You are the Checkly Check Search Engine. You are given a query and a list of checks. Return the most relevant check that relates to the query.
 
@@ -117,6 +124,8 @@ Search Query: ${query ?? ""}`,
  * const formattedContext = formatContextAnalysis(contextRows);
  */
 function formatContextAnalysis(rows: CheckContext[]): string {
+  validObjectList.parse(rows);
+
   return stringify(
     rows
       .filter((c) => c.key !== ContextKey.ChecklyCheck)
@@ -136,6 +145,8 @@ function formatContextAnalysis(rows: CheckContext[]): string {
  * const monitorData = formatChecklyMonitorData(contextRows);
  */
 function formatChecklyMonitorData(rows: CheckContext[]): string {
+  validObjectList.parse(rows);
+
   const checkContext = rows.find((c) => c.key === ContextKey.ChecklyCheck);
   return stringify(
     {
