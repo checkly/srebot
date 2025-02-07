@@ -372,5 +372,5 @@ export const generateSlackMessageLink = (
   }
 
   const formattedTs = ts.replace(".", ""); // Convert ts to Slack's format
-  return `Slack link: https://${process.env.SLACK_TEAM_DOMAIN}.slack.com/archives/${channel}/p${formattedTs}`;
+  return `https://${process.env.SLACK_TEAM_DOMAIN}.slack.com/archives/${channel}/p${formattedTs}`;
 };
