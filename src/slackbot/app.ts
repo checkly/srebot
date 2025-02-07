@@ -19,6 +19,11 @@ import {
   getMessageText,
   getThreadMetadata,
 } from "./utils";
+import {
+  FeedbackScore,
+  saveResponseAndAskForFeedback,
+  saveResponseFeedback,
+} from "./feedback";
 
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
@@ -352,12 +357,13 @@ if (process.env.OPS_CHANNEL_ID) {
           ],
         });
 
-        await app.client.chat.postMessage({
+        const postMessageResponse = await app.client.chat.postMessage({
           token: context.botToken,
           channel: event.channel,
           text: responseText,
           thread_ts: event.ts, // Replies in the same thread
           metadata: {
+            // This metadata will be used to identify message for feedback purposes
             event_type: "alert",
             event_payload: {
               threadId: openAIThread.id,
@@ -365,9 +371,126 @@ if (process.env.OPS_CHANNEL_ID) {
             },
           },
         });
+
+        await saveResponseAndAskForFeedback(context, postMessageResponse);
       } catch (error) {
         console.error("Error responding to message:", error);
       }
     },
   );
 }
+
+app.action("feedback_thumbs_up", async ({ body, ack, respond }: any) => {
+  await ack();
+
+  await saveResponseFeedback(body.message.metadata, FeedbackScore.thumbsUp);
+
+  await respond({
+    text: `*Thank you for the :thumbsup: feedback <@${body.user.id}>!*`,
+    replace_original: true,
+  });
+});
+
+app.action("feedback_thumbs_down", async ({ body, ack, respond }: any) => {
+  await ack();
+
+  const feedbackRecord = await saveResponseFeedback(
+    body.message.metadata,
+    FeedbackScore.thumbsDown,
+  );
+
+  if (!feedbackRecord) {
+    console.log(
+      `msg="Feedback thumbs down submitted" user=${body.user.id} error="No related response found"`,
+    );
+    return;
+  }
+
+  const encodeValueAndMetadata = (value: string): string =>
+    JSON.stringify({ ...body.message.metadata, value });
+
+  await respond({
+    text: `Feedback: <@${body.user.id}>`,
+    replace_original: true,
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Thank you for the :thumbsdown: feedback <@${body.user.id}>!*\nWhy this wasn't not helpful. Select all that apply.`,
+        },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "checkboxes",
+            action_id: "feedback_reasons_submit",
+            options: [
+              {
+                text: {
+                  type: "mrkdwn",
+                  text: "Incorrect info",
+                },
+                value: encodeValueAndMetadata("incorrect_info"),
+              },
+              {
+                text: {
+                  type: "mrkdwn",
+                  text: "Too vague / missing details",
+                },
+                value: encodeValueAndMetadata("vague"),
+              },
+              {
+                text: {
+                  type: "mrkdwn",
+                  text: "Irrelevant / off-topic",
+                },
+                value: encodeValueAndMetadata("irrelevant"),
+              },
+              {
+                text: {
+                  type: "mrkdwn",
+                  text: "Too long / hard to read",
+                },
+                value: encodeValueAndMetadata("long"),
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+});
+
+app.action("feedback_reasons_submit", async ({ body, ack }: any) => {
+  await ack();
+
+  const selectedOptionsInputs = body.actions[0].selected_options.map((opt) =>
+    JSON.parse(opt.value),
+  );
+  const categories = selectedOptionsInputs.map((opt) => opt.value);
+  const userId = body.user.id;
+  if (categories.length === 0) {
+    console.log(
+      `msg="Feedback reasons submitted" user=${userId} error="No feedback reasons selected"`,
+    );
+    return;
+  }
+  const eventMetadata = selectedOptionsInputs[0];
+  const feedbackRecord = await saveResponseFeedback(
+    eventMetadata,
+    FeedbackScore.thumbsDown,
+    categories,
+  );
+
+  if (!feedbackRecord) {
+    console.log(
+      `msg="Feedback reasons submitted" user=${userId} error="No related response found"`,
+    );
+    return;
+  }
+  console.log(
+    `msg="Feedback reasons submitted" user=${userId} sre_bot_response_id=${feedbackRecord.botResponseId} categories=${categories.join(",")}`,
+  );
+});
