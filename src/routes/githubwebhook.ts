@@ -19,6 +19,7 @@ import {
 } from "../github/slackBlock";
 import moment from "moment";
 import { prisma } from "../prisma";
+import { saveResponseAndAskForFeedback } from "../slackbot/feedback";
 
 const GH_WEBHOOK_SECRET = process.env.GH_WEBHOOK_SECRET || "your_secret";
 
@@ -191,7 +192,7 @@ router.post("/", async (req: Request, res: Response) => {
         );
 
         // Save deployment to the database
-        await prisma.deployment.create({
+        const deploymentRecord = await prisma.deployment.create({
           data: {
             ...deploymentData,
             rawEvent: deploymentEvent as unknown as Prisma.InputJsonValue,
@@ -216,15 +217,18 @@ router.post("/", async (req: Request, res: Response) => {
           summary: diffSummary.summary,
         }).blocks;
         console.log("Posting a message to Slack");
-        await app.client.chat.postMessage({
+        const postMessageResponse = await app.client.chat.postMessage({
           channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
           text: `New Deployment in ${deployment.environment} Environment: in ${organizationName}/${repositoryName}`,
           metadata: {
-            event_type: "deployment-summary",
-            event_payload: {},
+            event_type: "deployment",
+            event_payload: {
+              deploymentId: deploymentRecord.id,
+            },
           },
           blocks: deploymentBlocks,
         });
+        await saveResponseAndAskForFeedback(postMessageResponse);
 
         res.status(200).send("Deployment event processed successfully");
       } catch (error) {
@@ -302,15 +306,18 @@ router.post("/", async (req: Request, res: Response) => {
       });
 
       console.log("Posting a message to Slack");
-      await app.client.chat.postMessage({
+      const postMessageResponse = await app.client.chat.postMessage({
         channel: process.env.SLACK_RELEASE_CHANNEL_ID as string,
         text: `New release: ${releaseEvent.release.name} in ${releaseEvent.repository.owner.login}/${repoName}`,
         metadata: {
-          event_type: "release-summary",
-          event_payload: {},
+          event_type: "release",
+          event_payload: {
+            releaseId: createdRelease.id,
+          },
         },
         blocks: releaseBlocks,
       });
+      await saveResponseAndAskForFeedback(postMessageResponse);
 
       res.status(200).send("Webhook received");
       break;

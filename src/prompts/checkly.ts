@@ -98,9 +98,7 @@ export function checklyToolPrompt(
   return [
     `You are the Checkly Check Search Engine. You are given a query and a list of checks. Return the most relevant check that relates to the query.
 
-Available checks: ${stringify(
-      checks.map((c) => ({ ...mapCheckToContextValue(c) })),
-    )}
+Available checks: ${stringify(checks.map((c) => ({ ...mapCheckToContextValue(c) })))}
 
 Search Query: ${query ?? ""}`,
     promptConfig(),

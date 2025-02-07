@@ -24,6 +24,7 @@ import {
   saveResponseAndAskForFeedback,
   saveResponseFeedback,
 } from "./feedback";
+import type { ChatPostMessageResponse } from "@slack/web-api/dist/types/response";
 
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
@@ -357,22 +358,23 @@ if (process.env.OPS_CHANNEL_ID) {
           ],
         });
 
-        const postMessageResponse = await app.client.chat.postMessage({
-          token: context.botToken,
-          channel: event.channel,
-          text: responseText,
-          thread_ts: event.ts, // Replies in the same thread
-          metadata: {
-            // This metadata will be used to identify message for feedback purposes
-            event_type: "alert",
-            event_payload: {
-              threadId: openAIThread.id,
-              alertId: alertRecord.id,
+        const postMessageResponse: ChatPostMessageResponse =
+          await app.client.chat.postMessage({
+            token: context.botToken,
+            channel: event.channel,
+            text: responseText,
+            thread_ts: event.ts, // Replies in the same thread
+            metadata: {
+              // This metadata will be used to identify message for feedback purposes
+              event_type: "alert",
+              event_payload: {
+                threadId: openAIThread.id,
+                alertId: alertRecord.id,
+              },
             },
-          },
-        });
+          });
 
-        await saveResponseAndAskForFeedback(context, postMessageResponse);
+        await saveResponseAndAskForFeedback(postMessageResponse);
       } catch (error) {
         console.error("Error responding to message:", error);
       }
@@ -382,8 +384,22 @@ if (process.env.OPS_CHANNEL_ID) {
 
 app.action("feedback_thumbs_up", async ({ body, ack, respond }: any) => {
   await ack();
+  const userId = body.user.id;
 
-  await saveResponseFeedback(body.message.metadata, FeedbackScore.thumbsUp);
+  const feedbackRecord = await saveResponseFeedback(
+    body.message.metadata,
+    FeedbackScore.thumbsUp,
+  );
+  if (!feedbackRecord) {
+    console.log(
+      `msg="Feedback thumbs up ignored" user=${userId} error="No related response found"`,
+    );
+    return;
+  }
+
+  console.log(
+    `msg="Feedback thumbs up received" user=${userId} sre_bot_response_id=${feedbackRecord.botResponseId}`,
+  );
 
   await respond({
     text: `*Thank you for the :thumbsup: feedback <@${body.user.id}>!*`,
@@ -393,31 +409,35 @@ app.action("feedback_thumbs_up", async ({ body, ack, respond }: any) => {
 
 app.action("feedback_thumbs_down", async ({ body, ack, respond }: any) => {
   await ack();
+  const userId = body.user.id;
 
   const feedbackRecord = await saveResponseFeedback(
     body.message.metadata,
     FeedbackScore.thumbsDown,
   );
-
   if (!feedbackRecord) {
     console.log(
-      `msg="Feedback thumbs down submitted" user=${body.user.id} error="No related response found"`,
+      `msg="Feedback thumbs down ignored" user=${userId} error="No related response found"`,
     );
     return;
   }
 
-  const encodeValueAndMetadata = (value: string): string =>
-    JSON.stringify({ ...body.message.metadata, value });
+  console.log(
+    `msg="Feedback thumbs down received" user=${userId} sre_bot_response_id=${feedbackRecord.botResponseId}`,
+  );
+
+  const text = `Thanks for your :thumbsdown: feedback, <@${userId}>!\nCould you tell us why this wasn’t helpful? Select all that apply below.`;
 
   await respond({
-    text: `Feedback: <@${body.user.id}>`,
+    text,
     replace_original: true,
+    metadata: body.message.metadata, // Pass metadata so that the feedback_reasons_submit can use it to find related response
     blocks: [
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Thank you for the :thumbsdown: feedback <@${body.user.id}>!*\nWhy this wasn't not helpful. Select all that apply.`,
+          text,
         },
       },
       {
@@ -430,30 +450,39 @@ app.action("feedback_thumbs_down", async ({ body, ack, respond }: any) => {
               {
                 text: {
                   type: "mrkdwn",
-                  text: "Incorrect info",
+                  text: "Incorrect info / hallucinations",
                 },
-                value: encodeValueAndMetadata("incorrect_info"),
+                value: "incorrect_info",
               },
               {
                 text: {
                   type: "mrkdwn",
                   text: "Too vague / missing details",
                 },
-                value: encodeValueAndMetadata("vague"),
+                value: "vague",
               },
               {
                 text: {
                   type: "mrkdwn",
-                  text: "Irrelevant / off-topic",
+                  text: "Irrelevant / off-topic ",
                 },
-                value: encodeValueAndMetadata("irrelevant"),
+                value: "irrelevant",
               },
               {
                 text: {
                   type: "mrkdwn",
                   text: "Too long / hard to read",
                 },
-                value: encodeValueAndMetadata("long"),
+                value: "long",
+              },
+              {
+                text: {
+                  type: "mrkdwn",
+                  text: "Other",
+                },
+                // We can use other to capture any other feedback reasons.
+                // We can actually implement it if once we see that users are using it.
+                value: "other",
               },
             ],
           },
@@ -466,31 +495,28 @@ app.action("feedback_thumbs_down", async ({ body, ack, respond }: any) => {
 app.action("feedback_reasons_submit", async ({ body, ack }: any) => {
   await ack();
 
-  const selectedOptionsInputs = body.actions[0].selected_options.map((opt) =>
-    JSON.parse(opt.value),
-  );
-  const categories = selectedOptionsInputs.map((opt) => opt.value);
+  const categories = body.actions[0].selected_options.map((opt) => opt.value);
   const userId = body.user.id;
   if (categories.length === 0) {
     console.log(
-      `msg="Feedback reasons submitted" user=${userId} error="No feedback reasons selected"`,
+      `msg="Feedback reasons ignored" user=${userId} error="No feedback reasons selected"`,
     );
     return;
   }
-  const eventMetadata = selectedOptionsInputs[0];
+  const messageMetadata = body.message.metadata;
   const feedbackRecord = await saveResponseFeedback(
-    eventMetadata,
+    messageMetadata,
     FeedbackScore.thumbsDown,
     categories,
   );
 
   if (!feedbackRecord) {
     console.log(
-      `msg="Feedback reasons submitted" user=${userId} error="No related response found"`,
+      `msg="Feedback reasons ignored" user=${userId} error="No related response found"`,
     );
     return;
   }
   console.log(
-    `msg="Feedback reasons submitted" user=${userId} sre_bot_response_id=${feedbackRecord.botResponseId} categories=${categories.join(",")}`,
+    `msg="Feedback thumbs down categories received" user=${userId} sre_bot_response_id=${feedbackRecord.botResponseId} categories=${categories.join(",")}`,
   );
 });

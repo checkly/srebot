@@ -1,7 +1,8 @@
 import { prisma } from "../prisma";
-import { generateSlackMessageLink } from "./utils";
+import { generateSlackMessageLink, getMessageText } from "./utils";
 import { app } from "./app";
 import { BotResponse, Feedback } from "@prisma/client";
+import type { ChatPostMessageResponse } from "@slack/web-api/dist/types/response";
 
 type BotResponseWhereClause = {
   alertId?: string;
@@ -13,6 +14,12 @@ const getWhereClause = (metadata: any): BotResponseWhereClause => {
   const whereClause: BotResponseWhereClause = {};
   if (metadata.event_type === "alert") {
     whereClause.alertId = metadata.event_payload?.alertId;
+  }
+  if (metadata.event_type === "release") {
+    whereClause.releaseId = metadata.event_payload?.releaseId;
+  }
+  if (metadata.event_type === "deployment") {
+    whereClause.deploymentId = metadata.event_payload?.deploymentId;
   }
   return whereClause;
 };
@@ -29,28 +36,27 @@ async function findBotResponse(metadata: any): Promise<BotResponse | null> {
 }
 
 export const saveResponseAndAskForFeedback = async (
-  context: any,
-  postMessageResponse: any,
+  postMessageResponse: ChatPostMessageResponse,
 ) => {
-  const whereClause = getWhereClause(postMessageResponse.message.metadata);
+  const message = postMessageResponse.message!;
+  const whereClause = getWhereClause(message.metadata);
+  const channel = postMessageResponse.channel!;
+  const threadTs = message.thread_ts || postMessageResponse.ts;
+  const messageText = getMessageText(message);
 
   await prisma.botResponse.create({
     data: {
       ...whereClause,
-      content: postMessageResponse.message.text,
-      slackMessageUrl: generateSlackMessageLink(
-        postMessageResponse.channel!,
-        postMessageResponse.message.thread_ts!,
-      ),
-      slackMessageTs: postMessageResponse.message.thread_ts,
+      content: messageText,
+      slackMessageUrl: generateSlackMessageLink(channel!, threadTs!),
+      slackMessageTs: threadTs!,
     },
   });
 
   // Post another message with feedback buttons in the same thread
   // The message will be replaced with feedback result when a user submits it
   await app.client.chat.postMessage({
-    token: context.botToken,
-    channel: postMessageResponse.channel,
+    channel,
     text: "Was this helpful?",
     blocks: [
       {
@@ -85,8 +91,8 @@ export const saveResponseAndAskForFeedback = async (
       },
     ],
 
-    thread_ts: postMessageResponse.message.thread_ts, // Replies in the same thread
-    metadata: postMessageResponse.message.metadata,
+    thread_ts: threadTs, // Replies in the same thread
+    metadata: message.metadata! as any,
   });
 };
 
