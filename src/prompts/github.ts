@@ -53,6 +53,7 @@ ${check.script}
 Check Result:
 ${checkResult}`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "findRelevantReleases",
@@ -85,6 +86,7 @@ ${check.script}
 Check Result:
 ${checkResult}`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "findRelevantDeployments",
@@ -112,6 +114,7 @@ Do not describe the outer context as the developer is already aware.
 Do not yap.
 Do not use any formatting rules.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "releaseHeadline",
@@ -144,6 +147,7 @@ Format titles using *Title*, code using \`code\`.
 Do not use any other formatting rules.
 Focus on potential impact of the change and the reason for the change.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "releaseSummary",
@@ -171,6 +175,7 @@ export function generateDeploymentSummaryPrompt(
   Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules.
   Focus on potential impact of the change and the reason for the change.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "deploymentSummary",
@@ -193,6 +198,7 @@ ${JSON.stringify(allRepos)}
 
 Select the repository that is most relevant to the prompt.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "findRepo",
@@ -207,6 +213,7 @@ export function generateTimeframePrompt(): [string, PromptConfig] {
     Based on his prompt choose identify the date in ISO8601 format.
     If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "timeframe",
