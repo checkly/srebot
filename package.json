@@ -33,6 +33,7 @@
     "@slack/bolt": "4.1.0",
     "@vercel/otel": "1.10.1",
     "ai": "3.4.33",
+    "autoevals": "0.0.119",
     "axios": "1.7.9",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
