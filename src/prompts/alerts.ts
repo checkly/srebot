@@ -1,7 +1,6 @@
 import { getOpenaiSDKClient } from "../ai/openai";
 import { NotionPage } from "../notion/notion";
 import { PromptConfig, promptConfig } from "./common";
-import { getOpenaiSDKClient } from "../ai/openai";
 import { validObjectList, validString } from "./validation";
 
 export function affectedComponentsPrompt(
