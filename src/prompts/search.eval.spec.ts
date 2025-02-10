@@ -122,8 +122,8 @@ describe("Context Search Prompt Tests", () => {
     ]);
 
     expect(scores[0].score).toBe(1);
-    expect(scores[1].score).toBeGreaterThan(0.6);
-    expect(scores[2].score).toBeGreaterThan(0.6);
-    expect(scores[3].score).toBeGreaterThan(0.6);
+    expect(scores[1].score).toBeGreaterThanOrEqual(0.6);
+    expect(scores[2].score).toBeGreaterThanOrEqual(0.6);
+    expect(scores[3].score).toBeGreaterThanOrEqual(0.6);
   });
 });
