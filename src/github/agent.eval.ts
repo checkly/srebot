@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import { createOpenAI, OpenAIProvider } from "@ai-sdk/openai";
 import { GithubAgent } from "./agent";
 import GitHubAPI from "./github";
+import { startLangfuseTelemetrySDK } from "../langfuse";
+
+startLangfuseTelemetrySDK();
 
 dotenv.config();
 
@@ -62,8 +65,9 @@ describe("GithubAgent Tests", () => {
 
     const result = await Summary({ output, expected, input });
     if (result.score === 0) {
-      console.log(`Summary score: ${result.score}`);
-      console.log(`Summary metadata: ${result.metadata?.rationale}`);
+      console.log(`Summary output:\n${output}`);
+      console.log(`Summary score:\n${result.score}`);
+      console.log(`Summary metadata:\n${result.metadata?.rationale}`);
     }
     expect(result.score).toBe(1);
   });

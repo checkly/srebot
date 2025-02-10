@@ -135,6 +135,9 @@ export function generateReleaseSummaryPrompt(
   Summarize the changes so that another developer quickly understands what has changes:
 ${diff.slice(0, MAX_DIFF_LENGTH)}.
 
+Make sure the commit hash, the authors and the summary of each commit is present.
+Stick to the facts presented without additional assumptions.
+
 Do not describe the outer context as the developer is already aware.
 Do not yap.
 Format titles using *Title*, code using \`code\`.
