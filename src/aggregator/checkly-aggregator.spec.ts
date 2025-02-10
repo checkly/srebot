@@ -7,7 +7,8 @@ import { checklyAggregator } from "./checkly-aggregator";
 
 jest.setTimeout(30000);
 describe("ChecklyService", () => {
-  it("can collect chekly context", async () => {
+  // FIXME do not use static ids here (al)
+  it.skip("can collect checkly context", async () => {
     const checks = await checkly.getChecks();
     const context = await checklyAggregator.fetchContext(
       plainToInstance(

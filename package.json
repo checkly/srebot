@@ -9,7 +9,7 @@
     "dev": "nodemon src/index.ts",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write --ignore-unknown .",
-    "test": "jest",
+    "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:deploy": "prisma migrate deploy",
