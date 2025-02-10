@@ -1,8 +1,8 @@
 import { generateText } from "ai";
 import { Battle, Factuality, Possible, Summary } from "autoevals";
 import dotenv from "dotenv";
-import { CheckContext } from "src/aggregator/ContextAggregator";
-import { getOpenaiSDKClient } from "src/ai/openai";
+import { CheckContext } from "../aggregator/ContextAggregator";
+import { getOpenaiSDKClient } from "../ai/openai";
 import { startLangfuseTelemetrySDK } from "../langfuse";
 import { contextAnalysisSummaryPrompt } from "./checkly";
 startLangfuseTelemetrySDK();

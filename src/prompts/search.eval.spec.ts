@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
 import { AnswerRelevancy, Battle, Factuality, Possible } from "autoevals";
 import dotenv from "dotenv";
-import { getOpenaiSDKClient } from "src/ai/openai";
+import { getOpenaiSDKClient } from "../ai/openai";
 import { z } from "zod";
 import { startLangfuseTelemetrySDK } from "../langfuse";
 import { searchContextPrompt } from "./search";
