@@ -1,4 +1,4 @@
-name: NPM Unit Test
+name: Unit Tests
 
 on:
   push:

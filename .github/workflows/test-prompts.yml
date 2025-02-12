@@ -1,4 +1,4 @@
-name: NPM Prompt Eval Tests
+name: Prompt Eval Tests
 
 on:
   push:
