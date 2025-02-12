@@ -1,10 +1,14 @@
-name: Npm Test
+name: NPM Prompt Eval Tests
 
 on:
   push:
     branches: [main]
+    paths:
+      - "src/prompts/**"
   pull_request:
     branches: [main]
+    paths:
+      - "src/prompts/**"
 
 jobs:
   build:
@@ -39,7 +43,7 @@ jobs:
         run: npm run build
 
       - name: Run tests
-        run: npm test
+        run: npm test:prompts
         env:
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}

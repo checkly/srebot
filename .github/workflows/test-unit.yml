@@ -1,0 +1,48 @@
+name: NPM Unit Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read Node.js version
+        id: node-version
+        run: echo "NODE_VERSION=$(cat .node-version)" >> $GITHUB_ENV
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Set up environment variables
+        run: |
+          echo "CHECKLY_API_KEY=${{ secrets.CHECKLY_API_KEY }}" >> $GITHUB_ENV
+          echo "CHECKLY_ACCOUNT_ID=${{ secrets.CHECKLY_ACCOUNT_ID }}" >> $GITHUB_ENV
+          echo "PROMETHEUS_INTEGRATION_KEY=${{ secrets.PROMETHEUS_INTEGRATION_KEY }}" >> $GITHUB_ENV
+          echo "CHECKLY_GITHUB_TOKEN=${{ secrets.CHECKLY_GITHUB_TOKEN }}" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build API
+        run: npm run build
+
+      - name: Run tests
+        run: npm test:unit
+        env:
+          CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
+          CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
+          PROMETHEUS_INTEGRATION_KEY: ${{ secrets.PROMETHEUS_INTEGRATION_KEY }}
+          CHECKLY_GITHUB_TOKEN: ${{ secrets.CHECKLY_GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

@@ -10,6 +10,8 @@
     "lint": "prettier --check .",
     "lint:fix": "prettier --write --ignore-unknown .",
     "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
+    "test:unit": "node --experimental-vm-modules ./node_modules/.bin/jest --testPathIgnorePatterns=src/prompts/.*.eval.spec.ts",
+    "test:prompts": "node --experimental-vm-modules ./node_modules/.bin/jest --testPathPattern=src/prompts/.*.eval.spec.ts",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:deploy": "prisma migrate deploy",
