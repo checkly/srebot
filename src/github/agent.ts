@@ -46,23 +46,35 @@ export class GithubAgent {
     return { diff, summary: text };
   }
 
-  async summarizeRelease(
-    org: string,
-    repo: string,
-    release: string,
-    previousRelease: string,
-  ) {
-    let diff = await this.github.getDiffBetweenTags(
+  async summarizeRelease({
+    org,
+    repo,
+    release,
+    previousRelease,
+  }: {
+    org: string;
+    repo: string;
+    release: string;
+    previousRelease: string;
+  }) {
+    const diff = await this.github.getDiffBetweenTags(
       org,
       repo,
       previousRelease,
       release,
     );
+    const commits = diff.commits.map((c) => {
+      return {
+        author: c.commit.author?.name || "unknown author",
+        sha: c.sha,
+        message: c.commit.message,
+      };
+    });
 
     const [prompt, config] = generateReleaseSummaryPrompt(
       previousRelease,
       release,
-      JSON.stringify(diff),
+      { commits },
     );
 
     const { text } = await generateText({
@@ -156,12 +168,12 @@ export class GithubAgent {
     let summaries = await Promise.all(
       releases.slice(0, -1).map(async (release, i) => {
         let previousRelease = releases[i + 1]?.tag || "";
-        let { diff, summary } = await this.summarizeRelease(
+        let { diff, summary } = await this.summarizeRelease({
           org,
-          repo.name,
-          release.tag,
+          repo: repo.name,
           previousRelease,
-        );
+          release: release.tag,
+        });
         console.log(JSON.stringify(diff, undefined, 2));
         return {
           id: release.tag,

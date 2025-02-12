@@ -262,12 +262,12 @@ router.post("/", async (req: Request, res: Response) => {
         ),
       );
 
-      const release = await githubAgent.summarizeRelease(
-        releaseEvent.repository.owner.login,
-        repoName,
-        releaseEvent.release.tag_name,
+      const release = await githubAgent.summarizeRelease({
+        org: releaseEvent.repository.owner.login,
+        repo: repoName,
         previousRelease,
-      );
+        release: releaseEvent.release.tag_name,
+      });
       const date = moment(releaseEvent.release.published_at).fromNow();
       const authors = pullAuthors(release.diff);
       let releaseName =

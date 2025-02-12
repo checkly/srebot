@@ -21,12 +21,12 @@ describe("GithubAgent Tests", () => {
 
   it.skip("should summarize a single release", async () => {
     let agent = new GithubAgent(openai("gpt-4o"), github);
-    let response = await agent.summarizeRelease(
-      "checkly",
-      "checkly-webapp",
-      "2024-11-15-12.56.18",
-      "2024-11-15-11.29.32",
-    );
+    let response = await agent.summarizeRelease({
+      org: "checkly",
+      repo: "checkly-webapp",
+      previousRelease: "2025-02-07-15.59.26",
+      release: "2025-02-11-17.04.27",
+    });
     console.log(response);
   });
 

@@ -16,6 +16,7 @@ export function searchContextPrompt(
 
   const config = promptConfig({
     maxTokens: 1000,
+    temperature: 0,
     experimental_telemetry: {
       isEnabled: true,
       functionId: "searchContext",
