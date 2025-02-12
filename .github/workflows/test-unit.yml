@@ -39,7 +39,7 @@ jobs:
         run: npm run build
 
       - name: Run tests
-        run: npm test:unit
+        run: npm run test:unit
         env:
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
