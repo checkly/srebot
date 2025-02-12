@@ -45,6 +45,7 @@ jobs:
       - name: Run tests
         run: npm run test:prompts -- --ci --reporters=default --reporters=jest-junit
         env:
+          JEST_JUNIT_OUTPUT_DIR: reports/
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
           PROMETHEUS_INTEGRATION_KEY: ${{ secrets.PROMETHEUS_INTEGRATION_KEY }}
@@ -56,5 +57,5 @@ jobs:
         if: success() || failure() # run this step even if previous step failed
         with:
           name: Prompt Eval Tests # Name of the check run which will be created
-          path: reports/jest-*.xml # Path to test results
+          path: reports/*.xml # Path to test results
           reporter: jest-junit # Format of test results
