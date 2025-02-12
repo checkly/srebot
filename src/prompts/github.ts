@@ -123,20 +123,31 @@ Do not use any formatting rules.`,
   ];
 }
 
+export interface Commit {
+  author: string;
+  sha: string;
+  message: string;
+}
+
+export interface Release {
+  commits: Commit[];
+}
+
 export function generateReleaseSummaryPrompt(
   prevRelease: string,
   currentRelease: string,
-  diff: string,
+  release: Release,
 ): [string, PromptConfig] {
+  const releaseString = JSON.stringify(release);
   validString.parse(prevRelease);
   validString.parse(currentRelease);
-  validString.parse(diff);
+  validString.parse(releaseString);
 
   return [
     `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
   Summarize the changes so that another developer quickly understands what has changes:
-${diff.slice(0, MAX_DIFF_LENGTH)}.
+${releaseString.slice(0, MAX_DIFF_LENGTH)}.
 
 Make sure the commit hash, the authors and the summary of each commit is present.
 Stick to the facts presented without additional assumptions.
