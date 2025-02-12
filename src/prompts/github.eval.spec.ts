@@ -14,7 +14,7 @@ dotenv.config();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 const CHECKLY_GITHUB_TOKEN = process.env.CHECKLY_GITHUB_TOKEN!;
 
-jest.setTimeout(120000); // Set timeout to 120 seconds
+jest.setTimeout(120000);
 
 describe("GithubAgent Tests", () => {
   let openai: OpenAIProvider;
