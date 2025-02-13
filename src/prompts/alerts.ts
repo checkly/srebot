@@ -10,7 +10,6 @@ export function affectedComponentsPrompt(
   validObjectList.parse(guidelines);
   validString.parse(alertMessage);
 
-  const model = getOpenaiSDKClient()("gpt-4o-mini");
   const systemPrompt = `You are an experienced on-call engineer who is responsible for determining which system components are affected by an alert`;
 
   return [
@@ -21,7 +20,6 @@ export function affectedComponentsPrompt(
     Here are the guidelines for determining the affected components and environment:
     ${JSON.stringify(guidelines)}`,
     promptConfig("affectedComponents", {
-      model,
       system: systemPrompt,
     }),
   ];
@@ -36,7 +34,6 @@ export function alertRecommendationPrompt(
   validString.parse(alertMessage);
   validObjectList.parse(affectedComponents);
 
-  const model = getOpenaiSDKClient()("gpt-4o-mini");
   const system =
     "You are an experienced on-call engineer who is responsible for recommending further actions for an alert";
 
@@ -52,7 +49,6 @@ export function alertRecommendationPrompt(
     - Determine the course of action based on alert state
     ${JSON.stringify(guidelines)}`,
     promptConfig("alertRecommendation", {
-      model,
       system,
     }),
   ];
@@ -69,7 +65,6 @@ export function alertHistoryPrompt(
     "You are an experienced on-call engineer who is responsible for analysing previous alert in the slack channel";
 
   const config = promptConfig("alertHistory", {
-    model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
   });
 
@@ -102,7 +97,6 @@ export function alertSeverityPrompt(
     "You are an experienced on-call engineer who is responsible for determining the severity of alerts";
 
   const config = promptConfig("alertSeverity", {
-    model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
   });
 
@@ -144,7 +138,6 @@ export function alertSummaryPrompt(
     "You are an experienced on-call engineer who is leading a team of engineers analysing alerts from a Slack channel";
 
   const config = promptConfig("alertSummary", {
-    model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
   });
 
