@@ -121,7 +121,7 @@ describe("Context Search Prompt Tests", () => {
       expect(output).toScoreGreaterThanOrEqual(
         AnswerRelevancy({
           input,
-          expected,
+          context: JSON.stringify(contextRows),
         }),
         0.6,
       ),
