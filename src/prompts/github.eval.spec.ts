@@ -79,22 +79,22 @@ describe("Github Prompt Tests", () => {
 
       Commit: 9f2db4a2cbf4439fe6afd2bfd31cf4a35b1b3047
       Author: Michelle Liebheit
-      Summary: Updated the Vercel onboarding flow, potentially improving user experience during the onboarding process.
+      Summary: Updated the Vercel onboarding flow.
       feat: reduce response data comparison options (#7854)
 
       Commit: 08578b470e285ed55d544b5338f3c7776e0f63aa
       Author: Sergii Bezliudnyi
-      Summary: Reduced the options for response data comparison, likely simplifying the comparison logic and improving performance.
+      Summary: Reduced the options for response data comparison,.
       chore: bump deps to fix nodegyp errs (#7853)
 
       Commit: 15d6190cd42d68df6b5b207c59d11765067a6b69
       Author: Sergii Bezliudnyi
-      Summary: Bumped dependencies to resolve nodegyp errors, ensuring smoother builds and dependency management. Attempted lockfile update to maintain consistency.
+      Summary: Bumped dependencies to resolve nodegyp errors.
       refactor: drop vueuse "usescripttag" to load featurebase (#7859)
 
       Commit: 356749fc14a99286d7f047f1cef00275a8de490e
       Author: Javier Pérez
-      Summary: Refactored code to remove the use of vueuse "usescripttag" for loading featurebase, possibly streamlining the loading process.
+      Summary: Refactored code to remove the use of vueuse "usescripttag" for loading featurebase.
       fix: remove beta tag [sc-00] (#7860)`;
 
     await expect(summary).toScorePerfect(
