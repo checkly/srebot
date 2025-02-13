@@ -138,7 +138,10 @@ export function generateReleaseSummaryPrompt(
   currentRelease: string,
   release: Release,
 ): [string, PromptConfig] {
-  const releaseString = JSON.stringify(release);
+validObject.parse(release)
+validObjectList.parse(release.commits)
+
+const releaseString = JSON.stringify(release)
   validString.parse(prevRelease);
   validString.parse(currentRelease);
   validString.parse(releaseString);
