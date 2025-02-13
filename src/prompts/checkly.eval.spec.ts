@@ -1,10 +1,11 @@
 import { generateText } from "ai";
-import { Battle, Factuality, Possible, Summary } from "autoevals";
 import dotenv from "dotenv";
 import { CheckContext } from "../aggregator/ContextAggregator";
 import { getOpenaiSDKClient } from "../ai/openai";
 import { startLangfuseTelemetrySDK } from "../langfuse";
 import { contextAnalysisSummaryPrompt } from "./checkly";
+import { expect } from "@jest/globals";
+import { Possible, Factuality, Battle, Summary } from "./toScoreMatcher";
 startLangfuseTelemetrySDK();
 
 dotenv.config();
@@ -102,32 +103,33 @@ describe("Checkly Prompt Tests", () => {
     const input =
       "Anaylze the context and generate a concise summary of the current situation.";
 
-    const scores = await Promise.all([
-      Possible({
-        input: prompt,
-        output: summary,
-        expected: expected,
-      }),
-      Factuality({
-        input: prompt,
-        output: summary,
-        expected: expected,
-      }),
-      Battle({
-        instructions: prompt,
-        output: summary,
-        expected: expected,
-      }),
-      Summary({
-        input: prompt,
-        output: summary,
-        expected: expectedBad,
-      }),
+    return Promise.all([
+      expect(summary).toScorePerfect(
+        Possible({
+          input,
+          expected: expected,
+        }),
+      ),
+      expect(summary).toScoreGreaterThanOrEqual(
+        Factuality({
+          input: prompt,
+          expected: expected,
+        }),
+        0.5,
+      ),
+      expect(summary).toScoreGreaterThanOrEqual(
+        Battle({
+          instructions: prompt,
+          expected: expected,
+        }),
+        0.5,
+      ),
+      expect(summary).toScorePerfect(
+        Summary({
+          input: prompt,
+          expected: expectedBad,
+        }),
+      ),
     ]);
-
-    expect(scores[0].score).toBe(1);
-    expect(scores[1].score).toBeGreaterThan(0.5);
-    expect(scores[2].score).toBeGreaterThan(0.5);
-    expect(scores[3].score).toBeGreaterThan(0.5);
   });
 });

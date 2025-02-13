@@ -1,10 +1,16 @@
 import { generateObject } from "ai";
-import { AnswerRelevancy, Battle, Factuality, Possible } from "autoevals";
 import dotenv from "dotenv";
 import { getOpenaiSDKClient } from "../ai/openai";
 import { z } from "zod";
 import { startLangfuseTelemetrySDK } from "../langfuse";
 import { searchContextPrompt } from "./search";
+import { expect } from "@jest/globals";
+import {
+  Possible,
+  Factuality,
+  AnswerRelevancy,
+  Battle,
+} from "./toScoreMatcher";
 startLangfuseTelemetrySDK();
 
 dotenv.config();
@@ -66,10 +72,9 @@ describe("Context Search Prompt Tests", () => {
       },
     ];
 
-    const question =
-      "What's causing the high latency in the /api/users endpoint?";
+    const input = "What's causing the high latency in the /api/users endpoint?";
 
-    const [prompt, config] = searchContextPrompt(question, contextRows);
+    const [prompt, config] = searchContextPrompt(input, contextRows);
 
     const { object: relevantContext } = await generateObject({
       output: "array",
@@ -80,8 +85,9 @@ describe("Context Search Prompt Tests", () => {
       ...config,
       prompt,
     });
+    const output = JSON.stringify(relevantContext);
 
-    const expected = [
+    const expected = JSON.stringify([
       {
         relevance: 1,
         context:
@@ -96,34 +102,36 @@ describe("Context Search Prompt Tests", () => {
         context:
           "Deployment of the user authentication caching layer at 14:15 UTC",
       },
-    ];
-
-    const scores = await Promise.all([
-      Possible({
-        input: question,
-        output: JSON.stringify(relevantContext),
-        expected: JSON.stringify(expected),
-      }),
-      Factuality({
-        input: JSON.stringify(contextRows),
-        output: JSON.stringify(relevantContext),
-        expected: JSON.stringify(expected),
-      }),
-      AnswerRelevancy({
-        input: question,
-        output: JSON.stringify(relevantContext),
-        context: JSON.stringify(contextRows),
-      }),
-      Battle({
-        instructions: prompt,
-        output: JSON.stringify(relevantContext),
-        expected: JSON.stringify(expected),
-      }),
     ]);
 
-    expect(scores[0].score).toBe(1);
-    expect(scores[1].score).toBeGreaterThanOrEqual(0.6);
-    expect(scores[2].score).toBeGreaterThanOrEqual(0.6);
-    expect(scores[3].score).toBeGreaterThanOrEqual(0.6);
+    return Promise.all([
+      expect(output).toScorePerfect(
+        Possible({
+          input,
+          expected,
+        }),
+      ),
+      expect(output).toScoreGreaterThanOrEqual(
+        Factuality({
+          input,
+          expected,
+        }),
+        0.6,
+      ),
+      expect(output).toScoreGreaterThanOrEqual(
+        AnswerRelevancy({
+          input,
+          expected,
+        }),
+        0.6,
+      ),
+      expect(output).toScoreGreaterThanOrEqual(
+        Battle({
+          instructions: prompt,
+          expected,
+        }),
+        0.6,
+      ),
+    ]);
   });
 });

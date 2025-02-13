@@ -1,12 +1,10 @@
-import { expect, test } from "@jest/globals";
-import "./toScoreMatcher";
-
 import dotenv from "dotenv";
 import { createOpenAI, OpenAIProvider } from "@ai-sdk/openai";
 import GitHubAPI from "../github/github";
 import { startLangfuseTelemetrySDK } from "../langfuse";
 import { generateReleaseSummaryPrompt } from "./github";
 import { generateText } from "ai";
+import { expect } from "@jest/globals";
 import { Summary } from "./toScoreMatcher";
 
 startLangfuseTelemetrySDK();
