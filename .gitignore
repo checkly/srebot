@@ -61,3 +61,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # React Component Preview
 previewConfig.json
+
+reports/
+junit.xml

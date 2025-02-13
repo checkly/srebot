@@ -1,4 +1,4 @@
-name: Npm Test
+name: Unit Tests
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
         run: npm run build
 
       - name: Run tests
-        run: npm test
+        run: npm run test:unit -- --ci --reporters=default --reporters=jest-junit
         env:
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}

@@ -53,6 +53,7 @@ ${check.script}
 Check Result:
 ${checkResult}`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "findRelevantReleases",
@@ -85,6 +86,7 @@ ${check.script}
 Check Result:
 ${checkResult}`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "findRelevantDeployments",
@@ -112,6 +114,7 @@ Do not describe the outer context as the developer is already aware.
 Do not yap.
 Do not use any formatting rules.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "releaseHeadline",
@@ -120,20 +123,37 @@ Do not use any formatting rules.`,
   ];
 }
 
+export interface Commit {
+  author: string;
+  sha: string;
+  message: string;
+}
+
+export interface Release {
+  commits: Commit[];
+}
+
 export function generateReleaseSummaryPrompt(
   prevRelease: string,
   currentRelease: string,
-  diff: string,
+  release: Release,
 ): [string, PromptConfig] {
+validObject.parse(release)
+validObjectList.parse(release.commits)
+
+const releaseString = JSON.stringify(release)
   validString.parse(prevRelease);
   validString.parse(currentRelease);
-  validString.parse(diff);
+  validString.parse(releaseString);
 
   return [
     `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
   Summarize the changes so that another developer quickly understands what has changes:
-${diff.slice(0, MAX_DIFF_LENGTH)}.
+${releaseString.slice(0, MAX_DIFF_LENGTH)}.
+
+Make sure the commit hash, the authors and the summary of each commit is present.
+Stick to the facts presented without additional assumptions.
 
 Do not describe the outer context as the developer is already aware.
 Do not yap.
@@ -141,6 +161,7 @@ Format titles using *Title*, code using \`code\`.
 Do not use any other formatting rules.
 Focus on potential impact of the change and the reason for the change.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "releaseSummary",
@@ -168,6 +189,7 @@ export function generateDeploymentSummaryPrompt(
   Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules.
   Focus on potential impact of the change and the reason for the change.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "deploymentSummary",
@@ -190,6 +212,7 @@ ${JSON.stringify(allRepos)}
 
 Select the repository that is most relevant to the prompt.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "findRepo",
@@ -204,6 +227,7 @@ export function generateTimeframePrompt(): [string, PromptConfig] {
     Based on his prompt choose identify the date in ISO8601 format.
     If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`,
     promptConfig({
+      temperature: 0,
       experimental_telemetry: {
         isEnabled: true,
         functionId: "timeframe",

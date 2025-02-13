@@ -1,0 +1,61 @@
+name: Prompt Eval Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/prompts/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/prompts/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read Node.js version
+        id: node-version
+        run: echo "NODE_VERSION=$(cat .node-version)" >> $GITHUB_ENV
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Set up environment variables
+        run: |
+          echo "CHECKLY_API_KEY=${{ secrets.CHECKLY_API_KEY }}" >> $GITHUB_ENV
+          echo "CHECKLY_ACCOUNT_ID=${{ secrets.CHECKLY_ACCOUNT_ID }}" >> $GITHUB_ENV
+          echo "PROMETHEUS_INTEGRATION_KEY=${{ secrets.PROMETHEUS_INTEGRATION_KEY }}" >> $GITHUB_ENV
+          echo "CHECKLY_GITHUB_TOKEN=${{ secrets.CHECKLY_GITHUB_TOKEN }}" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build API
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test:evals -- --ci --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: reports/
+          CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
+          CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
+          PROMETHEUS_INTEGRATION_KEY: ${{ secrets.PROMETHEUS_INTEGRATION_KEY }}
+          CHECKLY_GITHUB_TOKEN: ${{ secrets.CHECKLY_GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure() # run this step even if previous step failed
+        with:
+          name: Prompt Eval Tests # Name of the check run which will be created
+          path: reports/*.xml # Path to test results
+          reporter: jest-junit # Format of test results
