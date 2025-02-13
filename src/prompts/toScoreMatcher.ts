@@ -36,17 +36,18 @@ function createScorer(
         output,
         args,
         score,
-        message: `
-        Type: ${score.name}, Score: ${score.score}\n\n
-        ${Object.entries(args)
-          .filter(([_, value]) => value !== undefined)
-          .map(
-            ([key, value]) =>
-              `===== ${key[0].toUpperCase() + key.slice(1)} =====\n\n${JSON.stringify(value)}`,
-          )
-          .join("\n")}\n\n
-        ===== Output =====\n${output}\n\n
-        ===== Rationale =====\n${score.metadata?.rationale}`,
+        message:
+          "" +
+          `Type: ${score.name}, Score: ${score.score}\n\n` +
+          `${Object.entries(args)
+            .filter(([_, value]) => value !== undefined)
+            .map(
+              ([key, value]) =>
+                `===== ${key[0].toUpperCase() + key.slice(1)} =====${JSON.stringify(value)}\n\n`,
+            )
+            .join("\n")}\n\n` +
+          `===== Output =====\n${output}\n\n` +
+          `===== Rationale =====\n${score.metadata?.rationale}`,
       };
     },
   };

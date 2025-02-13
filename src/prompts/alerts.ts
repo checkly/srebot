@@ -20,13 +20,9 @@ export function affectedComponentsPrompt(
 
     Here are the guidelines for determining the affected components and environment:
     ${JSON.stringify(guidelines)}`,
-    promptConfig({
+    promptConfig("affectedComponents", {
       model,
       system: systemPrompt,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "affectedComponents",
-      },
     }),
   ];
 }
@@ -55,13 +51,9 @@ export function alertRecommendationPrompt(
     Below you will find the guidelines for alerts:
     - Determine the course of action based on alert state
     ${JSON.stringify(guidelines)}`,
-    promptConfig({
+    promptConfig("alertRecommendation", {
       model,
       system,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "alertRecommendation",
-      },
     }),
   ];
 }
@@ -76,13 +68,9 @@ export function alertHistoryPrompt(
   const system =
     "You are an experienced on-call engineer who is responsible for analysing previous alert in the slack channel";
 
-  const config = promptConfig({
+  const config = promptConfig("alertHistory", {
     model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
-    experimental_telemetry: {
-      isEnabled: true,
-      functionId: "alertHistory",
-    },
   });
 
   return [
@@ -113,13 +101,9 @@ export function alertSeverityPrompt(
   const system =
     "You are an experienced on-call engineer who is responsible for determining the severity of alerts";
 
-  const config = promptConfig({
+  const config = promptConfig("alertSeverity", {
     model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
-    experimental_telemetry: {
-      isEnabled: true,
-      functionId: "alertSeverity",
-    },
   });
 
   return [
@@ -159,13 +143,9 @@ export function alertSummaryPrompt(
   const system =
     "You are an experienced on-call engineer who is leading a team of engineers analysing alerts from a Slack channel";
 
-  const config = promptConfig({
+  const config = promptConfig("alertSummary", {
     model: getOpenaiSDKClient()("gpt-4o-mini"),
     system,
-    experimental_telemetry: {
-      isEnabled: true,
-      functionId: "alertSummary",
-    },
   });
 
   return [

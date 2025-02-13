@@ -52,12 +52,8 @@ ${check.script}
 
 Check Result:
 ${checkResult}`,
-    promptConfig({
+    promptConfig("findRelevantReleases", {
       temperature: 0,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "findRelevantReleases",
-      },
     }),
   ];
 }
@@ -85,12 +81,8 @@ ${check.script}
 
 Check Result:
 ${checkResult}`,
-    promptConfig({
+    promptConfig("findRelevantDeployments", {
       temperature: 0,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "findRelevantDeployments",
-      },
     }),
   ];
 }
@@ -113,12 +105,8 @@ ${diff}
 Do not describe the outer context as the developer is already aware.
 Do not yap.
 Do not use any formatting rules.`,
-    promptConfig({
+    promptConfig("releaseHeadline", {
       temperature: 0,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "releaseHeadline",
-      },
     }),
   ];
 }
@@ -138,10 +126,10 @@ export function generateReleaseSummaryPrompt(
   currentRelease: string,
   release: Release,
 ): [string, PromptConfig] {
-validObject.parse(release)
-validObjectList.parse(release.commits)
+  validObject.parse(release);
+  validObjectList.parse(release.commits);
 
-const releaseString = JSON.stringify(release)
+  const releaseString = JSON.stringify(release);
   validString.parse(prevRelease);
   validString.parse(currentRelease);
   validString.parse(releaseString);
@@ -160,12 +148,8 @@ Do not yap.
 Format titles using *Title*, code using \`code\`.
 Do not use any other formatting rules.
 Focus on potential impact of the change and the reason for the change.`,
-    promptConfig({
+    promptConfig("releaseSummary", {
       temperature: 0,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "releaseSummary",
-      },
     }),
   ];
 }
@@ -188,12 +172,8 @@ export function generateDeploymentSummaryPrompt(
   Do not describe the outer context as the developer is already aware.
   Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules.
   Focus on potential impact of the change and the reason for the change.`,
-    promptConfig({
+    promptConfig("deploymentSummary", {
       temperature: 0,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "deploymentSummary",
-      },
     }),
   ];
 }
@@ -211,12 +191,8 @@ export function generateFindRepoPrompt(
 ${JSON.stringify(allRepos)}
 
 Select the repository that is most relevant to the prompt.`,
-    promptConfig({
+    promptConfig("findRepo", {
       temperature: 0,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "findRepo",
-      },
     }),
   ];
 }
@@ -226,12 +202,8 @@ export function generateTimeframePrompt(): [string, PromptConfig] {
     `A developer describes a task which is about a certain time frame.
     Based on his prompt choose identify the date in ISO8601 format.
     If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`,
-    promptConfig({
+    promptConfig("timeframe", {
       temperature: 0,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "timeframe",
-      },
     }),
   ];
 }

@@ -60,12 +60,8 @@ To complete the task, follow these steps:
 3. Create a concise summary of the channel's content related to the prompt, highlighting the most relevant and important information.
 4. Your summary should NOT be longer than 3-5 sentences.
 `,
-    promptConfig({
+    promptConfig("channelSummary", {
       temperature: 0,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "channelSummary",
-      },
     }),
   ];
 }

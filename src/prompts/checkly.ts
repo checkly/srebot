@@ -34,7 +34,7 @@ export function contextAnalysisEntryPrompt(
 
 CONTEXT:
 ${stringify(entry)}`,
-    promptConfig({ temperature: 0.1, maxTokens: 300 }),
+    promptConfig("contextAnalysisEntry", { temperature: 0.1, maxTokens: 300 }),
   ];
 }
 
@@ -85,13 +85,9 @@ Be concise, insightful and actionable, skip the fluff, no yapping.
 If a recent release is the most likely root cause, provide a link to the release diff.
 
 *Summary:*`,
-    promptConfig({
+    promptConfig("contextAnalysisSummary", {
       temperature: 1,
       maxTokens: 500,
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "contextAnalysisSummary",
-      },
     }),
   ];
 }
@@ -108,7 +104,7 @@ export function checklyToolPrompt(
 Available checks: ${stringify(checks.map((c) => ({ ...mapCheckToContextValue(c) })))}
 
 Search Query: ${query ?? ""}`,
-    promptConfig(),
+    promptConfig("checklyTool"),
   ];
 }
 

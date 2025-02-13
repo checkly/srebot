@@ -14,13 +14,9 @@ export function searchContextPrompt(
   validString.parse(query);
   validObjectList.parse(contextRows);
 
-  const config = promptConfig({
+  const config = promptConfig("searchContext", {
     maxTokens: 1000,
     temperature: 0,
-    experimental_telemetry: {
-      isEnabled: true,
-      functionId: "searchContext",
-    },
   });
 
   return [
