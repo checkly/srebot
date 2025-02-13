@@ -1,6 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { LanguageModelV1 } from "ai";
-
+import { trace } from "@opentelemetry/api";
 export const model = openai("gpt-4o");
 
 export interface PromptConfig {
@@ -14,13 +14,27 @@ export interface PromptConfig {
   };
 }
 
-export const defaultPromptConfig: PromptConfig = {
-  model,
-};
-
-export function promptConfig(config?: Partial<PromptConfig>) {
+export function promptConfig(id: string, config?: Partial<PromptConfig>) {
   return {
-    ...defaultPromptConfig,
+    model,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: id,
+      metadata: {
+        ...langfuseTraceIdFromOtel(),
+      },
+    },
     ...config,
+  };
+}
+
+function langfuseTraceIdFromOtel() {
+  const activeSpan = trace.getActiveSpan();
+  if (!activeSpan) return null;
+
+  const context = activeSpan.spanContext();
+  return {
+    langfuseTraceId: context.traceId,
+    langfuseUpdateParent: false, // Do not update the parent trace with execution results
   };
 }

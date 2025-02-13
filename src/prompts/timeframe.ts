@@ -19,11 +19,6 @@ export function parseTimeframePrompt(
       - interpretation: explanation of how the timeframe was interpreted
 
       Consider current date: ${moment().format("YYYY-MM-DD")}`,
-    promptConfig({
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: "parseTimeframe",
-      },
-    }),
+    promptConfig("parseTimeframe"),
   ];
 }
