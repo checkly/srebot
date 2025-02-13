@@ -43,7 +43,7 @@ jobs:
         run: npm run build
 
       - name: Run tests
-        run: npm run test:prompts -- --ci --reporters=default --reporters=jest-junit
+        run: npm run test:evals -- --ci --reporters=default --reporters=jest-junit
         env:
           JEST_JUNIT_OUTPUT_DIR: reports/
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}

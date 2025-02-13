@@ -11,7 +11,7 @@
     "lint:fix": "prettier --write --ignore-unknown .",
     "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
     "test:unit": "npm run test -- --testPathIgnorePatterns=src/prompts/.*.eval.spec.ts",
-    "test:prompts": "npm run test -- --testPathPattern=src/prompts/.*.eval.spec.ts",
+    "test:evals": "npm run test -- --testPathPattern=src/prompts/.*.eval.spec.ts",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:deploy": "prisma migrate deploy",
