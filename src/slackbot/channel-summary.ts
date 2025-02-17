@@ -2,7 +2,9 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { WebhookAlertDto } from "../checkly/alertDTO";
 import { channelSummaryPrompt } from "../prompts/slack";
-import { fetchHistoricalMessages } from "../slack/slack";
+import { SlackClient } from "../slack/slack";
+
+const slackClient = new SlackClient(process.env.SLACK_AUTH_TOKEN || "");
 
 export const generateChannelSummary = async (
   channelId: string,
@@ -12,7 +14,11 @@ export const generateChannelSummary = async (
   const fromDate = fromTimestamp
     ? new Date(fromTimestamp)
     : new Date(Date.now() - 1000 * 60 * 60 * 24);
-  const messages = await fetchHistoricalMessages(channelId, 100, fromDate);
+  const messages = await slackClient.fetchHistoricalMessages(
+    channelId,
+    100,
+    fromDate,
+  );
 
   const [prompt, config] = channelSummaryPrompt(alert, messages);
 

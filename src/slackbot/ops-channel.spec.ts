@@ -4,7 +4,9 @@ import dotenv from "dotenv";
 import "dotenv/config";
 import "reflect-metadata";
 import { convertSlackTimestamp } from "./utils";
-import { fetchHistoricalMessages } from "../slack/slack";
+import { SlackClient } from "../slack/slack";
+
+const slackClient = new SlackClient(process.env.SLACK_AUTH_TOKEN || "");
 
 dotenv.config();
 jest.setTimeout(30000);
@@ -13,13 +15,14 @@ jest.setTimeout(30000);
 
 describe.skip("fetchHistoricalMessages", () => {
   it("should fetch historical messages", async () => {
-    const messages = await fetchHistoricalMessages("CUZ7V5YKZ");
+    const messages = await slackClient.fetchHistoricalMessages("CUZ7V5YKZ");
   });
 
   it("should generate a summary", async () => {
-    const opsMessages = (await fetchHistoricalMessages("CUZ7V5YKZ", 100)) ?? [];
+    const opsMessages =
+      (await slackClient.fetchHistoricalMessages("CUZ7V5YKZ", 100)) ?? [];
     const deploymentMessages =
-      (await fetchHistoricalMessages("C046EHXJCFM", 100)) ?? [];
+      (await slackClient.fetchHistoricalMessages("C046EHXJCFM", 100)) ?? [];
 
     const messages = [...opsMessages, ...deploymentMessages].sort((a, b) => {
       return (

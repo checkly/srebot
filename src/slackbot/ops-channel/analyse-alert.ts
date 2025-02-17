@@ -10,7 +10,9 @@ import {
   alertSummaryPrompt,
 } from "../../prompts/alerts";
 import { convertSlackTimestamp } from "../utils";
-import { fetchHistoricalMessages } from "../../slack/slack";
+import { SlackClient } from "../../slack/slack";
+
+const slackClient = new SlackClient(process.env.SLACK_AUTH_TOKEN || "");
 
 const OPS_CHANNEL_GUIDELINES_SLUG =
   process.env.OPS_CHANNEL_GUIDELINES_SLUG || "ops-channel-guidelines";
@@ -161,7 +163,11 @@ export const analyseAlert = async (
   );
 
   const fromDate = moment().subtract(3, "days").toDate();
-  const messages = await fetchHistoricalMessages(channelId, 300, fromDate);
+  const messages = await slackClient.fetchHistoricalMessages(
+    channelId,
+    300,
+    fromDate,
+  );
   const messageHistory = getFormattedMessages(messages, channelId, messageTs);
 
   const [historyPrompt, historyConfig] = alertHistoryPrompt(

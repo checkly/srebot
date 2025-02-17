@@ -9,38 +9,91 @@ export type SlackMessage = NonNullable<
 
 dotenv.config();
 
-export const web = new WebClient(process.env.SLACK_AUTH_TOKEN);
+export class SlackClient {
+  private web: WebClient;
 
-export async function fetchHistoricalMessages(
-  channelId: string,
-  limit = 30,
-  fromDate?: Date,
-) {
-  try {
-    const result = await web.conversations.history({
-      channel: channelId,
-      limit: limit,
-      ...(fromDate ? { oldest: (fromDate.getTime() / 1000).toString() } : {}),
-    });
+  constructor(authToken: string) {
+    this.web = new WebClient(authToken);
+  }
 
-    if (!result.messages) {
-      console.log("No messages in response");
+  async fetchHistoricalMessages(
+    channelId: string,
+    limit = 30,
+    fromDate?: Date,
+  ) {
+    try {
+      const result = await this.web.conversations.history({
+        channel: channelId,
+        limit: limit,
+        ...(fromDate ? { oldest: (fromDate.getTime() / 1000).toString() } : {}),
+      });
+
+      if (!result.messages) {
+        console.log("No messages in response");
+        return [];
+      }
+
+      // Create a new cache for this request only
+      const nameCache = new Map<string, Promise<string>>();
+
+      console.log(`Found ${result.messages.length} messages`);
+      return await Promise.all(
+        result.messages.map(async (m) => ({
+          ...m,
+          plaintext: getMessageText(m),
+          username: await this.fetchMessageSenderName(m, nameCache),
+        })),
+      );
+    } catch (error) {
+      console.error("Error fetching historical messages:", error);
       return [];
     }
+  }
 
-    const nameCache = new Map<string, Promise<string>>();
+  private async fetchMessageSenderName(
+    message: SlackMessage,
+    nameCache: Map<string, Promise<string>>,
+  ): Promise<string> {
+    const isUser = Boolean(message.user);
 
-    console.log(`Found ${result.messages.length} messages`);
-    return await Promise.all(
-      result.messages.map(async (m) => ({
-        ...m,
-        plaintext: getMessageText(m),
-        username: await fetchMessageSenderName(m, nameCache),
-      })),
-    );
-  } catch (error) {
-    console.error("Error fetching historical messages:", error);
-    return [];
+    if (message.username) {
+      return isUser ? `User/${message.username}` : `Bot/${message.username}`;
+    }
+
+    const cacheKey = isUser ? `user:${message.user}` : `bot:${message.bot_id}`;
+
+    const promise = nameCache.get(cacheKey);
+    if (promise) {
+      return promise;
+    }
+
+    const namePromise = isUser
+      ? this.fetchUserName(message.user!)
+      : this.fetchBotName(message.bot_id!);
+
+    nameCache.set(cacheKey, namePromise);
+    const name = await namePromise;
+    return isUser ? `User/${name}` : `Bot/${name}`;
+  }
+
+  private async fetchUserName(userId: string): Promise<string> {
+    try {
+      const user = await this.web.users
+        .info({ user: userId })
+        .then((u) => u.user);
+      return user?.name ?? user?.real_name ?? userId;
+    } catch (e) {
+      return userId;
+    }
+  }
+
+  private async fetchBotName(botId: string): Promise<string> {
+    try {
+      const bot = await this.web.bots.info({ bot: botId! });
+      return bot.bot?.name ?? botId;
+    } catch (e) {
+      return botId;
+    }
   }
 }
 
@@ -107,48 +160,4 @@ export const getMessageText = (message: Object): string => {
 
   // Join all parts with newlines and trim whitespace
   return uniqueTextParts.join("\n").trim();
-};
-
-export const fetchMessageSenderName = async (
-  message: SlackMessage,
-  nameCache: Map<string, Promise<string>>,
-): Promise<string> => {
-  const isUser = Boolean(message.user);
-
-  if (message.username) {
-    return isUser ? `User/${message.username}` : `Bot/${message.username}`;
-  }
-
-  const cacheKey = isUser ? `user:${message.user}` : `bot:${message.bot_id}`;
-
-  const promise = nameCache.get(cacheKey);
-  if (promise) {
-    return promise;
-  }
-
-  const namePromise = isUser
-    ? fetchUserName(message.user!)
-    : fetchBotName(message.bot_id!);
-
-  nameCache.set(cacheKey, namePromise);
-  const name = await namePromise;
-  return isUser ? `User/${name}` : `Bot/${name}`;
-};
-
-const fetchUserName = async (userId: string): Promise<string> => {
-  try {
-    const user = await web.users.info({ user: userId }).then((u) => u.user);
-    return user?.name ?? user?.real_name ?? userId;
-  } catch (e) {
-    return userId;
-  }
-};
-
-const fetchBotName = async (botId: string): Promise<string> => {
-  try {
-    const bot = await web.bots.info({ bot: botId! });
-    return bot.bot?.name ?? botId;
-  } catch (e) {
-    return botId;
-  }
 };
