@@ -14,11 +14,8 @@ import { prisma } from "../prisma";
 import { SreAssistant } from "../sre-assistant/SreAssistant";
 import { getSlackConfig, validateConfig } from "./config";
 import { analyseAlert } from "./ops-channel/analyse-alert";
-import {
-  convertToSlackMarkdown,
-  getMessageText,
-  getThreadMetadata,
-} from "./utils";
+import { convertToSlackMarkdown, getThreadMetadata } from "./utils";
+import { getMessageText } from "../slack/slack";
 import {
   FeedbackScore,
   saveResponseAndAskForFeedback,

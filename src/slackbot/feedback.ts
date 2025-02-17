@@ -1,8 +1,9 @@
 import { prisma } from "../prisma";
-import { generateSlackMessageLink, getMessageText } from "./utils";
+import { generateSlackMessageLink } from "./utils";
 import { app } from "./app";
 import { BotResponse, Feedback } from "@prisma/client";
 import type { ChatPostMessageResponse } from "@slack/web-api/dist/types/response";
+import { getMessageText } from "../slack/slack";
 
 type BotResponseWhereClause = {
   alertId?: string;

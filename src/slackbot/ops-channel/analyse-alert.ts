@@ -9,7 +9,8 @@ import {
   alertSeverityPrompt,
   alertSummaryPrompt,
 } from "../../prompts/alerts";
-import { convertSlackTimestamp, fetchHistoricalMessages } from "../utils";
+import { convertSlackTimestamp } from "../utils";
+import { fetchHistoricalMessages } from "../../slack/slack";
 
 const OPS_CHANNEL_GUIDELINES_SLUG =
   process.env.OPS_CHANNEL_GUIDELINES_SLUG || "ops-channel-guidelines";

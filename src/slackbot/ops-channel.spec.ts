@@ -3,7 +3,8 @@ import { generateText } from "ai";
 import dotenv from "dotenv";
 import "dotenv/config";
 import "reflect-metadata";
-import { convertSlackTimestamp, fetchHistoricalMessages } from "./utils";
+import { convertSlackTimestamp } from "./utils";
+import { fetchHistoricalMessages } from "../slack/slack";
 
 dotenv.config();
 jest.setTimeout(30000);
