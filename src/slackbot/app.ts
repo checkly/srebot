@@ -288,11 +288,12 @@ if (process.env.OPS_CHANNEL_ID) {
         const isMessageEvent = event.type === "message"; // Ignore message edits
         const isNotMessageChangedEvent = event.subtype !== "message_changed"; // Ignore message edits
 
-        const shouldRespondToMessage =
-          isTargetChannel &&
-          isNotAThreadReply &&
-          isMessageEvent &&
-          isNotMessageChangedEvent;
+        // FIXME enable bot again at some point (al)
+        const shouldRespondToMessage = false;
+        // isTargetChannel &&
+        // isNotAThreadReply &&
+        // isMessageEvent &&
+        // isNotMessageChangedEvent;
         if (!shouldRespondToMessage) {
           return;
         }
