@@ -51,7 +51,7 @@ export function alertRecommendationPrompt(
   guidelines: NotionPage[],
   alertMessage: string,
   affectedComponents: { component: string; environment: string }[],
-): PromptDefinition {
+): PromptDefinition<"object"> {
   validObjectList.parse(guidelines);
   validString.parse(alertMessage);
   validObjectList.parse(affectedComponents);
@@ -87,13 +87,14 @@ export function alertRecommendationPrompt(
 
   return definePrompt("alertRecommendation", prompt, schema, {
     system,
+    output: "object",
   });
 }
 
 export function alertHistoryPrompt(
   alertMessage: string,
   messageHistory: string,
-): PromptDefinition {
+): PromptDefinition<"object"> {
   validString.parse(alertMessage);
   validString.parse(messageHistory);
 
@@ -137,7 +138,10 @@ export function alertHistoryPrompt(
       ),
   });
 
-  return definePrompt("alertHistory", prompt, schema, { system });
+  return definePrompt("alertHistory", prompt, schema, {
+    system,
+    output: "object",
+  });
 }
 
 export function alertSeverityPrompt(
