@@ -15,10 +15,12 @@ export interface PromptConfig {
   };
 }
 
-export type PromptDefinition = PromptConfig & {
+export type PromptDefinition<
+  T extends "array" | "object" | "enum" | "no-schema" = "object",
+> = PromptConfig & {
   prompt: string;
   schema: z.Schema<any, z.ZodTypeDef, any>;
-  output: "array" | "object" | "enum" | "no-schema";
+  output: T;
 };
 
 export function promptConfig(id: string, config?: Partial<PromptConfig>) {
@@ -42,7 +44,7 @@ export function definePrompt<
   prompt: string,
   schema: ZodSchema,
   config?: Partial<PromptConfig> & { output?: T },
-): PromptDefinition & { output: T } {
+): PromptDefinition<T> & { output: T } {
   return {
     output: "object" as T, // type assertion here since we know config.output will override if provided
     prompt,
