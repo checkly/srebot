@@ -1,6 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { LanguageModelV1 } from "ai";
 import { trace } from "@opentelemetry/api";
+import { z, ZodSchema } from "zod";
 export const model = openai("gpt-4o");
 
 export interface PromptConfig {
@@ -8,11 +9,17 @@ export interface PromptConfig {
   temperature?: number;
   maxTokens?: number;
   system?: string;
+  output?: "object" | undefined;
   experimental_telemetry?: {
     isEnabled: boolean;
     functionId: string;
   };
 }
+
+export type PromptDefinition = PromptConfig & {
+  prompt: string;
+  schema: z.Schema<any, z.ZodTypeDef, any>;
+};
 
 export function promptConfig(id: string, config?: Partial<PromptConfig>) {
   return {
@@ -25,6 +32,19 @@ export function promptConfig(id: string, config?: Partial<PromptConfig>) {
       },
     },
     ...config,
+  };
+}
+
+export function definePrompt(
+  id: string,
+  prompt: string,
+  schema: ZodSchema,
+  config?: Partial<PromptConfig>,
+): PromptDefinition {
+  return {
+    prompt,
+    schema,
+    ...promptConfig(id, config),
   };
 }
 
