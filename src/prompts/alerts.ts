@@ -1,35 +1,56 @@
-import { getOpenaiSDKClient } from "../ai/openai";
+import { z } from "zod";
 import { NotionPage } from "../notion/notion";
-import { PromptConfig, promptConfig } from "./common";
+import { definePrompt, PromptDefinition } from "./common";
 import { validObjectList, validString } from "./validation";
 
 export function affectedComponentsPrompt(
   guidelines: NotionPage[], // guidelines for ops channel
   alertMessage: string,
-): [string, PromptConfig] {
+) {
   validObjectList.parse(guidelines);
   validString.parse(alertMessage);
 
   const systemPrompt = `You are an experienced on-call engineer who is responsible for determining which system components are affected by an alert`;
-
-  return [
-    `Analyze the following alert message and determine which system components and environment it is related to.
+  const prompt = `Analyze the following alert message and determine which system components and environment it is related to.
 
     Alert: "${alertMessage}"
 
     Here are the guidelines for determining the affected components and environment:
-    ${JSON.stringify(guidelines)}`,
-    promptConfig("affectedComponents", {
-      system: systemPrompt,
-    }),
-  ];
+    ${JSON.stringify(guidelines)}`;
+
+  const schema = z.object({
+    type: z
+      .enum(["new", "recurring", "escalating"])
+      .describe(
+        "Alert type, whether it is a new issue or a recurring problem.",
+      ),
+    reasoning: z
+      .string()
+      .describe(
+        "Explanation of why the alert is classified at this severity level.",
+      ),
+    confidence: z
+      .number()
+      .describe(
+        "Confidence level of the recommendation. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation.",
+      ),
+    pastMessageLinks: z
+      .array(z.string())
+      .describe(
+        "Slack Links to relevant past messages that indicate a recurring issue.",
+      ),
+  });
+
+  return definePrompt("affectedComponents", prompt, schema, {
+    system: systemPrompt,
+  });
 }
 
 export function alertRecommendationPrompt(
   guidelines: NotionPage[],
   alertMessage: string,
   affectedComponents: { component: string; environment: string }[],
-): [string, PromptConfig] {
+): PromptDefinition {
   validObjectList.parse(guidelines);
   validString.parse(alertMessage);
   validObjectList.parse(affectedComponents);
@@ -37,8 +58,7 @@ export function alertRecommendationPrompt(
   const system =
     "You are an experienced on-call engineer who is responsible for recommending further actions for an alert";
 
-  return [
-    `Analyze if it is firing or recovered.
+  const prompt = `Analyze if it is firing or recovered.
 
     Alert: "${alertMessage}"
 
@@ -47,29 +67,39 @@ export function alertRecommendationPrompt(
 
     Below you will find the guidelines for alerts:
     - Determine the course of action based on alert state
-    ${JSON.stringify(guidelines)}`,
-    promptConfig("alertRecommendation", {
-      system,
-    }),
-  ];
+    ${JSON.stringify(guidelines)}`;
+
+  const schema = z.object({
+    recommendation: z
+      .enum(["ignore", "analyse"])
+      .describe("The severity level of the alert."),
+    state: z.enum(["firing", "recovered"]).describe("The state of the alert."),
+    reasoning: z
+      .string()
+      .describe("Explanation why do you recommend this action."),
+    confidence: z
+      .number()
+      .describe(
+        "Confidence level of the recommendation. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation.",
+      ),
+  });
+
+  return definePrompt("alertRecommendation", prompt, schema, {
+    system,
+  });
 }
 
 export function alertHistoryPrompt(
   alertMessage: string,
   messageHistory: string,
-): [string, PromptConfig] {
+): PromptDefinition {
   validString.parse(alertMessage);
   validString.parse(messageHistory);
 
   const system =
     "You are an experienced on-call engineer who is responsible for analysing previous alert in the slack channel";
 
-  const config = promptConfig("alertHistory", {
-    system,
-  });
-
-  return [
-    `Your task is to analyse the messages from the previous 72h.
+  const prompt = `Your task is to analyse the messages from the previous 72h.
       Determine if the alert is new, escalating or a recurring issue.
       1. Alerts that are recurring are those that have been resolved and reappeared within the last 72h.
       2. If the alert is recurring, provide links to the relevant messages that indicate a recurring issue.
@@ -81,38 +111,65 @@ export function alertHistoryPrompt(
     Alert: "${alertMessage}"
 
     Here is the message history from the Slack channel:
-    ${messageHistory}`,
-    config,
-  ];
+    ${messageHistory}`;
+
+  const schema = z.object({
+    type: z
+      .enum(["new", "recurring", "escalating"])
+      .describe(
+        "Alert type, whether it is a new issue or a recurring problem.",
+      ),
+    reasoning: z
+      .string()
+      .describe(
+        "Explanation of why the alert is classified at this severity level.",
+      ),
+    confidence: z
+      .number()
+      .describe(
+        "Confidence level of the recommendation. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation.",
+      ),
+    pastMessageLinks: z
+      .array(z.string())
+      .describe(
+        "Slack Links to relevant past messages that indicate a recurring issue.",
+      ),
+  });
+
+  return definePrompt("alertHistory", prompt, schema, { system });
 }
 
 export function alertSeverityPrompt(
   alertMessage: string,
   affectedComponents: { component: string; environment: string }[],
-): [string, PromptConfig] {
+): PromptDefinition {
   validString.parse(alertMessage);
   validObjectList.parse(affectedComponents);
+
+  const prompt = `Analyze the following alert message and determine its severity level with reasoning.
+
+  Alert: "${alertMessage}"
+
+  We have determined that the following components and environments are affected:
+    ${affectedComponents.map((affected) => `Component: ${affected.component} in environment: ${affected.environment}`).join("\n")}`;
 
   const system =
     "You are an experienced on-call engineer who is responsible for determining the severity of alerts";
 
-  const config = promptConfig("alertSeverity", {
-    system,
+  const schema = z.object({
+    severity: z
+      .enum(["low", "medium", "high", "critical"])
+      .describe("The severity level of the alert."),
+    reasoning: z
+      .string()
+      .describe(
+        "Explanation of why the alert is classified at this severity level.",
+      ),
   });
 
-  return [
-    `Analyze the following alert message and determine its severity level with reasoning.
-
-    Alert: "${alertMessage}"
-
-    We have determined that the following components and environments are affected:
-    ${affectedComponents.map((affected) => `Component: ${affected.component} in environment: ${affected.environment}`).join("\n")}
-
-    Return a JSON object with:
-    - severity: "low", "medium", "high", or "critical"
-    - reasoning: explanation of why this severity level was chosen`,
-    config,
-  ];
+  return definePrompt("alertSeverity", prompt, schema, {
+    system,
+  });
 }
 
 export function alertSummaryPrompt(
@@ -122,7 +179,7 @@ export function alertSummaryPrompt(
   stateInfo: { state: string; reasoning: string },
   historyInfo: { type: string; reasoning: string },
   guidelines: NotionPage[],
-): [string, PromptConfig] {
+): PromptDefinition {
   validObjectList.parse(affectedComponents);
   [
     alertMessage,
@@ -134,15 +191,23 @@ export function alertSummaryPrompt(
     historyInfo.reasoning,
   ].forEach((s) => validString.parse(s));
 
-  const system =
-    "You are an experienced on-call engineer who is leading a team of engineers analysing alerts from a Slack channel";
-
-  const config = promptConfig("alertSummary", {
-    system,
+  const schema = z.object({
+    escalateToIncidentResponse: z
+      .boolean()
+      .optional()
+      .describe("Whether to escalate to incident response team"),
+    summary: z.string().describe("Concise executive summary of the alert."),
+    reasoning: z
+      .string()
+      .describe("Explain the reason behind escalatingToIncidentResponse"),
+    escalateConfidence: z
+      .number()
+      .describe(
+        "Confidence level of the recommendation. Use a number between 0 and 100 (inclusive).",
+      ),
   });
 
-  return [
-    `Your team gathered the following information about the alert:
+  const prompt = `Your team gathered the following information about the alert:
 
     Alert Message:
     "${alertMessage}"
@@ -177,7 +242,12 @@ export function alertSummaryPrompt(
     6. Only escalate to the incident response team if an issue is escalating or new.
 
     Keep in mind the following guidelines:
-    ${JSON.stringify(guidelines)}`,
-    config,
-  ];
+    ${JSON.stringify(guidelines)}`;
+
+  const system =
+    "You are an experienced on-call engineer who is leading a team of engineers analysing alerts from a Slack channel";
+
+  return definePrompt("alertSummary", prompt, schema, {
+    system,
+  });
 }
