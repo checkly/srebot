@@ -27,8 +27,21 @@ export function contextAnalysisEntryPrompt(
   validObject.parse(entry);
   validObjectList.parse(allEntries);
 
+  const checklyCtx = findChecklyContext(allEntries, ContextKey.ChecklyCheck);
+  validObject.parse(checklyCtx);
+
+  const checklyScript = findChecklyContext(
+    allEntries,
+    ContextKey.ChecklyScript,
+  );
+
+  validObject.parse(checklyScript);
+
   return [
-    `The following check has failed: ${formatChecklyMonitorData(allEntries)}
+    `The following check has failed: ${formatChecklyMonitorData(checklyCtx as CheckContext)}
+
+    Here's the checkly script for this check:
+    ${checklyScript}
 
 		Analyze the following context and generate a concise summary to extract the most important information. Output only the relevant context summary, no other text.
 
@@ -55,7 +68,17 @@ export function contextAnalysisSummaryPrompt(
 ): [string, PromptConfig] {
   validObjectList.parse(contextRows);
 
-  const checkContext = formatChecklyMonitorData(contextRows);
+  const checklyCtx = findChecklyContext(contextRows, ContextKey.ChecklyCheck);
+  validObject.parse(checklyCtx);
+
+  const checklyScript = findChecklyContext(
+    contextRows,
+    ContextKey.ChecklyScript,
+  );
+
+  validObject.parse(checklyScript);
+
+  const checkContext = formatChecklyMonitorData(checklyCtx as CheckContext);
 
   return [
     `The following check has changed its state: ${checkContext}
@@ -140,15 +163,21 @@ function formatContextAnalysis(rows: CheckContext[]): string {
  * @example
  * const monitorData = formatChecklyMonitorData(contextRows);
  */
-function formatChecklyMonitorData(rows: CheckContext[]): string {
-  validObjectList.parse(rows);
+function formatChecklyMonitorData(ctx: CheckContext): string {
+  validObject.parse(ctx);
 
-  const checkContext = rows.find((c) => c.key === ContextKey.ChecklyCheck);
   return stringify(
     {
-      checkId: checkContext?.checkId,
-      data: checkContext?.value,
+      checkId: ctx.checkId,
+      data: ctx.value,
     },
     { indent: 2 },
   );
+}
+
+function findChecklyContext(
+  allRows: CheckContext[],
+  key: ContextKey,
+): CheckContext | undefined {
+  return allRows.find((c) => c.key === key);
 }

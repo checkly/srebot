@@ -29,6 +29,13 @@ describe("Checkly Prompt Tests", () => {
         source: "checkly",
       },
       {
+        key: "checkly.check",
+        value:
+          '{"tags":[],"type":"BROWSER","checkId":"d6330bf8-1928-4953-9bc1-f4ac8d98f81f","frequency":10,"locations":["eu-central-1","eu-south-1"],"shouldFail":false,"retryStrategy":null,"sslCheckDomain":"","frequencyOffset":54,"maxResponseTime":30000}',
+        checkId: "123",
+        source: "checkly",
+      },
+      {
         key: "metrics.latency",
         value: "P95 latency increased from 200ms to 2500ms at 14:30 UTC",
         checkId: "123",
@@ -84,6 +91,36 @@ describe("Checkly Prompt Tests", () => {
         value: "Backup disk cleanup completed successfully, 234GB freed",
         checkId: "123",
         source: "system",
+      },
+      {
+        key: "checkly.script",
+        value: `const { expect, test } = require('@playwright/test')
+
+// Configure the Playwright Test timeout to 210 seconds,
+// ensuring that longer tests conclude before Checkly's browser check timeout of 240 seconds.
+// The default Playwright Test timeout is set at 30 seconds.
+// For additional information on timeouts, visit: https://checklyhq.com/docs/browser-checks/timeouts/
+test.setTimeout(210000)
+
+// Set the action timeout to 10 seconds to quickly identify failing actions.
+// By default Playwright Test has no timeout for actions (e.g. clicking an element).
+test.use({ actionTimeout: 10000 })
+
+test('visit page and take screenshot', async ({ page }) => {
+  // Change checklyhq.com to your site's URL,
+  // or, even better, define a ENVIRONMENT_URL environment variable
+  // to reuse it across your browser checks
+  const response = await page.goto(process.env.ENVIRONMENT_URL || 'https://checklyhq.com')
+
+  // Take a screenshot
+  await page.screenshot({ path: 'screenshot.jpg' })
+
+  // Test that the response did not fail
+  expect(response.status(), 'should respond with correct status code').toBeLessThan(400)
+})
+`,
+        checkId: "123",
+        source: "checkly",
       },
     ] as CheckContext[];
 
