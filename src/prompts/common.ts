@@ -1,15 +1,14 @@
 import { openai } from "@ai-sdk/openai";
-import { LanguageModelV1 } from "ai";
+import { LanguageModel, LanguageModelV1 } from "ai";
 import { trace } from "@opentelemetry/api";
 import { z, ZodSchema } from "zod";
 export const model = openai("gpt-4o");
 
 export interface PromptConfig {
-  model: LanguageModelV1;
+  model: LanguageModel;
   temperature?: number;
   maxTokens?: number;
   system?: string;
-  output?: "object" | undefined;
   experimental_telemetry?: {
     isEnabled: boolean;
     functionId: string;
@@ -19,6 +18,7 @@ export interface PromptConfig {
 export type PromptDefinition = PromptConfig & {
   prompt: string;
   schema: z.Schema<any, z.ZodTypeDef, any>;
+  output: "array" | "object" | "enum" | "no-schema";
 };
 
 export function promptConfig(id: string, config?: Partial<PromptConfig>) {
@@ -35,13 +35,16 @@ export function promptConfig(id: string, config?: Partial<PromptConfig>) {
   };
 }
 
-export function definePrompt(
+export function definePrompt<
+  T extends "array" | "object" | "enum" | "no-schema",
+>(
   id: string,
   prompt: string,
   schema: ZodSchema,
-  config?: Partial<PromptConfig>,
-): PromptDefinition {
+  config?: Partial<PromptConfig> & { output?: T },
+): PromptDefinition & { output: T } {
   return {
+    output: "object" as T, // type assertion here since we know config.output will override if provided
     prompt,
     schema,
     ...promptConfig(id, config),
