@@ -42,6 +42,7 @@ export function affectedComponentsPrompt(
   });
 
   return definePrompt("affectedComponents", prompt, schema, {
+    output: "array",
     system: systemPrompt,
   });
 }
