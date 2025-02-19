@@ -38,7 +38,7 @@ export function promptConfig(id: string, config?: Partial<PromptConfig>) {
 }
 
 export function definePrompt<
-  T extends "array" | "object" | "enum" | "no-schema",
+  T extends "array" | "object" | "enum" | "no-schema" = "object",
 >(
   id: string,
   prompt: string,
