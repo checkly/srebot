@@ -89,15 +89,9 @@ export class ChecklyTool extends Tool<
       return stringify(status.failing);
     } else if (input.action === "searchCheck") {
       const checks = await checkly.getChecks();
-      const [prompt, config] = checklyToolPrompt(checks, input.query);
-      const search = await generateObject({
-        ...config,
-        prompt,
-        schema: z.object({
-          checkName: z.string(),
-          checkId: z.string(),
-        }),
-      });
+      const search = await generateObject(
+        checklyToolPrompt(checks, input.query),
+      );
 
       const relevantCheck = checks.find((c) => c.id === search.object.checkId);
 

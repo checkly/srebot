@@ -124,12 +124,9 @@ test('visit page and take screenshot', async ({ page }) => {
       },
     ] as CheckContext[];
 
-    const [prompt, config] = contextAnalysisSummaryPrompt(contextRows);
-
-    const { text: summary } = await generateText({
-      ...config,
-      prompt,
-    });
+    const { text: summary } = await generateText(
+      contextAnalysisSummaryPrompt(contextRows),
+    );
 
     const expected =
       "Recent caching layer update (14:15 UTC) likely reduced cache efficiency, increasing load on MongoDB—reflected by a spike in p95 latency (200ms→2500ms) on /api/users, high I/O wait (1500ms/query), and 92% DB memory utilization. Mitigate by rolling back the caching change and scaling DB resources.";
