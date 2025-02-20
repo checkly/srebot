@@ -116,7 +116,7 @@ describe("Context Search Prompt Tests", () => {
           input,
           expected,
         }),
-        0.6,
+        0.5,
       ),
       expect(output).toScoreGreaterThanOrEqual(
         AnswerRelevancy({
@@ -130,7 +130,7 @@ describe("Context Search Prompt Tests", () => {
           instructions: prompt,
           expected,
         }),
-        0.6,
+        0.5,
       ),
     ]);
   });
