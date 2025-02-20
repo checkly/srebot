@@ -63,16 +63,9 @@ describe("Github Prompt Tests", () => {
       ],
     };
 
-    const [prompt, config] = generateReleaseSummaryPrompt(
-      baseTag,
-      headTag,
-      input,
+    const { text: summary } = await generateText(
+      generateReleaseSummaryPrompt(baseTag, headTag, input),
     );
-
-    const { text: summary } = await generateText({
-      ...config,
-      prompt,
-    });
 
     const expected = `
       feat: update vercel onboarding flow [sc-00] (#7852)
