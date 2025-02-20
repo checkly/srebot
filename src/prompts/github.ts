@@ -1,8 +1,14 @@
 import { stringify } from "yaml";
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
-import { PromptConfig, promptConfig } from "./common";
+import {
+  definePrompt,
+  promptConfig,
+  PromptDefinition,
+  PromptDefinitionForText,
+} from "./common";
 import { validObjectList, validObject, validString } from "./validation";
+import { z } from "zod";
 
 const MAX_DIFF_LENGTH = 1000000;
 
@@ -30,13 +36,12 @@ export function generateFindRelevantReleasesPrompt(
   check: Check,
   checkResult: string,
   releases: GithubReleaseForPrompt[],
-): [string, PromptConfig] {
+): PromptDefinition {
   validObject.parse(check);
   validString.parse(checkResult);
   validObjectList.parse(releases);
 
-  return [
-    `Based on the following releases, which ones are most relevant to the check state change?
+  const prompt = `Based on the following releases, which ones are most relevant to the check state change?
 
 Analyze the check script, result and releases to determine which releases are most relevant.
 Provide a list of release ids that are most relevant to the check.
@@ -51,24 +56,29 @@ Check Script:
 ${check.script}
 
 Check Result:
-${checkResult}`,
-    promptConfig("findRelevantReleases", {
-      temperature: 0,
-    }),
-  ];
+${checkResult}`;
+
+  const schema = z.object({
+    releaseIds: z
+      .array(z.string())
+      .describe(
+        "The ids of the releases that are most relevant to the check failure.",
+      ),
+  });
+
+  return definePrompt("findRelevantReleases", prompt, schema);
 }
 
 export function generateFindRelevantDeploymentsPrompt(
   check: Check,
   checkResult: string,
   deployments: GithubDeploymentForPrompt[],
-): [string, PromptConfig] {
+): PromptDefinition {
   validObject.parse(check);
   validString.parse(checkResult);
   validObjectList.parse(deployments);
 
-  return [
-    `Based on the following deployments, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of deployment ids that are most relevant to the check.
+  const prompt = `Based on the following deployments, which ones are most relevant to the check state change? Analyze the check script, result and releases to determine which releases are most relevant. Provide a list of deployment ids that are most relevant to the check.
 
 Deployments:
 ${stringify(deployments)}
@@ -80,35 +90,43 @@ Check Script:
 ${check.script}
 
 Check Result:
-${checkResult}`,
-    promptConfig("findRelevantDeployments", {
-      temperature: 0,
-    }),
-  ];
+${checkResult}`;
+
+  const schema = z.object({
+    deploymentIds: z
+      .array(z.string())
+      .describe(
+        "The ids of the releases that are most relevant to the check failure.",
+      ),
+  });
+
+  return definePrompt("findRelevantDeployments", prompt, schema, {
+    temperature: 0,
+  });
 }
 
 export function generateReleaseHeadlinePrompt(
   prevRelease: string,
   currentRelease: string,
   diff: string,
-): [string, PromptConfig] {
+): PromptDefinitionForText {
   validString.parse(prevRelease);
   validString.parse(currentRelease);
   validString.parse(diff);
 
-  return [
-    `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
+  const prompt = `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
 Summarize the changes in a single sentence:
 ${diff}
 
 Do not describe the outer context as the developer is already aware.
 Do not yap.
-Do not use any formatting rules.`,
-    promptConfig("releaseHeadline", {
-      temperature: 0,
-    }),
-  ];
+Do not use any formatting rules.`;
+
+  return {
+    prompt,
+    ...promptConfig("releaseHeadline"),
+  };
 }
 
 export interface Commit {
@@ -125,7 +143,7 @@ export function generateReleaseSummaryPrompt(
   prevRelease: string,
   currentRelease: string,
   release: Release,
-): [string, PromptConfig] {
+): PromptDefinitionForText {
   validObject.parse(release);
   validObjectList.parse(release.commits);
 
@@ -134,8 +152,7 @@ export function generateReleaseSummaryPrompt(
   validString.parse(currentRelease);
   validString.parse(releaseString);
 
-  return [
-    `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
+  const prompt = `The following diff describes the changes between ${prevRelease} and ${currentRelease}.
 
   Summarize the changes so that another developer quickly understands what has changes:
 ${releaseString.slice(0, MAX_DIFF_LENGTH)}.
@@ -147,63 +164,66 @@ Do not describe the outer context as the developer is already aware.
 Do not yap.
 Format titles using *Title*, code using \`code\`.
 Do not use any other formatting rules.
-Focus on potential impact of the change and the reason for the change.`,
-    promptConfig("releaseSummary", {
-      temperature: 0,
-    }),
-  ];
+Focus on potential impact of the change and the reason for the change.`;
+
+  return {
+    prompt,
+    ...promptConfig("releaseSummary"),
+  };
 }
 
 export function generateDeploymentSummaryPrompt(
   prevSha: string,
   currentSha: string,
   diff: string,
-): [string, PromptConfig] {
+): PromptDefinitionForText {
   validString.parse(prevSha);
   validString.parse(currentSha);
   validString.parse(diff);
 
-  return [
-    `The following diff describes the changes between ${prevSha} and ${currentSha}.
+  const prompt = `The following diff describes the changes between ${prevSha} and ${currentSha}.
 
   Summarize the changes so that another developer quickly understands what has changes:
   ${diff}
 
   Do not describe the outer context as the developer is already aware.
   Do not yap. Format titles using *Title*, code using \`code\`. Do not use any other formatting rules.
-  Focus on potential impact of the change and the reason for the change.`,
-    promptConfig("deploymentSummary", {
-      temperature: 0,
-    }),
-  ];
+  Focus on potential impact of the change and the reason for the change.`;
+
+  return {
+    prompt,
+    ...promptConfig("deploymentSummary"),
+  };
 }
 
 export function generateFindRepoPrompt(
   userPrompt: string,
   allRepos: GithubRepoForPrompt[],
-): [string, PromptConfig] {
+): PromptDefinition {
   validString.parse(userPrompt);
   validObjectList.parse(allRepos);
 
-  return [
-    `Based on the following prompt: ${userPrompt} and the list of repositories
+  const prompt = `Based on the following prompt: ${userPrompt} and the list of repositories
 
 ${JSON.stringify(allRepos)}
 
-Select the repository that is most relevant to the prompt.`,
-    promptConfig("findRepo", {
-      temperature: 0,
-    }),
-  ];
+Select the repository that is most relevant to the prompt.`;
+
+  const schema = z.object({
+    repo: z.enum(allRepos.map((r) => r.name) as [string, ...string[]]),
+  });
+
+  return definePrompt("findRepo", prompt, schema);
 }
 
-export function generateTimeframePrompt(): [string, PromptConfig] {
-  return [
-    `A developer describes a task which is about a certain time frame.
+export function generateTimeframePrompt(): PromptDefinitionForText {
+  const system = `A developer describes a task which is about a certain time frame.
     Based on his prompt choose identify the date in ISO8601 format.
-    If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`,
-    promptConfig("timeframe", {
-      temperature: 0,
-    }),
-  ];
+  If you cannot find a timeframe return the date from 24h ago. Today is ${new Date().toISOString()}. Do not yap.`;
+
+  return {
+    prompt: "",
+    system,
+    ...promptConfig("timeframe"),
+  };
 }
