@@ -46,6 +46,52 @@ ${stringify(entry)}`;
   });
 }
 
+<<<<<<< HEAD
+=======
+export function featureCoveragePrompt(
+  testName: string,
+  scriptName: string,
+  script: string,
+  errors: string[],
+): [string, PromptConfig] {
+  return [
+    `
+      The following details describe a test which is used to monitor an application.
+
+      Do not refer to technical details of the test, use the domain language from the application under test.
+      Test name: ${testName}
+      Script name: ${scriptName}
+      Script: ${script}
+      Error stack: ${errors}
+
+      Summarize the steps executed by the test using high level domain language. Focus on the user flow omit technical details. Use max 5 words per step.
+      Identify the step which failed by match the script code with the stack of the error. Include details about the test failure.
+
+      CONSTITUTION:
+      - Always prioritize accuracy and relevance in the summary
+      - Be concise but comprehensive in your explanations
+      - Focus on providing actionable information that can help judging user impact
+    `,
+    promptConfig("checklySummarizeFeatureCoverage", {
+      temperature: 1,
+      maxTokens: 500,
+    }),
+  ];
+}
+
+/**
+ * Generates a comprehensive analysis prompt for multiple context entries.
+ * Creates a structured prompt for analyzing check state changes and generating
+ * actionable insights for DevOps engineers. The prompt includes specific
+ * instructions for format, analysis approach, and output requirements.
+ *
+ * @param {CheckContext[]} contextRows - Array of context entries to analyze
+ * @returns {string} A formatted prompt string for comprehensive context analysis
+ *
+ * @example
+ * const summary = contextAnalysisSummaryPrompt(contextEntries);
+ */
+>>>>>>> 3216a82 (first version checkly bot)
 export function contextAnalysisSummaryPrompt(
   contextRows: CheckContext[],
 ): PromptDefinition {

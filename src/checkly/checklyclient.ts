@@ -1,7 +1,7 @@
 import { plainToClass, plainToInstance } from "class-transformer";
 import * as fs from "fs";
 import fetch from "node-fetch";
-import { Check, CheckGroup, CheckResult } from "./models";
+import { Check, CheckGroup, CheckResult, Reporting, Status } from "./models";
 import { PrometheusParser } from "./PrometheusParser";
 
 interface ChecklyClientOptions {
@@ -53,10 +53,14 @@ export class ChecklyClient {
     return this.getPaginatedDownload("checks", Check);
   }
 
+  async getCheckGroups(): Promise<CheckGroup[]> {
+    return this.getPaginatedDownload("check-groups", CheckGroup);
+  }
+
   async getActivatedChecks(): Promise<Check[]> {
     const results = await Promise.all([
-      this.getPaginatedDownload("checks", Check),
-      this.getPaginatedDownload("check-groups", CheckGroup),
+      this.getChecks(),
+      this.getCheckGroups(),
     ]);
     const groups = results[1];
     const groupMap = new Map<number, CheckGroup>();
@@ -104,10 +108,46 @@ export class ChecklyClient {
     return this.makeRequest(url, CheckResult) as Promise<CheckResult>;
   }
 
-  async makeRequest<T>(url: string, type: { new (): T }): Promise<T | T[]> {
+  async getDashboards() {
+    const url = `${this.checklyApiUrl}dashboards`;
+    return this.makeRequest(url, Object) as Promise<Object>;
+  }
+
+  async getDashboard(id: string) {
+    const url = `${this.checklyApiUrl}dashboards/${id}`;
+    return this.makeRequest(url, Object) as Promise<Object>;
+  }
+
+  async getCheckMetrics(
+    checkType: "HEARTBEAT" | "BROWSER" | "API" | "MULTI_STEP" | "TCP",
+  ) {
+    const url = `${this.checklyApiUrl}analytics/metrics?checkType=${checkType}`;
+    return this.makeRequest(url, Object) as Promise<Object>;
+  }
+
+  async getReporting(options?: { quickRange: "last24Hrs" | "last7Days" }) {
+    const url = `${this.checklyApiUrl}reporting`;
+    return this.makeRequest(url, Reporting) as Promise<Reporting[]>;
+  }
+
+  async getStatuses() {
+    const url = `${this.checklyApiUrl}check-statuses`;
+    return this.makeRequest(url, Status) as Promise<Status[]>;
+  }
+
+  async runCheck(checkId: string) {
+    const url = `${this.checklyApiUrl}triggers/checks/${checkId}`;
+    return this.makeRequest(url, Object, { method: "POST" }) as Promise<Object>;
+  }
+
+  async makeRequest<T>(
+    url: string,
+    type: { new (): T },
+    options?: { method: "GET" | "POST" | undefined },
+  ): Promise<T | T[]> {
     try {
       const response = await fetch(url, {
-        method: "GET", // Optional, default is 'GET'
+        method: options?.method || "GET", // Optional, default is 'GET'
         headers: {
           Authorization: `Bearer ${this.apiKey}`, // Add Authorization header
           "X-Checkly-Account": this.accountId, // Add custom X-Checkly-Account header

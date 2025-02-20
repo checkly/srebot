@@ -1,0 +1,311 @@
+{
+  "id": "3758b511-8fd9-405d-8561-e5cb63360706",
+  "hasErrors": false,
+  "hasFailures": true,
+  "runLocation": "us-east-1",
+  "startedAt": "2025-02-01T14:13:46.335Z",
+  "stoppedAt": "2025-02-01T14:14:27.859Z",
+  "responseTime": 40751,
+  "checkId": "3c4264bc-4355-4f7f-ba6c-5d79a647e0bc",
+  "created_at": "2025-02-01T14:14:28.822Z",
+  "name": "Create Browser Check",
+  "checkRunId": 1738419163668,
+  "attempts": 4,
+  "isDegraded": false,
+  "overMaxResponseTime": false,
+  "sequenceId": "f7e8858e-0e1b-4728-903f-2c31a3028cfc",
+  "resultType": "FINAL",
+  "browserCheckResult": {
+    "type": "PLAYWRIGHT_TEST",
+    "pages": [
+      {
+        "url": "https://app.checklyhq.com/",
+        "webVitals": {
+          "CLS": {
+            "score": null,
+            "value": null
+          },
+          "FCP": {
+            "score": null,
+            "value": null
+          },
+          "LCP": {
+            "score": null,
+            "value": null
+          },
+          "TBT": {
+            "score": "GOOD",
+            "value": 0
+          },
+          "TTFB": {
+            "score": "GOOD",
+            "value": 71.09999999997672
+          }
+        },
+        "pageTimings": {
+          "onLoad": 147,
+          "onContentLoad": 147
+        },
+        "responseSizes": {}
+      },
+      {
+        "url": "https://auth.checklyhq.com/u/login/identifier?state=hKFo2SAteFpEazJvVjBpQVdNUFlJbEQ2b0N1YkNsLXYwWWNQUaFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIEZRa05JVUVzWjhGNHNRTGd0cXdVb2JzUkQ5SFVWOFNJo2NpZNkgeGc2SU1hSlhmNlAzSVlQb09aRzhHdHA2TVl2YUpQZVU",
+        "webVitals": {
+          "CLS": {
+            "score": "GOOD",
+            "value": 0.00044999459054734974
+          },
+          "FCP": {
+            "score": "GOOD",
+            "value": 685.6999999999534
+          },
+          "LCP": {
+            "score": "GOOD",
+            "value": 685.6999999999534
+          },
+          "TBT": {
+            "score": "GOOD",
+            "value": 10
+          },
+          "TTFB": {
+            "score": "POOR",
+            "value": 496.5
+          }
+        },
+        "pageTimings": {
+          "onLoad": 266,
+          "onContentLoad": 187
+        },
+        "responseSizes": {}
+      },
+      {
+        "url": "https://auth.checklyhq.com/u/login/password?state=hKFo2SAteFpEazJvVjBpQVdNUFlJbEQ2b0N1YkNsLXYwWWNQUaFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIEZRa05JVUVzWjhGNHNRTGd0cXdVb2JzUkQ5SFVWOFNJo2NpZNkgeGc2SU1hSlhmNlAzSVlQb09aRzhHdHA2TVl2YUpQZVU",
+        "webVitals": {
+          "CLS": {
+            "score": "GOOD",
+            "value": 0.04422731984179053
+          },
+          "FCP": {
+            "score": "GOOD",
+            "value": 513.5
+          },
+          "LCP": {
+            "score": "GOOD",
+            "value": 572.1000000000931
+          },
+          "TBT": {
+            "score": "GOOD",
+            "value": 0
+          },
+          "TTFB": {
+            "score": "POOR",
+            "value": 420.20000000006985
+          }
+        },
+        "pageTimings": {
+          "onLoad": 236,
+          "onContentLoad": 128
+        },
+        "responseSizes": {}
+      },
+      {
+        "url": "https://app.checklyhq.com/auth/callback/auth0?code=FPrw8rErLC1_M5UKQ-twdAXaV9GSOut8ZYBdTEp0DvAut&state=MGRORENXQzNufl9MdEY1V29hZVJScnJscFNTdmF4UHZVTGRTbUwxYzBqWg%3D%3D",
+        "webVitals": {
+          "CLS": {
+            "score": null,
+            "value": null
+          },
+          "FCP": {
+            "score": null,
+            "value": null
+          },
+          "LCP": {
+            "score": null,
+            "value": null
+          },
+          "TBT": {
+            "score": "GOOD",
+            "value": 0
+          },
+          "TTFB": {
+            "score": "POOR",
+            "value": 560.7999999999302
+          }
+        },
+        "pageTimings": {
+          "onLoad": 123,
+          "onContentLoad": 123
+        },
+        "responseSizes": {}
+      },
+      {
+        "url": "https://app.checklyhq.com/",
+        "webVitals": {
+          "CLS": {
+            "score": "GOOD",
+            "value": 0.000197021484375
+          },
+          "FCP": {
+            "score": "GOOD",
+            "value": 565.8999999999069
+          },
+          "LCP": {
+            "score": "GOOD",
+            "value": 565.8999999999069
+          },
+          "TBT": {
+            "score": "POOR",
+            "value": 900
+          },
+          "TTFB": {
+            "score": "GOOD",
+            "value": 32.89999999990687
+          }
+        },
+        "pageTimings": {
+          "onLoad": 138,
+          "onContentLoad": 95
+        },
+        "responseSizes": {}
+      },
+      {
+        "url": "https://app.checklyhq.com/create",
+        "webVitals": {
+          "CLS": {
+            "score": null,
+            "value": null
+          },
+          "FCP": {
+            "score": null,
+            "value": null
+          },
+          "LCP": {
+            "score": null,
+            "value": null
+          },
+          "TBT": {
+            "score": "POOR",
+            "value": 993
+          },
+          "TTFB": {
+            "score": null,
+            "value": null
+          }
+        },
+        "pageTimings": null,
+        "responseSizes": {}
+      }
+    ],
+    "errors": [
+      {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toHaveTitle(expected)\n\nLocator: locator(':root')\nExpected string: \"New browser check\"\nReceived string: \"Create from scratch\"\nCall log:\n  - expect.toHaveTitle with timeout 30000ms\n  - waiting for locator(':root')\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Dashboard\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Dashboard\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Dashboard\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n\n    at BrowserCheckBuilderPom.navigateToUsingSidebarCreateButton (/check/569270bb-6b06-4c38-9e4f-f2294953745f/src/pages/checks/browser/create/__checks__/pom/module.ts:38:25)\n    at /check/569270bb-6b06-4c38-9e4f-f2294953745f/src/pages/checks/browser/create/__checks__/create_check.spec.ts:13:31",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toHaveTitle(expected)\n\nLocator: locator(':root')\nExpected string: \"New browser check\"\nReceived string: \"Create from scratch\"\nCall log:\n  - expect.toHaveTitle with timeout 30000ms\n  - waiting for locator(':root')\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Dashboard\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Dashboard\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Dashboard\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n  -   locator resolved to <html lang=\"en\">…</html>\n  -   unexpected value \"Create from scratch\"\n"
+      }
+    ],
+    "endTime": 1738419267858,
+    "startTime": 1738419226335,
+    "traceSummary": {
+      "consoleErrors": 4,
+      "networkErrors": 2,
+      "documentErrors": 0,
+      "userScriptErrors": 0
+    },
+    "runtimeVersion": "2024.02",
+    "playwrightTestVideos": [
+      "https://api.checklyhq.com/next/assets/check-run-data/us-east-1/438481ea-0eab-43d6-8932-ab51bd0d49d6%2F3c4264bc-4355-4f7f-ba6c-5d79a647e0bc%2F1738419163668%2Fartifacts%2Fscript-should-create-browser-check-chromium%2Fvideo.webm/redirect"
+    ],
+    "jobLog": [
+      {
+        "time": 1738419223927,
+        "msg": "Starting job",
+        "level": "DEBUG"
+      },
+      {
+        "time": 1738419223927,
+        "msg": "Backend used : prod-dd39bf5-20250130-supervisor on host 'browser-supervisor-764b5b47b5-zjz9g'",
+        "level": "DEBUG"
+      },
+      {
+        "time": 1738419223927,
+        "msg": "Creating runtime version 2024.02 using Node.js 18",
+        "level": "DEBUG"
+      },
+      {
+        "time": 1738419226335,
+        "msg": "Running Playwright test script",
+        "level": "DEBUG"
+      },
+      {
+        "time": 1738419227882,
+        "msg": "Running 1 test using 1 worker",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419228614,
+        "msg": "[1/1] [chromium] › test.spec.js › should create browser check",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267791,
+        "msg": "1) [chromium] › test.spec.js › should create browser check ",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267791,
+        "msg": "    Error: Timed out 30000ms waiting for expect(locator).toHaveTitle(expected)",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267791,
+        "msg": "    Locator: locator(':root')\n    Expected string: \"New browser check\"\n    Received string: \"Create from scratch\"\n    Call log:\n      - expect.toHaveTitle with timeout 30000ms\n      - waiting for locator(':root')\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Dashboard\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Dashboard\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Dashboard\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"\n      -   locator resolved to <html lang=\"en\">…</html>\n      -   unexpected value \"Create from scratch\"",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267791,
+        "msg": "\n        at BrowserCheckBuilderPom.navigateToUsingSidebarCreateButton (/check/569270bb-6b06-4c38-9e4f-f2294953745f/src/pages/checks/browser/create/__checks__/pom/module.ts:38:25)\n        at /check/569270bb-6b06-4c38-9e4f-f2294953745f/src/pages/checks/browser/create/__checks__/create_check.spec.ts:13:31",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267791,
+        "msg": "    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────\n    artifacts/script-should-create-browser-check-chromium/video.webm\n    ────────────────────────────────────────────────────────────────────────────────────────────────",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267791,
+        "msg": "    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    artifacts/script-should-create-browser-check-chromium/trace.zip\n    Usage:",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267791,
+        "msg": "        npx playwright show-trace artifacts/script-should-create-browser-check-chromium/trace.zip",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267791,
+        "msg": "    ────────────────────────────────────────────────────────────────────────────────────────────────",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267818,
+        "msg": "1 failed\n    [chromium] › ../../checkly/functions/src/2024-02/node_modules/vm2/lib/bridge.js:485:11 › should create browser check",
+        "level": "INFO"
+      },
+      {
+        "time": 1738419267859,
+        "msg": "Run finished",
+        "level": "DEBUG"
+      },
+      {
+        "time": 1738419267863,
+        "msg": "Uploading log file",
+        "level": "DEBUG"
+      }
+    ],
+    "jobAssets": [],
+    "playwrightTestTraces": [
+      "https://api.checklyhq.com/next/assets/check-run-data/us-east-1/438481ea-0eab-43d6-8932-ab51bd0d49d6%2F3c4264bc-4355-4f7f-ba6c-5d79a647e0bc%2F1738419163668%2Fscript-should-create-browser-check-chromium.zip/redirect"
+    ],
+    "playwrightTestJsonReportFile": "https://api.checklyhq.com/next/assets/check-run-data/us-east-1/438481ea-0eab-43d6-8932-ab51bd0d49d6%2F3c4264bc-4355-4f7f-ba6c-5d79a647e0bc%2F1738419163668%2Ftest-results.json/redirect"
+  }
+}

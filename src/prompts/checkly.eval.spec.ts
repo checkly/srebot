@@ -1,9 +1,11 @@
+import fs from "fs";
+
 import { generateText } from "ai";
 import dotenv from "dotenv";
 import { CheckContext } from "../aggregator/ContextAggregator";
 import { getOpenaiSDKClient } from "../ai/openai";
 import { startLangfuseTelemetrySDK } from "../langfuse";
-import { contextAnalysisSummaryPrompt } from "./checkly";
+import { contextAnalysisSummaryPrompt, featureCoveragePrompt } from "./checkly";
 import { expect } from "@jest/globals";
 import { Possible, Factuality, Battle, Summary } from "./toScoreMatcher";
 startLangfuseTelemetrySDK();
@@ -163,6 +165,65 @@ test('visit page and take screenshot', async ({ page }) => {
           input: promptDef.prompt,
           expected: expectedBad,
         }),
+      ),
+    ]);
+  });
+
+  it("should generate a feature coverage prompt", async () => {
+    const { name, script, scriptPath } = JSON.parse(
+      fs.readFileSync("results/check.json", "utf8"),
+    );
+    const checkResult = JSON.parse(
+      fs.readFileSync("results/checkResult.json", "utf8"),
+    );
+    const errors = checkResult.browserCheckResult.errors.map((e) => e.stack);
+
+    const [prompt, config] = featureCoveragePrompt(
+      name,
+      scriptPath,
+      script,
+      errors,
+    );
+    const { text: summary } = await generateText({
+      ...config,
+      prompt,
+    });
+
+    const expected = `
+        1. User logs into the application.
+        2. Navigate to create new check.
+        3. Enter name for browser check.
+        4. Deselect activate for new check.
+        5. Save the new browser check.
+
+    **Failure Occurred At:** Step 2: Navigate to create new check. The error happened while trying to navigate, as evident by the unresolved title "New browser check". This indicates a navigation issue, possibly remaining on the "Create from scratch" page instead.`;
+    const input = JSON.stringify({
+      name,
+      scriptPath,
+      script,
+      errors,
+    });
+
+    return Promise.all([
+      expect(summary).toScorePerfect(
+        Possible({
+          input,
+          expected: expected,
+        }),
+      ),
+      expect(summary).toScoreGreaterThanOrEqual(
+        Factuality({
+          input: prompt,
+          expected: expected,
+        }),
+        0.5,
+      ),
+      expect(summary).toScoreGreaterThanOrEqual(
+        Battle({
+          instructions: prompt,
+          expected: expected,
+        }),
+        0.5,
       ),
     ]);
   });

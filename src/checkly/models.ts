@@ -174,8 +174,10 @@ export class CheckResult {
     jobAssets: unknown | null;
   } | null;
   browserCheckResult: {
+    errors: Array<ErrorMessage>;
     jobLog: Array<LogEntry>;
     playwrightTestTraces: Array<string>;
+    playwrightTestJsonReportFile: string;
   } | null;
   multiStepCheckResult: {
     errors: Array<ErrorMessage>;
@@ -205,4 +207,72 @@ export class CheckResult {
       )
       .join("\n");
   }
+}
+
+export class PrometheusCheckMetric {
+  name: string;
+  checkType: string;
+  muted: boolean;
+  activated: boolean;
+  checkId: string;
+  tags: string[];
+  group: string;
+  status: "passing" | "failing" | "degraded";
+  value: number;
+
+  static fromJson(json: {
+    labels: {
+      name: string;
+      check_type: string;
+      muted: string;
+      activated: string;
+      check_id: string;
+      tags: string;
+      group: string;
+      status: string;
+    };
+    value: number;
+  }): PrometheusCheckMetric {
+    const metric = {
+      ...json.labels,
+      tags: json.labels.tags.split(","),
+      checkId: json.labels.check_id,
+      checkType: json.labels.check_type,
+      muted: json.labels.muted === "true",
+      activated: json.labels.activated === "true",
+      status: json.labels.status as "passing" | "failing" | "degraded",
+      value: json.value,
+    };
+
+    return metric;
+  }
+}
+
+export class Reporting {
+  name: string;
+  checkId: string;
+  checkType: string;
+  deactivated: boolean;
+  tags: string[];
+  aggregate: {
+    successRatio: number;
+    avg: number;
+    p95: number;
+    p99: number;
+  };
+}
+
+export class Status {
+  name: string;
+  hasErrors: boolean;
+  hasFailures: boolean;
+  longestRun: number | null;
+  shortestRun: number | null;
+  checkId: string;
+  created_at: string;
+  updated_at: string;
+  lastRunLocation: string | null;
+  lastCheckRunId: string | null;
+  sslDaysRemaining: number | null;
+  isDegraded: boolean;
 }

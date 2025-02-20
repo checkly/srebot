@@ -36,12 +36,12 @@ export class SlackClient {
       // Create a new cache for this request only
       const nameCache = new Map<string, Promise<string>>();
 
-      console.log(`Found ${result.messages.length} messages`);
       return await Promise.all(
         result.messages.map(async (m) => ({
           ...m,
           plaintext: getMessageText(m),
           username: await this.fetchMessageSenderName(m, nameCache),
+          timestamp: m.ts ? convertSlackTimestamp(m.ts) : null,
         })),
       );
     } catch (error) {
@@ -76,26 +76,45 @@ export class SlackClient {
     return isUser ? `User/${name}` : `Bot/${name}`;
   }
 
-  private async fetchUserName(userId: string): Promise<string> {
+  public async fetchUserName(userId: string): Promise<string> {
     try {
       const user = await this.web.users
         .info({ user: userId })
         .then((u) => u.user);
-      return user?.name ?? user?.real_name ?? userId;
+      return user?.profile?.display_name ?? userId;
     } catch (e) {
+      console.error("error fetching user name", userId, e);
       return userId;
     }
   }
 
-  private async fetchBotName(botId: string): Promise<string> {
+  public async fetchBotName(botId: string): Promise<string> {
     try {
       const bot = await this.web.bots.info({ bot: botId! });
       return bot.bot?.name ?? botId;
     } catch (e) {
+      console.error("error fetching bot name", botId, e);
       return botId;
     }
   }
+
+  async getTokenScopes() {
+    const res = await this.web.auth.test();
+    if (res.error) {
+      throw res.error;
+    }
+
+    return res.response_metadata?.scopes;
+  }
 }
+
+export const convertSlackTimestamp = (slackTs: string): Date => {
+  // Slack timestamps are in the format "1234567890.123456"
+  // The part before the dot is Unix seconds, after is microseconds
+  const [seconds, microseconds] = slackTs.split(".");
+  const milliseconds = parseInt(seconds) * 1000 + parseInt(microseconds) / 1000;
+  return new Date(milliseconds);
+};
 
 export const getMessageText = (message: Object): string => {
   const textParts: string[] = [];
