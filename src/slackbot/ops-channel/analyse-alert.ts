@@ -1,6 +1,5 @@
 import { generateObject } from "ai";
 import moment from "moment";
-import { z } from "zod";
 import { fetchDocumentsFromKnowledgeBase } from "../../notion/notion";
 import {
   affectedComponentsPrompt,
@@ -74,76 +73,24 @@ export const analyseAlert = async (
     (doc) => doc.slug === OPS_CHANNEL_GUIDELINES_SLUG,
   );
 
-  const [compPrompt, compConfig] = affectedComponentsPrompt(
-    opsChannelGuidelines,
-    alertMessage,
+  const affectedComponentsOutput = await generateObject(
+    affectedComponentsPrompt(opsChannelGuidelines, alertMessage),
   );
-
-  const affectedComponentsOutput = await generateObject({
-    ...compConfig,
-    prompt: compPrompt,
-    output: "array",
-    schema: z.object({
-      component: z
-        .string()
-        .describe(
-          "the name of the affected component. Only mention the components defined in the guidelines. Do not come up with your own components",
-        ),
-      environment: z
-        .enum(["development", "staging", "production"])
-        .describe("the environment in which the component is running"),
-      repository: z
-        .string()
-        .optional()
-        .describe(
-          "The repository where the component is located, use organization/repository format",
-        ),
-      reasoning: z
-        .string()
-        .describe(
-          "Explanation of why the alert is classified at this severity level.",
-        ),
-      confidence: z
-        .number()
-        .describe(
-          "Confidence level of the component identification. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation.",
-        ),
-    }),
-  });
 
   const confidentAffectedComponents = affectedComponentsOutput.object.filter(
     (affected) => affected.confidence >= 90,
   );
 
-  const [recoPrompt, recoConfig] = alertRecommendationPrompt(
-    opsChannelGuidelines,
-    alertMessage,
-    confidentAffectedComponents.map((c) => ({
-      component: c.component,
-      environment: c.environment,
-    })),
+  const recommendationOutput = await generateObject(
+    alertRecommendationPrompt(
+      opsChannelGuidelines,
+      alertMessage,
+      confidentAffectedComponents.map((c) => ({
+        component: c.component,
+        environment: c.environment,
+      })),
+    ),
   );
-
-  const recommendationOutput = await generateObject({
-    ...recoConfig,
-    prompt: recoPrompt,
-    schema: z.object({
-      recommendation: z
-        .enum(["ignore", "analyse"])
-        .describe("The severity level of the alert."),
-      state: z
-        .enum(["firing", "recovered"])
-        .describe("The state of the alert."),
-      reasoning: z
-        .string()
-        .describe("Explanation why do you recommend this action."),
-      confidence: z
-        .number()
-        .describe(
-          "Confidence level of the recommendation. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation.",
-        ),
-    }),
-  });
 
   if (
     recommendationOutput.object.recommendation === "ignore" &&
@@ -170,37 +117,9 @@ export const analyseAlert = async (
   );
   const messageHistory = getFormattedMessages(messages, channelId, messageTs);
 
-  const [historyPrompt, historyConfig] = alertHistoryPrompt(
-    alertMessage,
-    messageHistory,
+  const historyOutput = await generateObject(
+    alertHistoryPrompt(alertMessage, messageHistory),
   );
-
-  const historyOutput = await generateObject({
-    ...historyConfig,
-    prompt: historyPrompt,
-    schema: z.object({
-      type: z
-        .enum(["new", "recurring", "escalating"])
-        .describe(
-          "Alert type, whether it is a new issue or a recurring problem.",
-        ),
-      reasoning: z
-        .string()
-        .describe(
-          "Explanation of why the alert is classified at this severity level.",
-        ),
-      confidence: z
-        .number()
-        .describe(
-          "Confidence level of the recommendation. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation.",
-        ),
-      pastMessageLinks: z
-        .array(z.string())
-        .describe(
-          "Slack Links to relevant past messages that indicate a recurring issue.",
-        ),
-    }),
-  });
 
   console.log(
     `History: ${historyOutput.object.type} My reasoning:`,
@@ -209,68 +128,34 @@ export const analyseAlert = async (
     historyOutput.object.confidence,
   );
 
-  const [severityPrompt, severityConfig] = alertSeverityPrompt(
-    alertMessage,
-    confidentAffectedComponents,
+  const severityOutput = await generateObject(
+    alertSeverityPrompt(alertMessage, confidentAffectedComponents),
   );
-
-  const severityOutput = await generateObject({
-    ...severityConfig,
-    prompt: severityPrompt,
-    schema: z.object({
-      severity: z
-        .enum(["low", "medium", "high", "critical"])
-        .describe("The severity level of the alert."),
-      reasoning: z
-        .string()
-        .describe(
-          "Explanation of why the alert is classified at this severity level.",
-        ),
-    }),
-  });
 
   console.log(
     `Severity: ${severityOutput.object.severity} My reasoning:`,
     severityOutput.object.reasoning,
   );
 
-  const [summaryPrompt, summaryConfig] = alertSummaryPrompt(
-    alertMessage,
-    confidentAffectedComponents,
-    {
-      severity: severityOutput.object.severity,
-      reasoning: severityOutput.object.reasoning,
-    },
-    {
-      state: recommendationOutput.object.state,
-      reasoning: recommendationOutput.object.reasoning,
-    },
-    {
-      type: historyOutput.object.type,
-      reasoning: historyOutput.object.reasoning,
-    },
-    opsChannelGuidelines,
+  const summary = await generateObject(
+    alertSummaryPrompt(
+      alertMessage,
+      confidentAffectedComponents,
+      {
+        severity: severityOutput.object.severity,
+        reasoning: severityOutput.object.reasoning,
+      },
+      {
+        state: recommendationOutput.object.state,
+        reasoning: recommendationOutput.object.reasoning,
+      },
+      {
+        type: historyOutput.object.type,
+        reasoning: historyOutput.object.reasoning,
+      },
+      opsChannelGuidelines,
+    ),
   );
-
-  const summary = await generateObject({
-    ...summaryConfig,
-    prompt: summaryPrompt,
-    schema: z.object({
-      escalateToIncidentResponse: z
-        .boolean()
-        .optional()
-        .describe("Whether to escalate to incident response team"),
-      summary: z.string().describe("Concise executive summary of the alert."),
-      reasoning: z
-        .string()
-        .describe("Explain the reason behind escalatingToIncidentResponse"),
-      escalateConfidence: z
-        .number()
-        .describe(
-          "Confidence level of the recommendation. Use a number between 0 and 100 (inclusive). 100 means that you are 100% confident in the recommendation.",
-        ),
-    }),
-  });
 
   console.log(
     `I'm recommending to escalate to the incident response team: ${summary.object.escalateToIncidentResponse} My reasoning:`,
