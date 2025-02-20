@@ -23,6 +23,11 @@ export type PromptDefinition<
   output: T;
 };
 
+export type PromptDefinitionForText = Omit<
+  PromptDefinition,
+  "schema" | "output"
+>;
+
 export function promptConfig(id: string, config?: Partial<PromptConfig>) {
   return {
     model,

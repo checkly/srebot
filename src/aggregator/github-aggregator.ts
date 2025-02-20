@@ -33,28 +33,18 @@ export const githubAggregator = {
       return [];
     }
 
-    const [prompt, config] = generateFindRelevantReleasesPrompt(
-      check,
-      stringify(mapCheckResultToContextValue(alertCheckResult)),
-      releases.map((r) => ({
-        id: r.id,
-        repo: r.repoUrl,
-        release: r.name,
-        summary: r.summary,
-      })),
+    const { object: relevantReleaseIds } = await generateObject(
+      generateFindRelevantReleasesPrompt(
+        check,
+        stringify(mapCheckResultToContextValue(alertCheckResult)),
+        releases.map((r) => ({
+          id: r.id,
+          repo: r.repoUrl,
+          release: r.name,
+          summary: r.summary,
+        })),
+      ),
     );
-
-    const { object: relevantReleaseIds } = await generateObject({
-      ...config,
-      prompt,
-      schema: z.object({
-        releaseIds: z
-          .array(z.string())
-          .describe(
-            "The ids of the releases that are most relevant to the check failure.",
-          ),
-      }),
-    });
 
     const relevantReleases = releases.filter((r) =>
       relevantReleaseIds.releaseIds.includes(r.id),
@@ -91,28 +81,18 @@ export const githubAggregator = {
       return [];
     }
 
-    const [prompt, config] = generateFindRelevantDeploymentsPrompt(
-      check,
-      stringify(mapCheckResultToContextValue(alertCheckResult)),
-      deployments.map((deploy) => ({
-        id: deploy.id,
-        repo: deploy.repoUrl,
-        createdAt: deploy.createdAt,
-        summary: deploy.summary,
-      })),
+    const { object: relevantReleaseIds } = await generateObject(
+      generateFindRelevantDeploymentsPrompt(
+        check,
+        stringify(mapCheckResultToContextValue(alertCheckResult)),
+        deployments.map((deploy) => ({
+          id: deploy.id,
+          repo: deploy.repoUrl,
+          createdAt: deploy.createdAt,
+          summary: deploy.summary,
+        })),
+      ),
     );
-
-    const { object: relevantReleaseIds } = await generateObject({
-      ...config,
-      prompt,
-      schema: z.object({
-        deploymentIds: z
-          .array(z.string())
-          .describe(
-            "The ids of the releases that are most relevant to the check failure.",
-          ),
-      }),
-    });
 
     const relevantReleases = deployments.filter((deployment) =>
       relevantReleaseIds.deploymentIds.includes(deployment.id),

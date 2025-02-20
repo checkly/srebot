@@ -1,5 +1,4 @@
 import { generateObject, generateText, LanguageModelV1 } from "ai";
-import { z } from "zod";
 import {
   generateDeploymentSummaryPrompt,
   generateFindRepoPrompt,
@@ -32,16 +31,13 @@ export class GithubAgent {
       release,
     );
 
-    const [prompt, config] = generateReleaseHeadlinePrompt(
+    const prompt = generateReleaseHeadlinePrompt(
       previousRelease,
       release,
       JSON.stringify(diff),
     );
 
-    const { text } = await generateText({
-      ...config,
-      prompt,
-    });
+    const { text } = await generateText(prompt);
 
     return { diff, summary: text };
   }
@@ -71,16 +67,10 @@ export class GithubAgent {
       };
     });
 
-    const [prompt, config] = generateReleaseSummaryPrompt(
-      previousRelease,
-      release,
-      { commits },
-    );
-
-    const { text } = await generateText({
-      ...config,
-      prompt,
+    const prompt = generateReleaseSummaryPrompt(previousRelease, release, {
+      commits,
     });
+    const { text } = await generateText(prompt);
 
     return { diff, summary: text };
   }
@@ -98,16 +88,13 @@ export class GithubAgent {
       currentSha,
     );
 
-    const [prompt, config] = generateDeploymentSummaryPrompt(
+    const prompt = generateDeploymentSummaryPrompt(
       previousSha,
       currentSha,
       JSON.stringify(diff),
     );
 
-    const { text } = await generateText({
-      ...config,
-      prompt,
-    });
+    const { text } = await generateText(prompt);
 
     return { diff, summary: text };
   }
@@ -121,34 +108,15 @@ export class GithubAgent {
       link: r.html_url,
     }));
 
-    // const { text } = await generateText({
-    //   model: this.model,
-    //   system: `A developer describes a task which is about a repository in his github organization. Select the repository he is most likely talking about and give me only its name. This list of posible repos is the following: ${JSON.stringify(repositories)}`,
-    //   prompt,
-    // });
-
-    const [prompt, config] = generateFindRepoPrompt(userPrompt, repositories);
-
-    const { object } = await generateObject({
-      ...config,
-      prompt,
-      schema: z.object({
-        repo: z.enum(repositories.map((r) => r.name) as [string, ...string[]]),
-      }),
-    });
+    const prompt = generateFindRepoPrompt(userPrompt, repositories);
+    const { object } = await generateObject(prompt);
 
     return repositories.find((r) => r.name === object.repo) || undefined;
   }
 
   async get_date(org: string, userPrompt: string) {
-    const [systemPrompt, config] = generateTimeframePrompt();
-
-    const { text } = await generateText({
-      ...config,
-      system: systemPrompt,
-      prompt: userPrompt,
-    });
-
+    const prompt = generateTimeframePrompt();
+    const { text } = await generateText(prompt);
     return text;
   }
 
