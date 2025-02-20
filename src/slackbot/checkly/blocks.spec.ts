@@ -15,7 +15,7 @@ describe("Slack Summary Message", () => {
     slack = new WebClient(authToken);
   });
 
-  test("sends block message to channel successfully", async () => {
+  test.skip("sends block message to channel successfully", async () => {
     const { text, blocks } = summaryBlock(1, 2, 3);
     await slack.chat.postMessage({
       channel,

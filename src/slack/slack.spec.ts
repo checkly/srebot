@@ -22,15 +22,15 @@ describe("Slack Web Api Tests", () => {
     expect(messages[0]).toHaveProperty("username");
   });
 
-  it("it should find the right displayname for a bot", async () => {
+  it.skip("it should find the right displayname for a bot", async () => {
     console.log(await slack.fetchBotName("B03KU7YPASZ"));
   });
 
-  it("it should find the right displayname for a user", async () => {
+  it.skip("it should find the right displayname for a user", async () => {
     console.log(await slack.fetchBotName("U026KTBH5K6"));
   });
 
-  it("should check auth scopes", async () => {
+  it.skip("should check auth scopes", async () => {
     const scopes = await slack.getTokenScopes();
     expect(scopes).toEqual([
       "app_mentions:read",

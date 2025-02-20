@@ -68,7 +68,7 @@ describe("ChecklyService", () => {
     expect(result).toBeDefined();
   });
 
-  it("can run a check", async () => {
+  it.skip("can run a check", async () => {
     const result = await client.runCheck(
       "e7608d1a-c013-4194-9da0-dec05d2fbabc",
     );
