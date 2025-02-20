@@ -3,27 +3,17 @@ import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
 import { validObjectList, validObject } from "./validation";
-import { promptConfig, PromptConfig } from "./common";
+import { definePrompt, PromptDefinition } from "./common";
 import { slackFormatInstructions } from "./slack";
+import { z } from "zod";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
 
-/**
- * Generates a prompt for analyzing a single context entry when a check fails.
- * The prompt includes the check data and the specific entry's context for analysis.
- *
- * @param {CheckContext} entry - The specific context entry to analyze
- * @param {CheckContext[]} allEntries - All available context entries for the check
- * @returns {string} A formatted prompt string for analyzing the context entry
- *
- * @example
- * const prompt = contextAnalysisEntryPrompt(entry, allContextEntries);
- */
 export function contextAnalysisEntryPrompt(
   entry: CheckContext,
   allEntries: CheckContext[],
-): [string, PromptConfig] {
+): PromptDefinition {
   validObject.parse(entry);
   validObjectList.parse(allEntries);
 
@@ -34,38 +24,31 @@ export function contextAnalysisEntryPrompt(
     allEntries,
     ContextKey.ChecklyScript,
   );
-
   validObject.parse(checklyScript);
 
-  return [
-    `The following check has failed: ${formatChecklyMonitorData(checklyCtx as CheckContext)}
+  const prompt = `The following check has failed: ${formatChecklyMonitorData(checklyCtx as CheckContext)}
 
     Here's the checkly script for this check:
     ${checklyScript}
 
-		Analyze the following context and generate a concise summary to extract the most important information. Output only the relevant context summary, no other text.
+    Analyze the following context and generate a concise summary to extract the most important information. Output only the relevant context summary, no other text.
 
 CONTEXT:
-${stringify(entry)}`,
-    promptConfig("contextAnalysisEntry", { temperature: 0.1, maxTokens: 300 }),
-  ];
+${stringify(entry)}`;
+
+  const schema = z.object({
+    summary: z.string().describe("Concise summary of the analyzed context"),
+  });
+
+  return definePrompt("contextAnalysisEntry", prompt, schema, {
+    temperature: 0.1,
+    maxTokens: 300,
+  });
 }
 
-/**
- * Generates a comprehensive analysis prompt for multiple context entries.
- * Creates a structured prompt for analyzing check state changes and generating
- * actionable insights for DevOps engineers. The prompt includes specific
- * instructions for format, analysis approach, and output requirements.
- *
- * @param {CheckContext[]} contextRows - Array of context entries to analyze
- * @returns {string} A formatted prompt string for comprehensive context analysis
- *
- * @example
- * const summary = contextAnalysisSummaryPrompt(contextEntries);
- */
 export function contextAnalysisSummaryPrompt(
   contextRows: CheckContext[],
-): [string, PromptConfig] {
+): PromptDefinition {
   validObjectList.parse(contextRows);
 
   const checklyCtx = findChecklyContext(contextRows, ContextKey.ChecklyCheck);
@@ -75,13 +58,11 @@ export function contextAnalysisSummaryPrompt(
     contextRows,
     ContextKey.ChecklyScript,
   );
-
   validObject.parse(checklyScript);
 
   const checkContext = formatChecklyMonitorData(checklyCtx as CheckContext);
 
-  return [
-    `The following check has changed its state: ${checkContext}
+  const prompt = `The following check has changed its state: ${checkContext}
 
 Anaylze the following context and generate a concise summary of the current situation.
 
@@ -93,55 +74,53 @@ CONSTITUTION:
 - Don't include the check configuration or run details, focus on logs, changes and the current state of the system.
 - Knowledge context is provided for you to build better understanding of the product, system and organisation structures.
 
-
 OUTPUT FORMAT INSTRUCTIONS:
 ${slackFormatInstructions}
 
 CONTEXT:
 ${formatContextAnalysis(contextRows)}
 
-Check-results amd checkly configuration details are already provided in the UI. Focus on the root cause analysis and potential mitigations. Help the user to resolve the issue.
+Check-results and checkly configuration details are already provided in the UI. Focus on the root cause analysis and potential mitigations. Help the user to resolve the issue.
 Generate a condensed summary of your root cause analysis of the current situation.
 Focus on the essentials, provide a concise overview and actionable insights.
 Provide reasoning and the source of the information. Max. 100 words. Include links to relevant context if applicable.
 Be concise, insightful and actionable, skip the fluff, no yapping.
 If a recent release is the most likely root cause, provide a link to the release diff.
 
-*Summary:*`,
-    promptConfig("contextAnalysisSummary", {
-      temperature: 1,
-      maxTokens: 500,
-    }),
-  ];
+*Summary:*`;
+
+  const schema = z.object({
+    summary: z.string().describe("Root cause analysis and actionable insights"),
+    links: z.array(z.string()).optional().describe("Relevant context links"),
+  });
+
+  return definePrompt("contextAnalysisSummary", prompt, schema, {
+    temperature: 1,
+    maxTokens: 500,
+  });
 }
 
 export function checklyToolPrompt(
   checks: Check[],
   query: string | undefined,
-): [string, PromptConfig] {
+): PromptDefinition {
   validObjectList.parse(checks);
 
-  return [
-    `You are the Checkly Check Search Engine. You are given a query and a list of checks. Return the most relevant check that relates to the query.
+  const prompt = `You are the Checkly Check Search Engine. You are given a query and a list of checks. Return the most relevant check that relates to the query.
 
 Available checks: ${stringify(checks.map((c) => ({ ...mapCheckToContextValue(c) })))}
 
-Search Query: ${query ?? ""}`,
-    promptConfig("checklyTool"),
-  ];
+Search Query: ${query ?? ""}`;
+
+  const schema = z.object({
+    checkName: z.string(),
+    checkId: z.string(),
+  });
+
+  return definePrompt("checklyTool", prompt, schema);
 }
 
-/**
- * Formats context data for analysis by filtering out Checkly check data and
- * converting the remaining context to YAML format. The output is truncated
- * to prevent oversized prompts.
- *
- * @param {CheckContext[]} rows - Array of context entries to format
- * @returns {string} YAML formatted string of filtered context data
- *
- * @example
- * const formattedContext = formatContextAnalysis(contextRows);
- */
+// Helper functions remain unchanged
 function formatContextAnalysis(rows: CheckContext[]): string {
   validObjectList.parse(rows);
 
@@ -153,16 +132,6 @@ function formatContextAnalysis(rows: CheckContext[]): string {
   ).slice(0, CONTEXT_ANALYSIS_MAX_LENGTH);
 }
 
-/**
- * Extracts and formats Checkly monitor data from context entries.
- * Finds the Checkly check context and formats it as YAML with check ID and value.
- *
- * @param {CheckContext[]} rows - Array of context entries to search for Checkly data
- * @returns {string} YAML formatted string of Checkly monitor data
- *
- * @example
- * const monitorData = formatChecklyMonitorData(contextRows);
- */
 function formatChecklyMonitorData(ctx: CheckContext): string {
   validObject.parse(ctx);
 

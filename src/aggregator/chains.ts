@@ -14,12 +14,9 @@ export const generateContextAnalysis = async (context: CheckContext[]) => {
   );
 
   async function generateContextAnalysisForEntry(entry: CheckContext) {
-    const [prompt, config] = contextAnalysisEntryPrompt(entry, context);
-
-    const summary = await generateText({
-      ...config,
-      prompt,
-    });
+    const summary = await generateText(
+      contextAnalysisEntryPrompt(entry, context),
+    );
 
     return summary.text;
   }
@@ -28,12 +25,9 @@ export const generateContextAnalysis = async (context: CheckContext[]) => {
 export const generateContextAnalysisSummary = async (
   contextAnalysis: CheckContext[],
 ) => {
-  const [prompt, config] = contextAnalysisSummaryPrompt(contextAnalysis);
-
-  const summary = await generateText({
-    ...config,
-    prompt,
-  });
+  const summary = await generateText(
+    contextAnalysisSummaryPrompt(contextAnalysis),
+  );
 
   return summary.text;
 };
