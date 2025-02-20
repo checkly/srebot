@@ -159,7 +159,7 @@ npm test
 
 ### Architecture
 
-```Mermaid
+```mermaid
 sequenceDiagram
     participant CLY as Checkly
     participant APP as App
