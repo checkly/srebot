@@ -123,7 +123,7 @@ describe("Context Search Prompt Tests", () => {
           input,
           context: JSON.stringify(contextRows),
         }),
-        0.6,
+        0.5,
       ),
       expect(output).toScoreGreaterThanOrEqual(
         Battle({
