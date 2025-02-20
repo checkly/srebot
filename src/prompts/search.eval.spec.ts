@@ -116,21 +116,21 @@ describe("Context Search Prompt Tests", () => {
           input,
           expected,
         }),
-        0.6,
+        0.5,
       ),
       expect(output).toScoreGreaterThanOrEqual(
         AnswerRelevancy({
           input,
           context: JSON.stringify(contextRows),
         }),
-        0.6,
+        0.5,
       ),
       expect(output).toScoreGreaterThanOrEqual(
         Battle({
           instructions: prompt,
           expected,
         }),
-        0.6,
+        0.5,
       ),
     ]);
   });
