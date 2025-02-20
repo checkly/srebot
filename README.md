@@ -33,21 +33,21 @@ The project uses PostgreSQL as its database. To set it up using Docker:
 
 1. Start the PostgreSQL container:
 
-```bash
-docker compose up -d
-```
+   ```bash
+   docker compose up -d
+   ```
 
-2. Run database migrations:
+1. Run database migrations:
 
-```bash
-npm run db:migrate
-```
+   ```bash
+   npm run db:migrate
+   ```
 
-3. (Optional) To explore the database using Prisma Studio:
+1. (Optional) To explore the database using Prisma Studio:
 
-```bash
-npm run db:studio
-```
+   ```bash
+   npm run db:studio
+   ```
 
 To reset the database if needed:
 
@@ -59,23 +59,23 @@ npm run db:migrate     # Run migrations again
 
 ### 3. Installation
 
-1. Install dependencies:
+1. Install dependencies
 
 ```bash
 npm install
 ```
 
-2. Initialize the OpenAI assistant:
+1. Initialize the OpenAI assistant
 
-- First, get your OpenAI API key from https://platform.openai.com/api-keys
-- Add the API key to your .env file
-- Create the assistant by running:
+   - First, get your [OpenAI API key](https://platform.openai.com/api-keys)
+   - Add the API key to your .env file
+   - Create the assistant by running:
 
-```bash
-npx ts-node scripts/init-assistant.ts
-```
+   ```bash
+   npx ts-node scripts/init-assistant.ts
+   ```
 
-Go to https://platform.openai.com/assistants to find your assistant ID
+Go to the [OpenAI Portal](https://platform.openai.com/assistants) to find your assistant ID
 
 ## Running the Application
 
@@ -133,18 +133,18 @@ npm test
 
 ### Slack Setup
 
-1. Create a new Slack app in your workspace: https://api.slack.com/apps
-2. Configure Bot Token Scopes:
+1. Create a new Slack app in your [workspace](https://api.slack.com/apps)
+1. Configure Bot Token Scopes:
    - chat:write
    - app_mentions:read
    - commands
-3. Install the app to your workspace
-4. Copy the signing secret, bot token, and app token to your .env file
+1. Install the app to your workspace
+1. Copy the signing secret, bot token, and app token to your .env file
 
 ### GitHub Setup
 
 1. Create a Personal Access Token with repo permissions
-2. Configure webhook in your organization/repository:
+1. Configure webhook in your organization/repository:
    - Payload URL: your-server/github-webhook
    - Content type: application/json
    - Secret: Same as GH_WEBHOOK_SECRET in .env
@@ -152,10 +152,38 @@ npm test
 
 ### Checkly Setup
 
-1. Get your API key and Account ID from Checkly: https://app.checklyhq.com/
-2. Configure webhook in Checkly:
+1. Get your [API key and Account ID from Checkly](https://app.checklyhq.com/settings/user/api-keys)
+1. Configure webhook in Checkly:
    - URL: your-server/checkly-webhook
    - Select relevant alert types
+
+### Architecture
+
+```mermaid
+sequenceDiagram
+    participant CLY as Checkly
+    participant APP as App
+    participant GHB as Github
+    participant NOT as Notion API
+    participant SLCK_API as Slack API
+    participant CLY_API as Checkly Api
+    participant AI as AI Model(OpenAI)
+    participant SLCK as Slack
+    CLY->>APP:Alert Webhook
+    critical Aggregate Context
+      APP->>GHB:Get Releases
+      GHB->>AI:Identify Relevant Releases
+      GHB->>AI:Identify Relevant Deployments
+      APP->>NOT:Get Knowledge Bases
+      APP->>SLCK_API:Get Channel Summary
+      SLCK_API->>AI:Summarize Channel
+      APP->>CLY_API:Get Alert Details
+    end
+
+    APP->>AI:Ananlyze context, Root Cause and Create Summary
+    AI->>APP:Alert Summary
+    APP->>SLCK:Send Alert Message
+```
 
 ## License
 
