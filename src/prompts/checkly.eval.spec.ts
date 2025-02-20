@@ -124,9 +124,9 @@ test('visit page and take screenshot', async ({ page }) => {
       },
     ] as CheckContext[];
 
-    const { text: summary } = await generateText(
-      contextAnalysisSummaryPrompt(contextRows),
-    );
+    const promptDef = contextAnalysisSummaryPrompt(contextRows);
+
+    const { text: summary } = await generateText(promptDef);
 
     const expected =
       "Recent caching layer update (14:15 UTC) likely reduced cache efficiency, increasing load on MongoDB—reflected by a spike in p95 latency (200ms→2500ms) on /api/users, high I/O wait (1500ms/query), and 92% DB memory utilization. Mitigate by rolling back the caching change and scaling DB resources.";
@@ -146,21 +146,21 @@ test('visit page and take screenshot', async ({ page }) => {
       ),
       expect(summary).toScoreGreaterThanOrEqual(
         Factuality({
-          input: prompt,
+          input: promptDef.prompt,
           expected: expected,
         }),
         0.5,
       ),
       expect(summary).toScoreGreaterThanOrEqual(
         Battle({
-          instructions: prompt,
+          instructions: promptDef.prompt,
           expected: expected,
         }),
         0.5,
       ),
       expect(summary).toScorePerfect(
         Summary({
-          input: prompt,
+          input: promptDef.prompt,
           expected: expectedBad,
         }),
       ),
