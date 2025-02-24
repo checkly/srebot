@@ -64,13 +64,19 @@ export function featureCoveragePrompt(
       Script: ${script}
       Error stack: ${errors}
 
-      Summarize the steps executed by the test using high level domain language. Focus on the user flow omit technical details. Use max 5 words per step.
-      Identify the step which failed by match the script code with the stack of the error. Include details about the test failure.
+      Identify the step which failed by matching the script code with the stack of the error. The line number can be identified by searching for the highest occurrence of the the Script name in the error stack.
+
+      Then summarize the steps executed by the test using high level domain language. Focus on the user flow and omit technical details. Use max 5 words per step.
+      Append each successful step and an :white_tick: emoji, the failed step with an :x: emoji and not executed steps with a :grey_question: emoji.
+      Make sure the steps are listed in execution order (top to bottom).
+
+      Include details about the test failure.
 
       CONSTITUTION:
       - Always prioritize accuracy and relevance in the summary
       - Be concise but comprehensive in your explanations
       - Focus on providing actionable information that can help judging user impact
+      - Use the domain language from the application under test
     `,
     promptConfig("checklySummarizeFeatureCoverage", {
       temperature: 1,
