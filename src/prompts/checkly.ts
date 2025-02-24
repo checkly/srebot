@@ -3,7 +3,12 @@ import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
 import { validObjectList, validObject } from "./validation";
-import { definePrompt, PromptDefinition } from "./common";
+import {
+  definePrompt,
+  promptConfig,
+  PromptConfig,
+  PromptDefinition,
+} from "./common";
 import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
 
