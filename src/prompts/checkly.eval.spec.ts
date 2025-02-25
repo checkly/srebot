@@ -1,9 +1,11 @@
+import fs from "fs";
+
 import { generateText } from "ai";
 import dotenv from "dotenv";
 import { CheckContext } from "../aggregator/ContextAggregator";
 import { getOpenaiSDKClient } from "../ai/openai";
 import { startLangfuseTelemetrySDK } from "../langfuse";
-import { contextAnalysisSummaryPrompt } from "./checkly";
+import { contextAnalysisSummaryPrompt, featureCoveragePrompt } from "./checkly";
 import { expect } from "@jest/globals";
 import { Possible, Factuality, Battle, Summary } from "./toScoreMatcher";
 startLangfuseTelemetrySDK();
@@ -163,6 +165,69 @@ test('visit page and take screenshot', async ({ page }) => {
           input: promptDef.prompt,
           expected: expectedBad,
         }),
+      ),
+    ]);
+  });
+
+  it("should generate a feature coverage prompt", async () => {
+    const { name, script, scriptPath } = {
+      name: "Create Browser Check",
+      script:
+        "// import { test } from '@playwright/test'\nimport { expect, test } from '../../../../../../__checks__/helpers/checklyTest'\nimport { invokeFnAndWaitForResponse } from '../../../../../../__checks__/helpers/invokeFnAndWaitForResponse'\nimport { randomString } from '../../../../../../__checks__/helpers/randomString'\nimport { CheckBuilderHeaderPom } from '../../../../../components/checks/check-builder/__checks__/CheckBuilderHeaderPom'\nimport { BrowserCheckBuilderPom } from './pom/BrowserCheckBuilderPom'\n\ntest('should create browser check', async ({ page, webapp, api }) => {\n  await webapp.login()\n\n  const browserCheckBuilder = new BrowserCheckBuilderPom({ page, webapp })\n\n  await browserCheckBuilder.navigateToUsingSidebarCreateButton()\n\n  const checkName = `Check E2E test ${randomString()}`\n\n  const checkBuilderHeaderPom = new CheckBuilderHeaderPom({ page, webapp })\n  await checkBuilderHeaderPom.nameInput.fill(checkName)\n  await checkBuilderHeaderPom.activateCheckbox.uncheck({ force: true })\n\n  const createdCheck = await invokeFnAndWaitForResponse({\n    page,\n    urlMatcher: (url: string) => url.endsWith('/checks'),\n    method: 'POST',\n    status: 200,\n    fn: () => checkBuilderHeaderPom.saveButton.click(),\n  })\n\n  /**\n   * Wait until the browser check builder has loaded the check, otherwise it might get deleted via the API\n   * before the UI has a chance to refresh the create screen into the edit screen.\n   *\n   * The assertion here is a bit arbitrary (i.e. it could be any element on the edit screen).\n   */\n  await expect(page.getByText('Export to code')).toBeVisible()\n\n  api.checks.addToCleanupQueue(createdCheck.id)\n})\n",
+      scriptPath:
+        "src/pages/checks/browser/create/__checks__/create_check.spec.ts",
+    };
+
+    const errors = [
+      'Error: Timed out 30000ms waiting for expect(locator).toHaveTitle(expected)\n\nLocator: locator(\':root\')\nExpected string: "New browser check"\nReceived string: "Create from scratch"\nCall log:\n  - expect.toHaveTitle with timeout 30000ms\n  - waiting for locator(\':root\')\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Dashboard"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Dashboard"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Dashboard"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n  -   locator resolved to <html lang="en">…</html>\n  -   unexpected value "Create from scratch"\n\n    at BrowserCheckBuilderPom.navigateToUsingSidebarCreateButton (/check/569270bb-6b06-4c38-9e4f-f2294953745f/src/pages/checks/browser/create/__checks__/pom/module.ts:38:25)\n    at /check/569270bb-6b06-4c38-9e4f-f2294953745f/src/pages/checks/browser/create/__checks__/create_check.spec.ts:13:31',
+    ];
+
+    const [prompt, config] = featureCoveragePrompt(
+      name,
+      scriptPath,
+      script,
+      errors,
+    );
+    const { text: summary } = await generateText({
+      ...config,
+      prompt,
+    });
+
+    const expected = `
+        1. User logs into the application.
+        2. Navigate to create new check.
+        3. Enter name for browser check.
+        4. Deselect activate for new check.
+        5. Save the new browser check.
+
+    **Failure Occurred At:** Step 2: Navigate to create new check. The error happened while trying to navigate, as evident by the unresolved title "New browser check". This indicates a navigation issue, possibly remaining on the "Create from scratch" page instead.`;
+    const input = JSON.stringify({
+      name,
+      scriptPath,
+      script,
+      errors,
+    });
+
+    return Promise.all([
+      expect(summary).toScorePerfect(
+        Possible({
+          input,
+          expected: expected,
+        }),
+      ),
+      expect(summary).toScoreGreaterThanOrEqual(
+        Factuality({
+          input: prompt,
+          expected: expected,
+        }),
+        0.5,
+      ),
+      expect(summary).toScoreGreaterThanOrEqual(
+        Battle({
+          instructions: prompt,
+          expected: expected,
+        }),
+        0.5,
       ),
     ]);
   });

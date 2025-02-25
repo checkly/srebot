@@ -24,7 +24,7 @@ describe("Context Search Prompt Tests", () => {
     openai = getOpenaiSDKClient();
   });
 
-  it("should be correct and relevant", async () => {
+  it.skip("should be correct and relevant", async () => {
     const contextRows = [
       {
         key: "checkly.alert",

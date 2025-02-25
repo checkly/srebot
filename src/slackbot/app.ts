@@ -22,6 +22,16 @@ import {
   saveResponseFeedback,
 } from "./feedback";
 import type { ChatPostMessageResponse } from "@slack/web-api/dist/types/response";
+import {
+  CHECKLY_ANALYZE_CHECK_ACTION,
+  CHECKLY_COMMAN_NAME,
+  CHECKLY_LIST_CHECKS_ACTION,
+  CHECKLY_RUN_CHECK_ACTION,
+  checklyAnalyzeCheckActionHandler,
+  checklyCommandHandler,
+  checklyListChecksActionHandler,
+  checklyRunCheckActionHandler,
+} from "./checkly/slack";
 
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
@@ -97,6 +107,11 @@ const pullNameFromMessage = (message) => {
     message.user_profile?.name
   );
 };
+
+app.command(CHECKLY_COMMAN_NAME, checklyCommandHandler);
+app.action(CHECKLY_LIST_CHECKS_ACTION, checklyListChecksActionHandler);
+app.action(CHECKLY_RUN_CHECK_ACTION, checklyRunCheckActionHandler);
+app.action(CHECKLY_ANALYZE_CHECK_ACTION, checklyAnalyzeCheckActionHandler);
 
 app.event("app_mention", async ({ event, context }) => {
   if (event.text.includes("srebot-replay-command") && event.thread_ts) {
