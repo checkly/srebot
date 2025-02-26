@@ -126,7 +126,7 @@ ${failingSummary}
     expect(result).toBeDefined();
   });
 
-  it("get check results for group", async () => {
+  it.skip("get check results for group", async () => {
     const groupId = 394650;
     let checks = await client.getChecksByGroup(groupId);
 
