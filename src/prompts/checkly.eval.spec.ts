@@ -473,6 +473,7 @@ test('visit page and take screenshot', async ({ page }) => {
       name,
       scriptPath,
       script,
+      [],
       errors,
     );
     const { text: summary } = await generateText({

@@ -213,7 +213,8 @@ export function clusterCheckResults(
 export function summarizeTestStepsPrompt(
   testName: string,
   scriptName: string,
-  script: string,
+  scriptPath: string,
+  dependencies: { script: string; scriptPath: string }[],
   errors: string[],
 ): [string, PromptConfig] {
   return [
@@ -223,8 +224,11 @@ export function summarizeTestStepsPrompt(
       Do not refer to technical details of the test, use the domain language from the application under test.
       Test name: ${testName}
       Script name: ${scriptName}
-      Script: ${script}
+      Script: ${scriptPath}
       Error stack: ${errors}
+
+      Dependent scripts of the main script:
+      ${dependencies.map((d) => `- ${d.scriptPath}\n  ${d.script}`).join("\n")}
 
       Summarize the steps executed by the test using high level domain language. Focus on the user flow omit technical details. Use max 5 words per step.
       Identify the step which failed by match the script code with the stack of the error. Include details about the test failure.
