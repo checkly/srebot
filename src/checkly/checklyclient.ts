@@ -1,7 +1,7 @@
 import { plainToClass, plainToInstance } from "class-transformer";
 import * as fs from "fs";
 import fetch from "node-fetch";
-import { Check, CheckGroup, CheckResult } from "./models";
+import { Check, CheckGroup, CheckResult, Reporting, Status } from "./models";
 import { PrometheusParser } from "./PrometheusParser";
 
 interface ChecklyClientOptions {
@@ -53,10 +53,19 @@ export class ChecklyClient {
     return this.getPaginatedDownload("checks", Check);
   }
 
+  async getChecksByGroup(groupId: number): Promise<Check[]> {
+    const url = `check-groups/${groupId}/checks`;
+    return this.getPaginatedDownload(url, Check) as Promise<Check[]>;
+  }
+
+  async getCheckGroups(): Promise<CheckGroup[]> {
+    return this.getPaginatedDownload("check-groups", CheckGroup);
+  }
+
   async getActivatedChecks(): Promise<Check[]> {
     const results = await Promise.all([
-      this.getPaginatedDownload("checks", Check),
-      this.getPaginatedDownload("check-groups", CheckGroup),
+      this.getChecks(),
+      this.getCheckGroups(),
     ]);
     const groups = results[1];
     const groupMap = new Map<number, CheckGroup>();
@@ -75,6 +84,47 @@ export class ChecklyClient {
       }
     });
     return s.filter((x) => x !== undefined) as Check[];
+  }
+
+  async getCheckResultsByCheckId(
+    checkId: string,
+    config?: {
+      hasFailures?: boolean;
+      resultType?: "ALL" | "FINAL" | "ATTEMPT";
+      from?: number;
+      to?: number;
+      limit?: number;
+    },
+  ): Promise<CheckResult[]> {
+    let hasFailuresQuery = "";
+    if (!!config && !!config.hasFailures) {
+      hasFailuresQuery = `&hasFailures=${config.hasFailures}`;
+    }
+    let resultTypeQuery = "";
+    if (!!config && !!config.resultType) {
+      resultTypeQuery = `&resultType=${config.resultType}`;
+    }
+    let fromQuery = "";
+    if (!!config && !!config.from) {
+      fromQuery = `&from=${Math.floor(config.from / 1000)}`;
+    }
+    let toQuery = "";
+    if (!!config && !!config.to) {
+      toQuery = `&to=${Math.floor(config.to / 1000)}`;
+    }
+    let limitQuery = "";
+    if (!!config && !!config.limit) {
+      limitQuery = `&limit=${config.limit}`;
+    }
+    const url =
+      `${this.checklyApiUrl}check-results/${checkId}?${hasFailuresQuery}${resultTypeQuery}${fromQuery}${toQuery}${limitQuery}`.replace(
+        "v1",
+        "v2",
+      );
+
+    console.log("URL", url);
+
+    return this.fetchWithCursor<CheckResult>(url);
   }
 
   async getPaginatedDownload<T>(
@@ -104,20 +154,93 @@ export class ChecklyClient {
     return this.makeRequest(url, CheckResult) as Promise<CheckResult>;
   }
 
-  async makeRequest<T>(url: string, type: { new (): T }): Promise<T | T[]> {
+  async getDashboards() {
+    const url = `${this.checklyApiUrl}dashboards`;
+    return this.makeRequest(url, Object) as Promise<Object>;
+  }
+
+  async getDashboard(id: string) {
+    const url = `${this.checklyApiUrl}dashboards/${id}`;
+    return this.makeRequest(url, Object) as Promise<Object>;
+  }
+
+  async getCheckMetrics(
+    checkType: "HEARTBEAT" | "BROWSER" | "API" | "MULTI_STEP" | "TCP",
+  ) {
+    const url = `${this.checklyApiUrl}analytics/metrics?checkType=${checkType}`;
+    return this.makeRequest(url, Object) as Promise<Object>;
+  }
+
+  async getReporting(options?: { quickRange: "last24Hrs" | "last7Days" }) {
+    const url = `${this.checklyApiUrl}reporting`;
+    return this.makeRequest(url, Reporting) as Promise<Reporting[]>;
+  }
+
+  async getStatuses() {
+    const url = `${this.checklyApiUrl}check-statuses`;
+    return this.makeRequest(url, Status) as Promise<Status[]>;
+  }
+
+  async runCheck(checkId: string) {
+    const url = `${this.checklyApiUrl}triggers/checks/${checkId}`;
+    return this.makeRequest(url, Object, { method: "POST" }) as Promise<Object>;
+  }
+
+  private async fetch(
+    url: string,
+    options?: { method: "GET" | "POST" },
+  ): Promise<any> {
     try {
       const response = await fetch(url, {
-        method: "GET", // Optional, default is 'GET'
+        method: options?.method || "GET", // Optional, default is 'GET'
         headers: {
           Authorization: `Bearer ${this.apiKey}`, // Add Authorization header
           "X-Checkly-Account": this.accountId, // Add custom X-Checkly-Account header
         },
       });
       if (!response.ok) {
+        console.log("RESPONSE", response);
         throw new Error(`Response status: ${response.status} url:${url}`);
       }
 
-      const json = await response.json();
+      return response.json();
+    } catch (error) {
+      console.error(error.message);
+      throw error;
+    }
+  }
+
+  private async fetchWithCursor<T>(
+    url: string,
+    options?: { method: "GET" | "POST" },
+  ): Promise<T[]> {
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Sleep for 2 seconds between paginated requests
+
+    const { entries: results, nextId } = await this.fetch(url, options);
+
+    let cursor = nextId;
+    while (cursor) {
+      //FIXME remove this
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Sleep for 2 seconds between paginated requests
+
+      const { entries, nextId } = await this.fetch(
+        url + "&nextId=" + cursor,
+        options,
+      );
+      results.push(...entries);
+      cursor = nextId;
+    }
+
+    return results;
+  }
+
+  private async makeRequest<T>(
+    url: string,
+    type: { new (): T },
+    options?: { method: "GET" | "POST" | undefined; version?: "v1" | "v2" },
+  ): Promise<T | T[]> {
+    try {
+      const json = await this.fetch(url, { method: options?.method || "GET" });
       if (Array.isArray(json)) {
         return plainToInstance(type, json) as T[];
       } else {
@@ -166,7 +289,7 @@ export class ChecklyClient {
     if (hasFailures !== undefined) {
       hasFailuresQuery = `hasFailures=${hasFailures}&`;
     }
-    const url = `https://api.checklyhq.com/v1/check-results/${checkid}?limit=${limit}&page=1&${hasFailuresQuery}resultType=FINAL`;
+    const url = `https://api.checklyhq.com/v1/check-results/${checkid}?limit=${limit}&page=1&${hasFailuresQuery}`;
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -177,7 +300,9 @@ export class ChecklyClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch failed API results: ${response.status}`);
+      throw new Error(
+        `Failed to fetch failed API results: ${response.status}:\n ${response.statusText}`,
+      );
     }
     const json = await response.json();
     const result = json.map((x) => plainToClass(CheckResult, x));
