@@ -35,7 +35,12 @@ describe("ChecklyService", () => {
 
   it("should be defined", async () => {
     const checks = await client.getChecks();
-    const result = await client.getCheck(checks[0].id);
+    const check = checks.find((c) => c.checkType == "BROWSER");
+
+    const result = await client.getCheck(check!.id, {
+      includeDependencies: true,
+    });
+    console.log(JSON.stringify(result, null, 2));
     expect(result).toBeDefined();
   });
 

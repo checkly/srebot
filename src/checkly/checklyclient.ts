@@ -44,8 +44,15 @@ export class ChecklyClient {
       `https://api.checklyhq.com/accounts/${this.accountId}/v2/prometheus/metrics`;
   }
 
-  async getCheck(checkid: string): Promise<Check> {
-    const url = `${this.checklyApiUrl}checks/${checkid}/`;
+  async getCheck(
+    checkid: string,
+    options?: { includeDependencies?: boolean },
+  ): Promise<Check> {
+    const includeDependenciesQuery = options?.includeDependencies
+      ? `&includeDependencies=${options.includeDependencies}`
+      : "";
+
+    const url = `${this.checklyApiUrl}checks/${checkid}?${includeDependenciesQuery}`;
     return this.makeRequest(url, Check) as Promise<Check>;
   }
 
