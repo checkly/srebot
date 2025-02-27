@@ -46,12 +46,12 @@ export const createHeatmap = (
 
   // 2. Build the data array in the format [xIndex, yIndex, failRatio]
   //    Where xIndex corresponds to the time bucket, yIndex to runLocation, failRatio is fails/total.
-  const heatmapData: [number, number, number][] = [];
+  const heatmapData: [number, number, number?][] = [];
   bucketIndices.forEach((bIndex, xIdx) => {
     runLocations.forEach((loc, yIdx) => {
       const key = `${loc}__${bIndex}`;
       const group = groupedResults[key];
-      const failRatio = group ? group.fails / group.total : -1;
+      const failRatio = group ? group.fails / group.total : undefined;
       heatmapData.push([xIdx, yIdx, failRatio]);
     });
   });
@@ -61,14 +61,11 @@ export const createHeatmap = (
   //    Y axis: runLocations
   //    Heatmap color scale: from 0 (green) to 1 (red)
   const option = {
-    tooltip: {
-      position: "top",
+    title: {
+      text: "Check Failures Percentage",
+      left: "center",
     },
     animation: false,
-    grid: {
-      height: "60%",
-      top: "10%",
-    },
     xAxis: {
       type: "category",
       data: bucketIndices.map((bIndex) => {
@@ -90,14 +87,14 @@ export const createHeatmap = (
       },
     },
     visualMap: {
-      min: -1,
+      min: 0,
       max: 1,
       calculable: true,
       orient: "vertical",
       left: "right",
       top: "middle",
       inRange: {
-        color: ["#000000", "#50fa7b", "#ff5555"], // green to red
+        color: ["#50fa7b", "#ff5555"], // green to red
       },
     },
     series: [

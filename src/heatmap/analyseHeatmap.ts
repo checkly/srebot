@@ -3,8 +3,10 @@ import fs from "fs";
 import { generateHeatmapPNG } from "./createHeatmap";
 import { CheckResult } from "../checkly/models";
 import { getOpenaiClient } from "../ai/openai";
+import { initConfig } from "../lib/init-config";
 
-const checklyClient = new ChecklyClient({});
+initConfig();
+const checklyClient = new ChecklyClient();
 
 const getResult = async (checkId) => {
   return await checklyClient.getCheckResultsByCheckId(checkId, {
@@ -51,7 +53,7 @@ export async function analyzeImageBufferForPatterns(imageBuffer: Buffer) {
       - X-axis: Time buckets in ascending order (not all are labelled)
       - Y-axis: Run locations - regions where the check is executed
       - Color intensity: Proportion of failing check results to all results in a specific location and time bucket.
-        Black: no data
+        Gray: no data - no check runs in that bucket
         Green: no failures
         Red: high proportion of failures
 
