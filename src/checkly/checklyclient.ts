@@ -69,6 +69,13 @@ export class ChecklyClient {
     return this.getPaginatedDownload("check-groups", CheckGroup);
   }
 
+  async getCheckGroup(groupId: number): Promise<CheckGroup> {
+    const url = `${this.checklyApiUrl}check-groups/${groupId}`;
+    return this.makeRequest(url, CheckGroup, {
+      method: "GET",
+    }) as Promise<CheckGroup>;
+  }
+
   async getActivatedChecks(): Promise<Check[]> {
     const results = await Promise.all([
       this.getChecks(),
