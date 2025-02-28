@@ -56,9 +56,9 @@ export async function fetchCheckResults(
 }
 
 export function summarizeCheckResult(checkResult: CheckResult) {
-  const error = checkResult.browserCheckResult?.errors[0]
-    ? checkResult.browserCheckResult?.errors[0]?.message || ""
-    : "";
+  const error =
+    checkResult.browserCheckResult?.errors.find((e) => !!e.message)?.message ||
+    "No Error provided";
   return {
     id: checkResult.id,
     sequenceId: checkResult.sequenceId,
