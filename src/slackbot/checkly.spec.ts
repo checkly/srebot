@@ -1,0 +1,138 @@
+import { expect } from "@jest/globals";
+import { WebClient } from "@slack/web-api";
+import dotenv from "dotenv";
+import {
+  summarizeErrorsPrompt,
+  SummarizeErrorsPromptType,
+} from "../prompts/checkly";
+import { generateObject } from "ai";
+import { ChecklyClient } from "../checkly/checklyclient";
+import {
+  fetchCheckResults,
+  summarizeCheckResult,
+  LAST_30_DAYS,
+  LAST_24_HOURS,
+  LAST_1_HOURS,
+  last24h,
+} from "../prompts/checkly-data";
+import { CheckResult } from "../checkly/models";
+import { createHeatmap, generateHeatmapPNG } from "../heatmap/createHeatmap";
+import { analyzeImageBufferForPatterns } from "../heatmap/analyseHeatmap";
+
+dotenv.config();
+
+describe("Slack Notifications", () => {
+  const slackClient = new WebClient(process.env.SLACK_AUTH_TOKEN!);
+  const channel = process.env.SLACK_BOT_CHANNEL_ID!;
+
+  it("should send formatted slack message for check failures", async () => {
+    const CHECK_ID = "dd89cce7-3eec-4786-8e0e-0e5f3b3647b4";
+    const CHECK_RESULT_ID = "aac7e993-2aba-42f8-a655-54f4cdc22473";
+
+    const checkly = new ChecklyClient({});
+
+    const check = await checkly.getCheck(CHECK_ID);
+
+    const checkResult = await checkly.getCheckResult(check.id, CHECK_RESULT_ID);
+
+    // console.log("CHECK_RESULT", checkResult);
+
+    const checkResults = await fetchCheckResults(checkly, {
+      checkId: check.id,
+      ...last24h(new Date(checkResult.startedAt)),
+    });
+
+    console.log("CHECK_RESULTS", checkResults.length);
+
+    const failingCheckResults = checkResults.filter(
+      (result) => result.hasFailures || result.hasErrors,
+    );
+
+    console.log("CHECK_RESULT_FAILURES", failingCheckResults.length);
+
+    const promptDef = summarizeErrorsPrompt({
+      check: check.id,
+      locations: check.locations,
+      frequency: check.frequency,
+      intervalStart: new Date(LAST_30_DAYS.from).toISOString(),
+      intervalEnd: new Date(LAST_30_DAYS.to).toISOString(),
+      results: [...failingCheckResults, checkResult].map(summarizeCheckResult),
+    });
+    const { object: errorGroups } =
+      await generateObject<SummarizeErrorsPromptType>(promptDef);
+
+    console.log("ERROR_GROUPS", errorGroups);
+
+    const errorGroup = errorGroups.groups.find(
+      (g) => g.checkResults.indexOf(checkResult.id) > -1,
+    );
+
+    console.log("ERROR_GROUP", errorGroup);
+
+    const heatmapImage = generateHeatmapPNG(checkResults, {
+      bucketSizeInMinutes: check.frequency * 10,
+      verticalSeries: check.locations.length,
+    });
+    // Arrange
+    const message = {
+      text: `*Check Result Details*`,
+      blocks: [
+        {
+          type: "header",
+          text: {
+            type: "plain_text",
+            text: "Check Failure Details",
+            emoji: true,
+          },
+        },
+        {
+          type: "section",
+          fields: [
+            {
+              type: "mrkdwn",
+              text: `*Check Name:*\n<${checkly.getCheckUrl(check.id)}|${check.name}>`,
+            },
+            {
+              type: "mrkdwn",
+              text: `*Timestamp:*\n${new Date(LAST_30_DAYS.from).toISOString()}`,
+            },
+            {
+              type: "mrkdwn",
+              text: `*Location:*\n\`${checkResult.runLocation}\``,
+            },
+            {
+              type: "mrkdwn",
+              text: `*Check Result:*\n<${checkly.getCheckResultUrl(check.id, checkResult.id)}|Link>`,
+            },
+          ],
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*Error Message:*\n\`${errorGroup?.errorMessage}\`\n\n*Similar Failures:*\nThis error occurred \`${errorGroup?.checkResults.length} times\` across locations: \`${check.locations.join("\`, \`")}\`. We saw \`${errorGroups.groups.length} Error Groups\` in total with \`${failingCheckResults.length} failures\` in the same timeframe.`,
+          },
+        },
+      ],
+    };
+
+    // console.log("MESSAGE", JSON.stringify(message, null, 2));
+
+    // Act
+    const result = await slackClient.chat.postMessage({
+      channel,
+      ...message,
+    });
+
+    const upload = await slackClient.files.uploadV2({
+      file: heatmapImage,
+      filename: "errorgroup.png",
+      title: "Show Error Group Details",
+      channel_id: channel,
+    });
+
+    // Assert
+    expect(result.ok).toBe(true);
+    expect(result.message?.text).toBeDefined();
+  }, 300000);
+});

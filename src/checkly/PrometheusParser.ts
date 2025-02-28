@@ -1,4 +1,4 @@
-import { PrometheusMetric, PrometheusMetricValue } from "./PrometheusMetric";
+import { PrometheusMetric, PrometheusMetricValue } from "./PrometheusMetric.ts";
 
 export class PrometheusParser {
   static parse(input: string): PrometheusMetric[] {

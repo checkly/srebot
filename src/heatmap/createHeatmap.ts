@@ -124,9 +124,15 @@ export const createHeatmap = (
 
 export const generateHeatmapPNG = (
   data,
-  outputFilePath = "heatmap.png",
-  bucketSizeInMinutes = 10,
-  verticalSeries = 3,
+  {
+    outputFilePath,
+    bucketSizeInMinutes = 10,
+    verticalSeries = 3,
+  }: {
+    outputFilePath?: string;
+    bucketSizeInMinutes: number;
+    verticalSeries: number;
+  },
 ) => {
   const width = 1200; // Image width
   const height = 150 * verticalSeries + 100; // Image height
@@ -142,7 +148,10 @@ export const generateHeatmapPNG = (
   chart.setOption(option);
 
   const buffer = canvas.toBuffer("image/png");
-  fs.writeFileSync(outputFilePath, buffer);
-  console.log(`Chart saved to ${outputFilePath}`);
+  if (outputFilePath) {
+    fs.writeFileSync(outputFilePath, buffer);
+    console.log(`Chart saved to ${outputFilePath}`);
+  }
+
   return buffer;
 };

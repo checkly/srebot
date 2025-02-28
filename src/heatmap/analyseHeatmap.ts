@@ -68,6 +68,7 @@ export async function analyzeImageBufferForPatterns(imageBuffer: Buffer) {
       - Highlight if specific regions show consistent flakiness.
       - Be concise and on point, no yapping.
       - Use simple formatting for clarity, no emojis
+      - do not use markdown formatting
       `,
             },
             {
@@ -101,12 +102,11 @@ export const analyseHeatmap = async (checkId: string) => {
   const locations = checkGroup?.locations || check.locations; // I hate this
 
   const bucketSizeInMinutes = check.frequency * locations.length * 2; // make sure each bucket has at least 2 results
-  const buffer = generateHeatmapPNG(
-    results,
-    `test-data/heatmap-${checkId}.png`,
+  const buffer = generateHeatmapPNG(results, {
+    outputFilePath: `test-data/heatmap-${checkId}.png`,
     bucketSizeInMinutes,
-    locations.length,
-  );
+    verticalSeries: locations.length,
+  });
 
   console.log(await analyzeImageBufferForPatterns(buffer));
 };

@@ -208,16 +208,4 @@ ${failingSummary}
     expect(checks).toBeDefined();
     expect(checks.length).toBe(15);
   }, 3000000); // Added 300 second timeout
-
-  /*  it('should be defined', async () => {
-      const result = await client.getCheckResult(bcheckid, bcheckresult);
-      expect(result).toBeDefined();
-      const log = result.getLog();
-      expect(log).toBeDefined();
-      await client.downloadAsset(
-        result.browserCheckResult?.playwrightTestTraces[0] || '',
-        'test.zip',
-      );
-    });
-  */
 });

@@ -1,13 +1,14 @@
 import { plainToClass, plainToInstance } from "class-transformer";
-import * as fs from "fs";
+import * as fs from "node:fs";
 import fetch from "node-fetch";
-import { Check, CheckGroup, CheckResult, Reporting, Status } from "./models";
-import { PrometheusParser } from "./PrometheusParser";
+import { Check, CheckGroup, CheckResult, Reporting, Status } from "./models.ts";
+import { PrometheusParser } from "./PrometheusParser.ts";
 
 interface ChecklyClientOptions {
   accountId?: string;
   apiKey?: string;
   checklyApiUrl?: string;
+  checklyAppUrl?: string;
   checklyPrometheusKey?: string;
   prometheusIntegrationUrl?: string;
 }
@@ -17,6 +18,7 @@ export class ChecklyClient {
    * The base URL of the Checkly API. Usually 'https://api.checklyhq.com/v1/'.
    */
   private readonly checklyApiUrl: string;
+  private readonly checklyAppUrl: string;
   private readonly accountId: string;
   private readonly apiKey: string;
   private readonly checklyPrometheusKey: string;
@@ -29,6 +31,7 @@ export class ChecklyClient {
    * @param {string} [options.accountId] - The account ID to use for authentication. Defaults to the value of the `CHECKLY_ACCOUNT_ID` environment variable.
    * @param {string} [options.apiKey] - The API key to use for authentication. Defaults to the value of the `CHECKLY_API_KEY` environment variable.
    * @param {string} [options.checklyApiUrl] - The base URL of the Checkly API. Defaults to 'https://api.checklyhq.com/v1/'.
+   * @param {string} [options.checklyAppUrl] - The base URL of the Checkly App. Defaults to 'https://app.checklyhq.com/'.
    * @param {string} [options.checklyPrometheusKey] - The Prometheus integration key. Defaults to the value of the `PROMETHEUS_INTEGRATION_KEY` environment variable.
    * @param {string} [options.prometheusIntegrationUrl] - The URL for the Prometheus integration. Defaults to 'https://api.checklyhq.com/accounts/{accountId}/v2/prometheus/metrics'.
    */
@@ -37,6 +40,7 @@ export class ChecklyClient {
     this.apiKey = options.apiKey || process.env.CHECKLY_API_KEY!;
     this.checklyApiUrl =
       options.checklyApiUrl || "https://api.checklyhq.com/v1/";
+    this.checklyAppUrl = options.checklyAppUrl || "https://app.checklyhq.com/";
     this.checklyPrometheusKey =
       options.checklyPrometheusKey || process.env.PROMETHEUS_INTEGRATION_KEY!;
     this.prometheusIntegrationUrl =
@@ -54,6 +58,10 @@ export class ChecklyClient {
 
     const url = `${this.checklyApiUrl}checks/${checkid}?${includeDependenciesQuery}`;
     return this.makeRequest(url, Check) as Promise<Check>;
+  }
+
+  getCheckUrl(checkId: string): string {
+    return `${this.checklyAppUrl}checks/${checkId}`;
   }
 
   async getChecks(): Promise<Check[]> {
@@ -136,8 +144,6 @@ export class ChecklyClient {
         "v2",
       );
 
-    console.log("URL", url);
-
     return this.fetchWithCursor<CheckResult>(url);
   }
 
@@ -166,6 +172,10 @@ export class ChecklyClient {
   ): Promise<CheckResult> {
     const url = `${this.checklyApiUrl}check-results/${checkid}/${checkresultid}`;
     return this.makeRequest(url, CheckResult) as Promise<CheckResult>;
+  }
+
+  getCheckResultUrl(checkId: string, checkResultId: string): string {
+    return `${this.checklyAppUrl}checks/${checkId}/check-session/results/${checkResultId}`;
   }
 
   async getDashboards() {
@@ -213,8 +223,9 @@ export class ChecklyClient {
         },
       });
       if (!response.ok) {
-        console.log("RESPONSE", response);
-        throw new Error(`Response status: ${response.status} url:${url}`);
+        throw new Error(
+          `Response status: ${response.status} url:${url}:\n${response.statusText}`,
+        );
       }
 
       return response.json();

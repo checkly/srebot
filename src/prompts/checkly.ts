@@ -81,10 +81,7 @@ export type CheckResult = {
   resultType: string;
   sequenceId: string;
   location: string;
-  error: {
-    message: string;
-    stack: string;
-  };
+  error: string;
 };
 
 export function summarizeErrorsPrompt(input: {
@@ -121,7 +118,7 @@ export function summarizeErrorsPrompt(input: {
       Result type: ${result.resultType}
       Sequence ID: ${result.sequenceId}
       Location: ${result.location}
-      Error: ${result.error.message}
+      Error: ${result.error}
     `,
       )
       .join("\n")}
@@ -129,7 +126,7 @@ export function summarizeErrorsPrompt(input: {
 
   return definePrompt("summarizeErrors", prompt, SUMMARIZE_ERRORS_SCHEMA, {
     temperature: 0.1,
-    maxTokens: 2000,
+    maxTokens: 10000,
   });
 }
 
@@ -206,8 +203,6 @@ export function clusterCheckResults(
     });
 
   return filteredClusters;
-
-  return clusters;
 }
 
 export function summarizeTestStepsPrompt(

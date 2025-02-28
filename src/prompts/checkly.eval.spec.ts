@@ -4,9 +4,8 @@ import { generateObject, generateText } from "ai";
 import dotenv from "dotenv";
 import { CheckContext } from "../aggregator/ContextAggregator";
 import { getOpenaiSDKClient } from "../ai/openai";
-import { startLangfuseTelemetrySDK } from "../langfuse";
+
 import {
-  clusterCheckResults,
   contextAnalysisSummaryPrompt,
   summarizeErrorsPrompt,
   SummarizeErrorsPromptType,
@@ -444,15 +443,6 @@ test('visit page and take screenshot', async ({ page }) => {
       console.log("GROUPS", checkId, JSON.stringify(errorGroups, null, 2));
 
       expect(errorGroups).toEqual(expected);
-
-      // const checkResults = input.results.filter((result) =>
-      //   errorGroups.groups[2].checkResults.includes(result.id),
-      // );
-
-      // console.log(
-      //   "CLUSTERS",
-      //   JSON.stringify(clusterCheckResults(input, checkResults), null, 2),
-      // );
     },
   );
 
