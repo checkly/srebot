@@ -64,3 +64,6 @@ previewConfig.json
 
 reports/
 junit.xml
+
+results/
+
