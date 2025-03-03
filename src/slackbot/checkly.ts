@@ -123,7 +123,7 @@ export const checklyCommandHandler = async ({ ack, respond, command }) => {
   await ack();
 
   const args = command.text.split(" ");
-  if (args.length === 1) {
+  if (args.length === 1 && !!args[0]) {
     const { message, image } = await checkSummary(args[0]);
     await respond({
       ...message,
@@ -135,7 +135,7 @@ export const checklyCommandHandler = async ({ ack, respond, command }) => {
     //   filename: "errorgroup.png",
     //   title: "Show Error Group Details",
     // });
-  } else if (args.length == 2) {
+  } else if (args.length === 2) {
     const [checkId, checkResultId] = args;
     const summary = await checkResultSummary(checkId, checkResultId);
 
