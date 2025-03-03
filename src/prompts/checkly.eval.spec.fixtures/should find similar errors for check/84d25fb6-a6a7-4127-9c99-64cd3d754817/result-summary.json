@@ -1,0 +1,82 @@
+{
+  "check": "Create Multistep Check",
+  "intervalStart": 1737901683655,
+  "intervalEnd": 1740493683655,
+  "frequency": 10,
+  "locations": ["eu-west-1", "us-east-1"],
+  "results": [
+    {
+      "id": "67c975c0-4f8b-4567-a271-22e1878943da",
+      "sequenceId": "723c8470-efa3-4cea-981d-7d05e3fd75cb",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-21T19:02:21.624Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n\n    at WebApp.login (/check/8f17c579-6020-480b-91c5-169a53e8760e/__checks__/fixtures/module.ts:84:45)\n    at /check/8f17c579-6020-480b-91c5-169a53e8760e/src/pages/checks/multi-step/__checks__/create_check.spec.ts:11:5",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible() - Locator: getByRole('button', { name: /switch accounts/i })"
+      }
+    },
+    {
+      "id": "c568835f-7775-48c5-93b5-6f7070bf4680",
+      "sequenceId": "227d105f-7e58-4f7c-ba71-56caaa28608b",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-21T13:42:21.624Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByText('Export to code')\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByText('Export to code')\n\n    at /check/56455300-4d23-4012-a79d-ba0a55edf4e0/src/pages/checks/multi-step/__checks__/create_check.spec.ts:31:71",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible() - Locator: getByText('Export to code')"
+      }
+    },
+    {
+      "id": "8dfdea30-8436-4366-b630-61171f3769d7",
+      "sequenceId": "32ae316c-5551-45b1-a187-6a2020840f74",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-18T13:58:21.838Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByText('Export to code')\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByText('Export to code')\n\n    at /check/6af2977e-b7b9-4c8e-b7ba-cdedf1c272bc/src/pages/checks/multi-step/__checks__/create_check.spec.ts:31:71",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible() - Locator: getByText('Export to code')"
+      }
+    },
+    {
+      "id": "a2a13969-4c2f-45a5-8f98-c55d43eadb6b",
+      "sequenceId": "ff6bcff8-bf96-4b96-8748-5f54a9d41625",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-17T20:38:22.736Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "1dba540f-1b7b-4e00-8652-7c874a3c18e7",
+      "sequenceId": "f6fafa6c-bcd2-4d82-84d9-5ccba5f471aa",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-13T10:30:05.222Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": ""
+    },
+    {
+      "id": "9158c7dd-ccc0-47a9-9414-ca518e4ac364",
+      "sequenceId": "cdc46be7-d1ee-4165-b1d8-331a18689787",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-01-29T10:37:10.557Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n\n    at WebApp.login (/check/7e576742-9d8c-4f79-a46a-94928bc170dc/__checks__/fixtures/module.ts:86:45)\n    at /check/7e576742-9d8c-4f79-a46a-94928bc170dc/src/pages/checks/multi-step/__checks__/create_check.spec.ts:11:5",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible() - Locator: getByRole('button', { name: /switch accounts/i })"
+      }
+    }
+  ]
+}

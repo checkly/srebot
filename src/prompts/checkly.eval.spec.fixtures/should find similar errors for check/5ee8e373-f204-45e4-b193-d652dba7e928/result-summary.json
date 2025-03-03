@@ -1,0 +1,84 @@
+{
+  "check": "Delete check group",
+  "intervalStart": 1737901683655,
+  "intervalEnd": 1740493683655,
+  "frequency": 10,
+  "locations": ["eu-west-1", "us-east-1"],
+  "results": [
+    {
+      "id": "28c5806b-efce-4429-908b-434f88e6be4e",
+      "sequenceId": "85a561a8-5efd-4f6a-81bd-8fdd1d118fd0",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-22T14:25:53.237Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "578495ed-4169-4dad-ade3-71c7b6804370",
+      "sequenceId": "d977bfb8-160d-4732-94aa-aaa80fb0b5b6",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-17T11:40:34.638Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n\n    at WebApp.login (/check/6f6509e2-1c52-49fa-9b4c-7b77619b7f8b/__checks__/fixtures/module.ts:86:45)\n    at /check/6f6509e2-1c52-49fa-9b4c-7b77619b7f8b/src/pages/check-groups/__checks__/delete_check_group.spec.ts:12:5",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n"
+      }
+    },
+    {
+      "id": "f013732a-c1ef-4990-ac3d-673878a8dc8f",
+      "sequenceId": "907d53b5-8d83-4768-a8c6-91125e277983",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-06T08:28:35.322Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "47a8bc46-2986-4ddd-83e3-63d94d3bab03",
+      "sequenceId": "732b3d8b-5786-42d1-a35a-b70f1f8d6885",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-04T14:35:28.354Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\n\n    at /check/80509742-bdf1-4f9a-96a8-52e7612e626b/src/pages/check-groups/__checks__/delete_check_group.spec.ts:20:83",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\n"
+      }
+    },
+    {
+      "id": "a2f7f995-536f-4b1e-8d75-dcce38dbab33",
+      "sequenceId": "7b0de52a-a3d2-4a03-80e5-aea8abdc97ef",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T12:11:34.523Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "9d5d04b9-f884-4f0f-b4ac-6587555de525",
+      "sequenceId": "037f50a4-441e-4d82-97d7-4f556060c6f8",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-01-29T14:03:08.226Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\n\n    at /check/2e0baa38-067c-4c82-a072-788b5c24467a/src/pages/check-groups/__checks__/delete_check_group.spec.ts:20:83",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\n"
+      }
+    }
+  ]
+}

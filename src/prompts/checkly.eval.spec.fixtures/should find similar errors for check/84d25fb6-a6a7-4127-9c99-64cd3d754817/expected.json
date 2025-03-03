@@ -1,0 +1,26 @@
+{
+  "groups": [
+    {
+      "errorMessage": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible() - Locator: getByRole('button', { name: /switch accounts/i })",
+      "checkResults": [
+        "67c975c0-4f8b-4567-a271-22e1878943da",
+        "9158c7dd-ccc0-47a9-9414-ca518e4ac364"
+      ]
+    },
+    {
+      "errorMessage": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible() - Locator: getByText('Export to code')",
+      "checkResults": [
+        "c568835f-7775-48c5-93b5-6f7070bf4680",
+        "8dfdea30-8436-4366-b630-61171f3769d7"
+      ]
+    },
+    {
+      "errorMessage": "Test timeout of 120000ms exceeded.",
+      "checkResults": ["a2a13969-4c2f-45a5-8f98-c55d43eadb6b"]
+    },
+    {
+      "errorMessage": "undefined",
+      "checkResults": ["1dba540f-1b7b-4e00-8652-7c874a3c18e7"]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "groups": [
+    {
+      "errorMessage": "Test timeout of 120000ms exceeded.",
+      "checkResults": [
+        "28c5806b-efce-4429-908b-434f88e6be4e",
+        "f013732a-c1ef-4990-ac3d-673878a8dc8f",
+        "a2f7f995-536f-4b1e-8d75-dcce38dbab33"
+      ]
+    },
+    {
+      "errorMessage": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })",
+      "checkResults": ["578495ed-4169-4dad-ade3-71c7b6804370"]
+    },
+    {
+      "errorMessage": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('heading').filter({ hasText: 'No checks or groups matched your filters' })",
+      "checkResults": [
+        "47a8bc46-2986-4ddd-83e3-63d94d3bab03",
+        "9d5d04b9-f884-4f0f-b4ac-6587555de525"
+      ]
+    }
+  ]
+}

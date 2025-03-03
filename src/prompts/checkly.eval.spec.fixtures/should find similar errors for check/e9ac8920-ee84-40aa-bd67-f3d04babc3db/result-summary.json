@@ -1,0 +1,360 @@
+{
+  "check": "Clone check group",
+  "intervalStart": 1737901683655,
+  "intervalEnd": 1740493683655,
+  "frequency": 10,
+  "locations": ["eu-west-1", "us-east-1"],
+  "results": [
+    {
+      "id": "e13cd594-6c08-4098-8f66-96f374c82b34",
+      "sequenceId": "3e672d5e-d312-4356-b202-3ee6362f07e3",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-22T13:14:21.823Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "5a62ba25-efab-469b-81d4-a47fe0db31ff",
+      "sequenceId": "622e2e40-b8a7-47fa-980a-46c06fe24fd2",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-18T19:56:33.824Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "17b1e8f6-fe18-4332-9aca-ee430b20e76e",
+      "sequenceId": "abe4a52d-e142-4834-ae97-810782250a52",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-17T20:38:28.523Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "57e8031b-3043-4ddc-916d-b4e4d51a6a0e",
+      "sequenceId": "88197b35-9ec3-43ed-86d6-b96932403720",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-12T02:55:11.854Z",
+      "location": "eu-west-1",
+      "attempts": 2,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n\n    at WebApp.login (/check/92181d24-5e83-4de2-b7fc-759424bed9a5/__checks__/fixtures/module.ts:86:45)\n    at /check/92181d24-5e83-4de2-b7fc-759424bed9a5/src/pages/home-dashboard/__checks__/clone-check-group.spec.ts:11:5",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n"
+      }
+    },
+    {
+      "id": "d0a9cafe-8b48-416f-b6db-463b995763c5",
+      "sequenceId": "88197b35-9ec3-43ed-86d6-b96932403720",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-12T02:52:04.222Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "05fbe7c2-474a-417b-9498-bf222338d46d",
+      "sequenceId": "9fb4dbf3-18d9-4acd-aa84-920b7d6e5f21",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-03T01:34:46.635Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n\n    at WebApp.login (/check/71e109d8-3ded-467e-81f1-d8e309e86cca/__checks__/fixtures/module.ts:86:45)\n    at /check/71e109d8-3ded-467e-81f1-d8e309e86cca/src/pages/home-dashboard/__checks__/clone-check-group.spec.ts:11:5",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n"
+      }
+    },
+    {
+      "id": "2c54f163-9898-465c-8254-66e0ef4baa9d",
+      "sequenceId": "0f9c290d-f305-4e41-81a6-e389c8bc6e1e",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-03T01:04:45.527Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n\n    at WebApp.login (/check/cec69e99-93ff-4d17-929b-9077c5450338/__checks__/fixtures/module.ts:86:45)\n    at /check/cec69e99-93ff-4d17-929b-9077c5450338/src/pages/home-dashboard/__checks__/clone-check-group.spec.ts:11:5",
+        "isSoft": false,
+        "message": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })\n"
+      }
+    },
+    {
+      "id": "1758ad06-6943-4998-9b4e-feb0ae2d21bd",
+      "sequenceId": "8edd8cf9-0c9b-4522-89cc-e6ed5a818cc8",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:54:46.837Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "b16dafdd-84fa-4b06-8cc7-aeaa3e2ae516",
+      "sequenceId": "9e5d27f7-a36d-4e30-b5cb-ce91e9e8fde2",
+      "resultType": "FINAL",
+      "startedAt": "2025-02-01T14:54:16.426Z",
+      "location": "us-east-1",
+      "attempts": 3,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "ab123006-d114-4ce0-a0f6-64a286e34f17",
+      "sequenceId": "50214733-e239-4f33-b868-901a9547aedb",
+      "resultType": "FINAL",
+      "startedAt": "2025-02-01T14:51:15.231Z",
+      "location": "eu-west-1",
+      "attempts": 3,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "dd176d51-54c6-49b1-9901-0bbae70fdfd3",
+      "sequenceId": "9e5d27f7-a36d-4e30-b5cb-ce91e9e8fde2",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:51:04.597Z",
+      "location": "us-east-1",
+      "attempts": 2,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "eb8c8385-2916-4836-8a1e-f8fdab5796c3",
+      "sequenceId": "50214733-e239-4f33-b868-901a9547aedb",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:48:01.139Z",
+      "location": "eu-west-1",
+      "attempts": 2,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "f0b8efe2-835e-40ef-8059-8ec5744c1a77",
+      "sequenceId": "9e5d27f7-a36d-4e30-b5cb-ce91e9e8fde2",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:46:39.328Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "cb4186ca-cbfd-447e-ae04-86ed8829dfda",
+      "sequenceId": "50214733-e239-4f33-b868-901a9547aedb",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:44:46.227Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "5f109aca-e735-4679-8766-fa66be1c1b2d",
+      "sequenceId": "c44cc631-3f6b-447c-88fb-82cdc27fd8ad",
+      "resultType": "FINAL",
+      "startedAt": "2025-02-01T14:41:17.524Z",
+      "location": "us-east-1",
+      "attempts": 3,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "2cb00c30-b0d7-459f-8bce-03ce1a206f0e",
+      "sequenceId": "c44cc631-3f6b-447c-88fb-82cdc27fd8ad",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:38:01.828Z",
+      "location": "us-east-1",
+      "attempts": 2,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "9ea1e360-bc58-4f14-b282-1d68e2d4fb67",
+      "sequenceId": "03dc772f-a4e8-4de9-beef-55b05271281c",
+      "resultType": "FINAL",
+      "startedAt": "2025-02-01T14:37:55.623Z",
+      "location": "eu-west-1",
+      "attempts": 3,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "a9ace8d5-e939-467b-b832-60d9275a734d",
+      "sequenceId": "c44cc631-3f6b-447c-88fb-82cdc27fd8ad",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:34:47.225Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "a6e7cd40-82bd-4ce9-a1fe-ce4b64723dd9",
+      "sequenceId": "03dc772f-a4e8-4de9-beef-55b05271281c",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:34:42.821Z",
+      "location": "eu-west-1",
+      "attempts": 2,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "524d4600-21b2-4fd1-b454-d82f496124d6",
+      "sequenceId": "03dc772f-a4e8-4de9-beef-55b05271281c",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:31:29.923Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "d19c0afc-acd5-46d1-aa97-6f5b7715180e",
+      "sequenceId": "08749cb0-7c19-483d-afc5-7ccb99743044",
+      "resultType": "FINAL",
+      "startedAt": "2025-02-01T14:31:18.828Z",
+      "location": "us-east-1",
+      "attempts": 3,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "3d572b69-1fc0-4f91-9dfa-6a49b760f38f",
+      "sequenceId": "08749cb0-7c19-483d-afc5-7ccb99743044",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:28:02.733Z",
+      "location": "us-east-1",
+      "attempts": 2,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "e1c97d3f-1019-4639-ac33-000c661d4b8a",
+      "sequenceId": "08749cb0-7c19-483d-afc5-7ccb99743044",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:24:46.443Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "23cd993a-2cfd-4fa0-9754-7356137771dd",
+      "sequenceId": "e6c60266-004b-4c74-9aeb-81ac8be59aed",
+      "resultType": "FINAL",
+      "startedAt": "2025-02-01T14:21:16.036Z",
+      "location": "eu-west-1",
+      "attempts": 3,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "95485458-f12b-461a-b14f-dc8fac13f8bb",
+      "sequenceId": "e6c60266-004b-4c74-9aeb-81ac8be59aed",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:18:01.126Z",
+      "location": "eu-west-1",
+      "attempts": 2,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "3f4c9e57-0ab4-4e20-a9de-77d7a94ded7f",
+      "sequenceId": "e6c60266-004b-4c74-9aeb-81ac8be59aed",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:14:46.621Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "7d319217-e892-46af-a21d-53a3ff256111",
+      "sequenceId": "707d7895-e86b-456b-a4b7-9c3d4cd38974",
+      "resultType": "FINAL",
+      "startedAt": "2025-02-01T14:11:19.531Z",
+      "location": "us-east-1",
+      "attempts": 3,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "0a73047e-a233-4639-9d2d-eecc3acc0f78",
+      "sequenceId": "707d7895-e86b-456b-a4b7-9c3d4cd38974",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:08:03.228Z",
+      "location": "us-east-1",
+      "attempts": 2,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "abae38a0-287b-4f40-8ff6-19df62dddbe3",
+      "sequenceId": "707d7895-e86b-456b-a4b7-9c3d4cd38974",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-01T14:04:47.847Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    }
+  ]
+}

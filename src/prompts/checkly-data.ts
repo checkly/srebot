@@ -1,18 +1,6 @@
 import { ChecklyClient } from "../checkly/checklyclient";
 import { CheckResult } from "../checkly/models";
 
-// export async function fetchChecksForGroup(checks: Check[]) {
-//   const intervalStart = Date.now() - 30 * 24 * 60 * 60 * 1000;
-//   const intervalEnd = Date.now();
-
-//   const results: any[] = [];
-//   for (const check of checks) {
-//     // Get failed results from last 30 days
-
-//     return results;
-//   }
-// }
-
 export const LAST_30_DAYS = {
   from: Date.now() - 30 * 24 * 60 * 60 * 1000,
   to: Date.now(),

@@ -1,0 +1,45 @@
+{
+  "check": "Edit browser check",
+  "intervalStart": 1737901683655,
+  "intervalEnd": 1740493683655,
+  "frequency": 10,
+  "locations": ["eu-west-1", "us-east-1"],
+  "results": [
+    {
+      "id": "90b2729a-5dff-44db-aac0-37c142e38574",
+      "sequenceId": "453c04d3-b348-4fc6-91f5-ac9455f68806",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-22T14:25:48.026Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "4a9f77ad-e509-4927-a344-63e188a5407e",
+      "sequenceId": "17e7dbc5-3f18-4996-ab54-4704902d0926",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-12T02:52:04.323Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    },
+    {
+      "id": "af51cebb-6982-4f19-84c5-4fdeb101a5c9",
+      "sequenceId": "e5208dd8-7cd0-4a2f-80b4-32765c721646",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-01-30T09:51:33.346Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "Test timeout of 120000ms exceeded.",
+        "message": "Test timeout of 120000ms exceeded."
+      }
+    }
+  ]
+}
