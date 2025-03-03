@@ -7,8 +7,8 @@ async function main() {
   const client = new ChecklyClient();
   let checks = await client.getChecksByGroup(groupId);
 
-  const intervalStart = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  const intervalEnd = Date.now();
+  const intervalStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const intervalEnd = new Date();
 
   // Create base directory for this group
   const baseDir = `results/groups/${groupId}`;
@@ -31,8 +31,8 @@ async function main() {
     const results = await client.getCheckResultsByCheckId(check.id, {
       hasFailures: true,
       resultType: "ALL",
-      fromMs: intervalStart,
-      toMs: intervalEnd,
+      from: new Date(intervalStart),
+      to: new Date(intervalEnd),
       limit: 100,
     });
     console.log("RESULTS", results.length);

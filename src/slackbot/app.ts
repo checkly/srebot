@@ -22,6 +22,10 @@ import {
   saveResponseFeedback,
 } from "./feedback";
 import type { ChatPostMessageResponse } from "@slack/web-api/dist/types/response";
+import {
+  CHECKLY_COMMAN_NAME as CHECKLY_COMMAND_NAME,
+  checklyCommandHandler,
+} from "./checkly";
 
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
@@ -42,6 +46,8 @@ let setupAgent = () => {
 };
 
 const githubAgent = setupAgent();
+
+app.command(CHECKLY_COMMAND_NAME, checklyCommandHandler);
 
 app.command("/srebot-releases", async ({ command, ack, respond }) => {
   await ack();
