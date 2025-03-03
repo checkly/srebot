@@ -115,13 +115,13 @@ describe("ChecklyService", () => {
       );
     }, "Failing tests:\n");
 
-    console.log(`
-Passing: ${result.passing.length}
-Failing: ${result.failing.length}
-Degraded: ${result.degraded.length}
+    //     console.log(`
+    // Passing: ${result.passing.length}
+    // Failing: ${result.failing.length}
+    // Degraded: ${result.degraded.length}
 
-${failingSummary}
-    `);
+    // ${failingSummary}
+    //     `);
 
     expect(result).toBeDefined();
   });
