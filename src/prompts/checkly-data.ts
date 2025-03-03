@@ -1,5 +1,5 @@
-import { ChecklyClient } from "../checkly/checklyclient.ts";
-import { CheckResult } from "../checkly/models.ts";
+import { ChecklyClient } from "../checkly/checklyclient";
+import { CheckResult } from "../checkly/models";
 
 // export async function fetchChecksForGroup(checks: Check[]) {
 //   const intervalStart = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -49,8 +49,8 @@ export async function fetchCheckResults(
 ) {
   return await checkly.getCheckResultsByCheckId(checkId, {
     resultType: "ALL",
-    from: from ?? Date.now() - 30 * 24 * 60 * 60 * 1000,
-    to: to ?? Date.now(),
+    fromMs: from ?? Date.now() - 30 * 24 * 60 * 60 * 1000,
+    toMs: to ?? Date.now(),
     limit: 100,
   });
 }

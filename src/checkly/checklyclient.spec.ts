@@ -94,7 +94,6 @@ describe("ChecklyService", () => {
     const failingSummary = Object.entries(
       result.failing.reduce(
         (acc, curr) => {
-          console.log(acc);
           if (!acc[curr.labels.group]) {
             acc[curr.labels.group] = [];
           }
@@ -115,17 +114,10 @@ describe("ChecklyService", () => {
       );
     }, "Failing tests:\n");
 
-    //     console.log(`
-    // Passing: ${result.passing.length}
-    // Failing: ${result.failing.length}
-    // Degraded: ${result.degraded.length}
-
-    // ${failingSummary}
-    //     `);
-
     expect(result).toBeDefined();
   });
 
+  // move this into notebook (al)
   it.skip("get check results for group", async () => {
     const groupId = 394650;
     let checks = await client.getChecksByGroup(groupId);
@@ -143,8 +135,6 @@ describe("ChecklyService", () => {
     }
 
     const filteredChecks = checks;
-    // const filteredChecks = [{ id: "28f31eaf-3169-4a13-8f7d-f547c100805f" }];
-    // Fetch results for each check
     for (const check of filteredChecks) {
       const checkDir = `${baseDir}/checks/${check.id}`;
       fs.mkdirSync(checkDir, { recursive: true });
@@ -159,8 +149,8 @@ describe("ChecklyService", () => {
       const results = await client.getCheckResultsByCheckId(check.id, {
         hasFailures: true,
         resultType: "ALL",
-        from: intervalStart,
-        to: intervalEnd,
+        fromMs: intervalStart,
+        toMs: intervalEnd,
         limit: 100,
       });
       console.log("RESULTS", results.length);

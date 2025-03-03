@@ -262,7 +262,7 @@ export class Reporting {
   };
 }
 
-export class Status {
+export class CheckStatus {
   name: string;
   hasErrors: boolean;
   hasFailures: boolean;

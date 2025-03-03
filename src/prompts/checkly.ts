@@ -86,15 +86,14 @@ export type CheckResult = {
 
 export function summarizeErrorsPrompt(input: {
   check: string;
-  intervalStart: string;
-  intervalEnd: string;
+  intervalStart: Date;
+  intervalEnd: Date;
   locations: string[];
   frequency: number;
   results: Array<CheckResult>;
 }): PromptDefinition {
   const prompt = `
     The following details describe a test which is used to monitor an application.
-    The test has failed multiple times in different locations.
 
     Analyze the provided check results and group them by their error messages.
     For each error group, collect:
@@ -103,8 +102,8 @@ export function summarizeErrorsPrompt(input: {
 
     Check details:
     - name: ${input.check}
-    - intervalStart: ${input.intervalStart}
-    - intervalEnd: ${input.intervalEnd}
+    - intervalStart: ${input.intervalStart.toISOString()}
+    - intervalEnd: ${input.intervalEnd.toISOString()}
     - frequency: ${input.frequency}
     - locations: ${input.locations}
 

@@ -51,8 +51,8 @@ describe("Checkly Slack Message Tests", () => {
       check: check.id,
       locations: check.locations,
       frequency: check.frequency,
-      intervalStart: new Date(LAST_30_DAYS.from).toISOString(),
-      intervalEnd: new Date(LAST_30_DAYS.to).toISOString(),
+      intervalStart: new Date(LAST_30_DAYS.from),
+      intervalEnd: new Date(LAST_30_DAYS.to),
       results: [...failingCheckResults, checkResult].map(summarizeCheckResult),
     });
     const { object: errorGroups } =
@@ -99,7 +99,7 @@ describe("Checkly Slack Message Tests", () => {
             },
             {
               type: "mrkdwn",
-              text: `*Check Result:*\n<${checkly.getCheckResultUrl(check.id, checkResult.id)}|Link>`,
+              text: `*Check Result:*\n<${checkly.getCheckResultAppUrl(check.id, checkResult.id)}|Link>`,
             },
           ],
         },
@@ -160,8 +160,8 @@ describe("Checkly Slack Message Tests", () => {
       check: check.id,
       locations: check.locations,
       frequency: check.frequency,
-      intervalStart: new Date(LAST_30_DAYS.from).toISOString(),
-      intervalEnd: new Date(LAST_30_DAYS.to).toISOString(),
+      intervalStart: new Date(LAST_30_DAYS.from),
+      intervalEnd: new Date(LAST_30_DAYS.to),
       results: failingCheckResults.map(summarizeCheckResult),
     });
     const { object: errorGroups } =

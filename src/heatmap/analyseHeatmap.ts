@@ -10,8 +10,8 @@ const checklyClient = new ChecklyClient();
 
 const getResult = async (checkId) => {
   return await checklyClient.getCheckResultsByCheckId(checkId, {
-    from: Math.floor(Date.now()) - 24 * 60 * 60 * 1000, // Last 24 hours
-    to: Math.floor(Date.now()),
+    fromMs: Math.floor(Date.now()) - 24 * 60 * 60 * 1000, // Last 24 hours
+    toMs: Math.floor(Date.now()),
     resultType: "ALL",
   });
 };

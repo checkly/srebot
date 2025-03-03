@@ -1,8 +1,14 @@
 import { plainToClass, plainToInstance } from "class-transformer";
 import * as fs from "node:fs";
 import fetch from "node-fetch";
-import { Check, CheckGroup, CheckResult, Reporting, Status } from "./models.ts";
-import { PrometheusParser } from "./PrometheusParser.ts";
+import {
+  Check,
+  CheckGroup,
+  CheckResult,
+  Reporting,
+  CheckStatus,
+} from "./models";
+import { PrometheusParser } from "./PrometheusParser";
 
 interface ChecklyClientOptions {
   accountId?: string;
@@ -113,8 +119,8 @@ export class ChecklyClient {
     config?: {
       hasFailures?: boolean;
       resultType?: "ALL" | "FINAL" | "ATTEMPT";
-      from?: number;
-      to?: number;
+      fromMs?: number;
+      toMs?: number;
       limit?: number;
     },
   ): Promise<CheckResult[]> {
@@ -127,12 +133,12 @@ export class ChecklyClient {
       resultTypeQuery = `&resultType=${config.resultType}`;
     }
     let fromQuery = "";
-    if (!!config && !!config.from) {
-      fromQuery = `&from=${Math.floor(config.from / 1000)}`;
+    if (!!config && !!config.fromMs) {
+      fromQuery = `&from=${Math.floor(config.fromMs / 1000)}`;
     }
     let toQuery = "";
-    if (!!config && !!config.to) {
-      toQuery = `&to=${Math.floor(config.to / 1000)}`;
+    if (!!config && !!config.toMs) {
+      toQuery = `&to=${Math.floor(config.toMs / 1000)}`;
     }
     let limitQuery = "";
     if (!!config && !!config.limit) {
@@ -174,7 +180,7 @@ export class ChecklyClient {
     return this.makeRequest(url, CheckResult) as Promise<CheckResult>;
   }
 
-  getCheckResultUrl(checkId: string, checkResultId: string): string {
+  getCheckResultAppUrl(checkId: string, checkResultId: string): string {
     return `${this.checklyAppUrl}checks/${checkId}/check-session/results/${checkResultId}`;
   }
 
@@ -202,7 +208,7 @@ export class ChecklyClient {
 
   async getStatuses() {
     const url = `${this.checklyApiUrl}check-statuses`;
-    return this.makeRequest(url, Status) as Promise<Status[]>;
+    return this.makeRequest(url, CheckStatus) as Promise<CheckStatus[]>;
   }
 
   async runCheck(checkId: string) {
@@ -214,25 +220,20 @@ export class ChecklyClient {
     url: string,
     options?: { method: "GET" | "POST" },
   ): Promise<any> {
-    try {
-      const response = await fetch(url, {
-        method: options?.method || "GET", // Optional, default is 'GET'
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`, // Add Authorization header
-          "X-Checkly-Account": this.accountId, // Add custom X-Checkly-Account header
-        },
-      });
-      if (!response.ok) {
-        throw new Error(
-          `Response status: ${response.status} url:${url}:\n${response.statusText}`,
-        );
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error(error.message);
-      throw error;
+    const response = await fetch(url, {
+      method: options?.method || "GET", // Optional, default is 'GET'
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`, // Add Authorization header
+        "X-Checkly-Account": this.accountId, // Add custom X-Checkly-Account header
+      },
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Response status: ${response.status} url:${url}:\n${response.statusText}`,
+      );
     }
+
+    return response.json();
   }
 
   private async fetchWithCursor<T>(

@@ -440,8 +440,6 @@ test('visit page and take screenshot', async ({ page }) => {
       const { object: errorGroups } =
         await generateObject<SummarizeErrorsPromptType>(promptDef);
 
-      console.log("GROUPS", checkId, JSON.stringify(errorGroups, null, 2));
-
       expect(errorGroups).toEqual(expected);
     },
   );
