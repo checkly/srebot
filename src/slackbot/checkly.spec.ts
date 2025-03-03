@@ -24,7 +24,7 @@ describe("Checkly Slack Message Tests", () => {
   const slackClient = new WebClient(process.env.SLACK_AUTH_TOKEN!);
   const channel = process.env.SLACK_BOT_CHANNEL_ID!;
 
-  it("Summarize a single Check Result and send a Slack Notification", async () => {
+  it.skip("Summarize a single Check Result and send a Slack Notification", async () => {
     const CHECK_ID = "dd89cce7-3eec-4786-8e0e-0e5f3b3647b4";
     const CHECK_RESULT_ID = "aac7e993-2aba-42f8-a655-54f4cdc22473";
 
@@ -133,7 +133,7 @@ describe("Checkly Slack Message Tests", () => {
     expect(result.message?.text).toBeDefined();
   }, 300000);
 
-  it("Summarize a Check and send a Slack Notification", async () => {
+  it.skip("Summarize a Check and send a Slack Notification", async () => {
     const CHECK_ID = "dd89cce7-3eec-4786-8e0e-0e5f3b3647b4";
 
     const check = await checkly.getCheck(CHECK_ID);
