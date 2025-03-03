@@ -32,8 +32,6 @@ describe("Checkly Slack Message Tests", () => {
 
     const checkResult = await checkly.getCheckResult(check.id, CHECK_RESULT_ID);
 
-    // console.log("CHECK_RESULT", checkResult);
-
     const checkResults = await fetchCheckResults(checkly, {
       checkId: check.id,
       ...last24h(new Date(checkResult.startedAt)),
