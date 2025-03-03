@@ -1,7 +1,9 @@
 {
   "check": "Clone check group",
-  "intervalStart": 1737901683655,
-  "intervalEnd": 1740493683655,
+  "interval": {
+    "from": 1737901683655,
+    "to": 1740493683655
+  },
   "frequency": 10,
   "locations": ["eu-west-1", "us-east-1"],
   "results": [
