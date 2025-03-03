@@ -1,0 +1,43 @@
+{
+  "groups": [
+    {
+      "errorMessage": "Test timeout of 120000ms exceeded.",
+      "checkResults": [
+        "e13cd594-6c08-4098-8f66-96f374c82b34",
+        "5a62ba25-efab-469b-81d4-a47fe0db31ff",
+        "17b1e8f6-fe18-4332-9aca-ee430b20e76e",
+        "d0a9cafe-8b48-416f-b6db-463b995763c5",
+        "1758ad06-6943-4998-9b4e-feb0ae2d21bd",
+        "b16dafdd-84fa-4b06-8cc7-aeaa3e2ae516",
+        "ab123006-d114-4ce0-a0f6-64a286e34f17",
+        "dd176d51-54c6-49b1-9901-0bbae70fdfd3",
+        "eb8c8385-2916-4836-8a1e-f8fdab5796c3",
+        "f0b8efe2-835e-40ef-8059-8ec5744c1a77",
+        "cb4186ca-cbfd-447e-ae04-86ed8829dfda",
+        "5f109aca-e735-4679-8766-fa66be1c1b2d",
+        "2cb00c30-b0d7-459f-8bce-03ce1a206f0e",
+        "9ea1e360-bc58-4f14-b282-1d68e2d4fb67",
+        "a9ace8d5-e939-467b-b832-60d9275a734d",
+        "a6e7cd40-82bd-4ce9-a1fe-ce4b64723dd9",
+        "524d4600-21b2-4fd1-b454-d82f496124d6",
+        "d19c0afc-acd5-46d1-aa97-6f5b7715180e",
+        "3d572b69-1fc0-4f91-9dfa-6a49b760f38f",
+        "e1c97d3f-1019-4639-ac33-000c661d4b8a",
+        "23cd993a-2cfd-4fa0-9754-7356137771dd",
+        "95485458-f12b-461a-b14f-dc8fac13f8bb",
+        "3f4c9e57-0ab4-4e20-a9de-77d7a94ded7f",
+        "7d319217-e892-46af-a21d-53a3ff256111",
+        "0a73047e-a233-4639-9d2d-eecc3acc0f78",
+        "abae38a0-287b-4f40-8ff6-19df62dddbe3"
+      ]
+    },
+    {
+      "errorMessage": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('button', { name: /switch accounts/i })\nExpected: visible\nReceived: hidden\nCall log:\n  - expect.toBeVisible with timeout 30000ms\n  - waiting for getByRole('button', { name: /switch accounts/i })",
+      "checkResults": [
+        "57e8031b-3043-4ddc-916d-b4e4d51a6a0e",
+        "05fbe7c2-474a-417b-9498-bf222338d46d",
+        "2c54f163-9898-465c-8254-66e0ef4baa9d"
+      ]
+    }
+  ]
+}

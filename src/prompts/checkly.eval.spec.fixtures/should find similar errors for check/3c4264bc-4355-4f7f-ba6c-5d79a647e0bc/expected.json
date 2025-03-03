@@ -1,0 +1,48 @@
+{
+  "groups": [
+    {
+      "errorMessage": "Error: Timed out 30000ms waiting for expect(locator).toBeVisible()",
+      "checkResults": ["505aa5fb-8ae1-4bc7-a2cd-b06d4fd47956"]
+    },
+    {
+      "errorMessage": "Test timeout of 120000ms exceeded.",
+      "checkResults": [
+        "6df6099b-74e6-4df0-9329-66e55c377970",
+        "864e481d-4176-4991-918e-37e06d4f00f8"
+      ]
+    },
+    {
+      "errorMessage": "Error: Timed out 30000ms waiting for expect(locator).toHaveTitle(expected)",
+      "checkResults": [
+        "ee7cb36b-e3c3-418b-aa0c-c439f6ccdd83",
+        "fdaa8c32-5862-4a60-844f-0c41b3c11bd9",
+        "54678ac1-2285-41db-b743-f30c6a6b3263",
+        "46a6573b-1654-4037-b239-5382afc2869f",
+        "1cd67c28-87b3-4fc4-8abb-200b1a9eb3cd",
+        "84fcb2c0-1233-4dd1-abb7-16936a6b16a0",
+        "38a47bf1-400f-4e42-bae6-94926b00ec06",
+        "3a44b559-27e4-4076-b327-eefc2a6a6226",
+        "764ce63e-23a5-452b-8050-4f5011725754",
+        "120a30a6-f2e8-4965-a724-a71e62141bd8",
+        "67449d18-90aa-4171-8f9e-8bfef228630f",
+        "7021109c-1882-4818-b283-f0f0847a4649",
+        "2e31c00b-1900-4db3-911d-7906767f8567",
+        "d1315faa-1173-4931-acc5-90d04688c9e7",
+        "7dbee5b5-00fa-4405-bdc0-277190f6ec83",
+        "2f1b8b21-272d-430d-923a-2467e0b37aa0",
+        "10a32f0b-2015-42a3-b855-abd255f38f66",
+        "a922620e-b67b-41b0-aac8-66198804b2b1",
+        "acd627aa-5fab-4d65-bcdc-266d9bb9c78e",
+        "39a36d08-8467-461a-900c-52f2cbb1c3ec",
+        "cba3a795-8c68-485b-bc00-03e8a15d961e",
+        "484a38c5-d75e-43a0-a480-c7ba3f45e716",
+        "c32d4b13-2eb9-41f0-8394-0c3a43af9581",
+        "c70fd597-277e-4639-b09b-70b9dd562bae",
+        "3758b511-8fd9-405d-8561-e5cb63360706",
+        "acc1ecee-d368-4172-8c85-8d38a0b2da20",
+        "c249e1c5-efda-4a5e-b1fd-49faea8453ca",
+        "4712dc00-4c2f-4c21-b8be-d1201dc64013"
+      ]
+    }
+  ]
+}

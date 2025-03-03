@@ -1,5 +1,6 @@
 import { ChecklyClient } from "./checklyclient";
 import "dotenv/config";
+import * as fs from "fs";
 
 jest.setTimeout(30000);
 describe("ChecklyService", () => {
@@ -13,6 +14,12 @@ describe("ChecklyService", () => {
     const activated = result.filter((r) => r.activated);
     expect(activated).toBeDefined();
   });
+
+  it("can download all check groups", async () => {
+    const groups = await client.getCheckGroups();
+    expect(groups).toBeDefined();
+  });
+
   it("can find activated checks", async () => {
     const result = await client.getActivatedChecks();
     expect(result).toBeDefined();
@@ -28,7 +35,12 @@ describe("ChecklyService", () => {
 
   it("should be defined", async () => {
     const checks = await client.getChecks();
-    const result = await client.getCheck(checks[0].id);
+    const check = checks.find((c) => c.checkType == "BROWSER");
+
+    const result = await client.getCheck(check!.id, {
+      includeDependencies: true,
+    });
+    console.log(JSON.stringify(result, null, 2));
     expect(result).toBeDefined();
   });
 
@@ -37,15 +49,71 @@ describe("ChecklyService", () => {
     expect(result).toBeDefined();
   });
 
-  /*  it('should be defined', async () => {
-      const result = await client.getCheckResult(bcheckid, bcheckresult);
-      expect(result).toBeDefined();
-      const log = result.getLog();
-      expect(log).toBeDefined();
-      await client.downloadAsset(
-        result.browserCheckResult?.playwrightTestTraces[0] || '',
-        'test.zip',
+  it("can retrieve check metrics", async () => {
+    const result = await client.getCheckMetrics("BROWSER");
+
+    expect(result).toBeDefined();
+  });
+
+  it("can retrieve check statuses", async () => {
+    const result = await client.getStatuses();
+
+    expect(result).toBeDefined();
+  });
+
+  it("can retrieve dashboards", async () => {
+    const result = await client.getDashboards();
+
+    expect(result).toBeDefined();
+  });
+
+  it("can retrieve dashboard by id", async () => {
+    const id = "77b9895d";
+    const result = await client.getDashboard(id);
+
+    expect(result).toBeDefined();
+  });
+
+  it.skip("can run a check", async () => {
+    const result = await client.runCheck(
+      "e7608d1a-c013-4194-9da0-dec05d2fbabc",
+    );
+
+    expect(result).toBeDefined();
+  });
+
+  it("can retrieve reportings", async () => {
+    const result = await client.getReporting();
+
+    expect(result).toBeDefined();
+  });
+
+  it("can merge checks and groups", async () => {
+    const result = await client.getPrometheusCheckStatus();
+
+    const failingSummary = Object.entries(
+      result.failing.reduce(
+        (acc, curr) => {
+          if (!acc[curr.labels.group]) {
+            acc[curr.labels.group] = [];
+          }
+
+          acc[curr.labels.group].push(curr.labels.name);
+
+          return acc;
+        },
+        {} as Record<string, string[]>,
+      ),
+    ).reduce((acc, [group, tests]) => {
+      return (
+        acc +
+        "  " +
+        group +
+        "\n" +
+        tests.reduce((acc, curr) => acc + "     " + curr + "\n", "")
       );
-    });
-  */
+    }, "Failing tests:\n");
+
+    expect(result).toBeDefined();
+  });
 });

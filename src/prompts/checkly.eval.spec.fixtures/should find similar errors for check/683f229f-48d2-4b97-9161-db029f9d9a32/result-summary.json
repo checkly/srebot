@@ -1,0 +1,102 @@
+{
+  "check": "Edit API Check",
+  "intervalStart": 1737901683655,
+  "intervalEnd": 1740493683655,
+  "frequency": 10,
+  "locations": ["eu-west-1", "us-east-1"],
+  "results": [
+    {
+      "id": "13f6aa82-61b9-4aed-8e15-827041fde24b",
+      "sequenceId": "e297d448-d54b-40d1-9b8a-23c388c96ee6",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-24T09:05:29.139Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": ""
+    },
+    {
+      "id": "e37efec7-f409-4627-840d-fd28b195bb30",
+      "sequenceId": "c8983ac7-7810-4c99-b709-8bfc3ed9cac0",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-22T18:35:28.131Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": ""
+    },
+    {
+      "id": "b7b2fa77-298b-486b-8214-035f601d1aec",
+      "sequenceId": "5f69d5ec-ef5f-446c-8785-7004e11a59e6",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-22T14:26:49.037Z",
+      "location": "us-east-1",
+      "attempts": 2,
+      "error": {
+        "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: 'email' })\n\n    at Auth0LoginPom.login (/check/d11c2c3b-c695-4895-805e-ae9c42d36751/__checks__/poms/module.ts:36:27)\n    at WebApp.login (/check/d11c2c3b-c695-4895-805e-ae9c42d36751/__checks__/fixtures/module.ts:81:24)\n    at /check/d11c2c3b-c695-4895-805e-ae9c42d36751/src/pages/checks/api/create/__checks__/edit_check.spec.ts:15:5",
+        "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: 'email' })\n"
+      }
+    },
+    {
+      "id": "a22e3117-d5f7-41a5-9919-16889c5e3309",
+      "sequenceId": "5f69d5ec-ef5f-446c-8785-7004e11a59e6",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-22T14:25:28.931Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": {
+        "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: 'email' })\n\n    at Auth0LoginPom.login (/check/d2081d87-386d-4ddd-bbd1-bbb6bbbd5284/__checks__/poms/module.ts:36:27)\n    at WebApp.login (/check/d2081d87-386d-4ddd-bbd1-bbb6bbbd5284/__checks__/fixtures/module.ts:81:24)\n    at /check/d2081d87-386d-4ddd-bbd1-bbb6bbbd5284/src/pages/checks/api/create/__checks__/edit_check.spec.ts:15:5",
+        "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: 'email' })\n"
+      }
+    },
+    {
+      "id": "e07eff3a-5672-4e4d-aa33-9a456f9ffa0f",
+      "sequenceId": "39d51547-212b-4741-bb8c-e69a32685362",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-22T13:15:28.625Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: 'email' })\n\n    at Auth0LoginPom.login (/check/df98dec2-c195-4894-bedd-210a08308d5b/__checks__/poms/module.ts:36:27)\n    at WebApp.login (/check/df98dec2-c195-4894-bedd-210a08308d5b/__checks__/fixtures/module.ts:81:24)\n    at /check/df98dec2-c195-4894-bedd-210a08308d5b/src/pages/checks/api/create/__checks__/edit_check.spec.ts:15:5",
+        "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: 'email' })\n"
+      }
+    },
+    {
+      "id": "a709fff6-3fd2-4e04-ba4a-90ac1a72f447",
+      "sequenceId": "79bb5140-9965-4086-a1c5-c300258f2dd2",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-17T07:03:52.224Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": {
+        "stack": "TimeoutError: locator.hover: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=home-dashboard-table]').getByRole('row').filter({ has: locator('span').getByText('API check E2E test heo413sk', { exact: true }) }).getByRole('button').locator(':scope[aria-haspopup=menu]')\n\n    at HomeDashboardPom.openCheckRowContextMenu (/check/e52f5ec0-5b8b-4283-b25e-7f9b23c0f798/src/pages/home-dashboard/__checks__/pom/module.ts:64:19)\n    at /check/e52f5ec0-5b8b-4283-b25e-7f9b23c0f798/src/pages/checks/api/create/__checks__/edit_check.spec.ts:20:29",
+        "message": "TimeoutError: locator.hover: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=home-dashboard-table]').getByRole('row').filter({ has: locator('span').getByText('API check E2E test heo413sk', { exact: true }) }).getByRole('button').locator(':scope[aria-haspopup=menu]')\n"
+      }
+    },
+    {
+      "id": "8ade2538-5500-422a-9f9a-28b18613f683",
+      "sequenceId": "eb3b139d-a8b4-4bc0-b924-62acb99254a5",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-03T01:41:17.230Z",
+      "location": "eu-west-1",
+      "attempts": 2,
+      "error": "[chromium] › ../../checkly/functions/src/2024-02/node_modules/vm2/lib/bridge.js:485:11 › should edit api check\nUserScript locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('tablist').getByText(/Scheduling & Locations/i)"
+    },
+    {
+      "id": "3f28e510-7d6e-4bc6-8c63-af27f9a4e8ac",
+      "sequenceId": "eb3b139d-a8b4-4bc0-b924-62acb99254a5",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-02-03T01:38:58.425Z",
+      "location": "eu-west-1",
+      "attempts": 1,
+      "error": ""
+    },
+    {
+      "id": "d3d12657-57e8-42b6-9c90-11c5529f40e7",
+      "sequenceId": "9687100b-c0ab-4fa4-8e00-76db6da16dbd",
+      "resultType": "ATTEMPT",
+      "startedAt": "2025-01-31T18:48:58.561Z",
+      "location": "us-east-1",
+      "attempts": 1,
+      "error": "[chromium] › ../../checkly/functions/src/2024-02/node_modules/vm2/lib/bridge.js:485:11 › should edit api check\nUserScript locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByRole('tablist').getByText(/Scheduling & Locations/i)"
+    }
+  ]
+}

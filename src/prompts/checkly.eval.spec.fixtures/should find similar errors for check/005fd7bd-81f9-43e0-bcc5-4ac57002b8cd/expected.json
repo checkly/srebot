@@ -1,0 +1,12 @@
+{
+  "groups": [
+    {
+      "errorMessage": "Test timeout of 120000ms exceeded.",
+      "checkResults": [
+        "90b2729a-5dff-44db-aac0-37c142e38574",
+        "4a9f77ad-e509-4927-a344-63e188a5407e",
+        "af51cebb-6982-4f19-84c5-4fdeb101a5c9"
+      ]
+    }
+  ]
+}
