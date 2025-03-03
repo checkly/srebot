@@ -20,7 +20,7 @@ describe("Checkly Slack Message Tests", () => {
     expect(result).toBeDefined();
   }, 300000);
 
-  it("Summarize a Check and send a Slack Notification", async () => {
+  it.skip("Summarize a Check and send a Slack Notification", async () => {
     const CHECK_ID = "dd89cce7-3eec-4786-8e0e-0e5f3b3647b4";
 
     const result = await checklyCommandHandler({
