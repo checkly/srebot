@@ -131,7 +131,7 @@ describe("Checkly Slack Message Tests", () => {
     expect(result.message?.text).toBeDefined();
   }, 300000);
 
-  it.skip("Summarize a Check and send a Slack Notification", async () => {
+  it("Summarize a Check and send a Slack Notification", async () => {
     const CHECK_ID = "dd89cce7-3eec-4786-8e0e-0e5f3b3647b4";
 
     const check = await checkly.getCheck(CHECK_ID);
@@ -179,36 +179,63 @@ describe("Checkly Slack Message Tests", () => {
           type: "header",
           text: {
             type: "plain_text",
-            text: `Check ${check.name} Details`,
+            text: `Check ${check.name} - Last 24 hours`,
             emoji: true,
           },
+        },
+        {
+          type: "divider",
         },
         {
           type: "section",
           fields: [
             {
               type: "mrkdwn",
-              text: `*Timestamp:*\n${new Date(LAST_30_DAYS.from).toISOString()}`,
+              text: `*Type:*\n${check.checkType.charAt(0).toUpperCase() + check.checkType.slice(1).toLowerCase()}`,
             },
             {
               type: "mrkdwn",
-              text: `*Location:*\n\`${check.locations.join(", ")}\``,
+              text: `*Frequency:*\nevery \`${check.frequency}\` minute${check.frequency > 1 ? "s" : ""}`,
             },
             {
               type: "mrkdwn",
-              text: `*Check Result:*\n<${checkly.getCheckUrl(check.id)}|Link>`,
+              text: `*Locations:*\n\`${check.locations.join("\`, \`")}\``,
+            },
+            {
+              type: "mrkdwn",
+              text: `*Link:*\n<${checkly.getCheckUrl(check.id)}|Link>`,
             },
           ],
         },
+        {
+          type: "header",
+          text: {
+            type: "plain_text",
+            text: `Detected Error Patterns`,
+            emoji: true,
+          },
+        },
         ...errorGroups.groups.flatMap((group) => [
+          {
+            type: "divider",
+          },
           {
             type: "section",
             text: {
               type: "mrkdwn",
-              text:
-                `*Error Pattern:* ${group.errorMessage}\n` +
-                `*Occurrences:* ${group.checkResults.length} failures\n` +
-                `*Affected Locations:* ${[
+              text: `*Pattern:* \`${group.errorMessage}\``,
+            },
+          },
+          {
+            type: "section",
+            fields: [
+              {
+                type: "mrkdwn",
+                text: `*Count:* \`${group.checkResults.length}\` failure${group.checkResults.length > 1 ? "s" : ""}`,
+              },
+              {
+                type: "mrkdwn",
+                text: `*Affected Locations:* \`${[
                   ...new Set(
                     group.checkResults.map(
                       (id) =>
@@ -217,11 +244,9 @@ describe("Checkly Slack Message Tests", () => {
                   ),
                 ]
                   .filter(Boolean)
-                  .join(", ")}`,
-            },
-          },
-          {
-            type: "divider",
+                  .join("\`, \`")}\``,
+              },
+            ],
           },
         ]),
       ],
