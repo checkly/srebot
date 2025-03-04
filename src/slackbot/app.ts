@@ -47,22 +47,25 @@ let setupAgent = () => {
 
 const githubAgent = setupAgent();
 
-app.command(CHECKLY_COMMAND_NAME, checklyCommandHandler);
+app.command(CHECKLY_COMMAND_NAME, checklyCommandHandler(app));
 
 app.command("/srebot-releases", async ({ command, ack, respond }) => {
   await ack();
-  let summaries = await githubAgent.summarizeReleases(command.text, "checkly");
+  const summaries = await githubAgent.summarizeReleases(
+    command.text,
+    "checkly",
+  );
   if (summaries.releases.length === 0) {
     await respond({
       text: `No releases found in repo ${summaries.repo.name} since ${summaries.since}`,
     });
   }
 
-  let releases = summaries.releases.sort(
+  const releases = summaries.releases.sort(
     (a, b) =>
       new Date(b.release_date).getTime() - new Date(a.release_date).getTime(),
   );
-  let response = [releaseHeader].concat(
+  const response = [releaseHeader].concat(
     releases
       .map((summary) => {
         const date = moment(summary.release_date).fromNow();

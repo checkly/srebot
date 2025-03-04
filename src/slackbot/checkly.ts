@@ -13,6 +13,7 @@ import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { generateHeatmapPNG } from "../heatmap/createHeatmap";
 import { createCheckBlock } from "./blocks/checkBlock";
 import { log } from "./log";
+import { App, StringIndexed } from "@slack/bolt";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -50,6 +51,11 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
   const { object: errorGroups } =
     await generateObject<SummarizeErrorsPromptType>(promptDef);
 
+  const heatmapImage = generateHeatmapPNG(checkResults, {
+    bucketSizeInMinutes: check.frequency * 10,
+    verticalSeries: check.locations.length,
+  });
+
   log.info(
     {
       checkId,
@@ -60,15 +66,18 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
     },
     "checkResultSummary",
   );
-  return createCheckResultBlock({
-    check,
-    checkAppUrl,
-    checkResult,
-    checkResultAppUrl,
-    errorGroups,
-    failingCheckResults,
-    intervalStart: interval.from,
-  });
+  return {
+    message: createCheckResultBlock({
+      check,
+      checkAppUrl,
+      checkResult,
+      checkResultAppUrl,
+      errorGroups,
+      failingCheckResults,
+      intervalStart: interval.from,
+    }),
+    image: heatmapImage,
+  };
 }
 
 async function checkSummary(checkId: string) {
@@ -136,27 +145,50 @@ async function checkSummary(checkId: string) {
 }
 export const CHECKLY_COMMAND_NAME = "/checkly";
 
-export const checklyCommandHandler = async ({ ack, respond, command }) => {
-  await ack();
+export const checklyCommandHandler = (app: App<StringIndexed>) => {
+  return async ({ ack, respond, command }) => {
+    await ack();
 
-  const args = command.text.split(" ");
-  if (args.length === 1 && !!args[0]) {
-    const { message } = await checkSummary(args[0]);
-    await respond({
-      ...message,
-    });
+    const args = command.text.split(" ");
+    if (args.length === 1 && !!args[0]) {
+      const { message, image } = await checkSummary(args[0]);
+      await respond({
+        ...message,
+      });
 
-    // FIXME find a way to send the image to slack (al)
-  } else if (args.length === 2) {
-    const [checkId, checkResultId] = args;
-    const summary = await checkResultSummary(checkId, checkResultId);
+      if (image) {
+        await app.client.files.uploadV2({
+          channel_id: command.channel_id,
+          file: image,
+          filename: "CheckResultHeatmap.png",
+          title: "Check Results Heatmap",
+        });
+      }
 
-    await respond({
-      ...summary,
-    });
-  } else {
-    await respond({
-      text: "Please provide either a check ID or both a check ID and check result ID in the format: /checkly <check_id> (<check_result_id>)",
-    });
-  }
+      // FIXME find a way to send the image to slack (al)
+    } else if (args.length === 2) {
+      const [checkId, checkResultId] = args;
+      const { message, image } = await checkResultSummary(
+        checkId,
+        checkResultId,
+      );
+
+      if (image) {
+        await app.client.files.uploadV2({
+          channel_id: command.channel_id,
+          file: image,
+          filename: "CheckResultHeatmap.png",
+          title: "Check Results Heatmap",
+        });
+      }
+
+      await respond({
+        ...message,
+      });
+    } else {
+      await respond({
+        text: "Please provide either a check ID or both a check ID and check result ID in the format: /checkly <check_id> (<check_result_id>)",
+      });
+    }
+  };
 };

@@ -1,4 +1,3 @@
-import { expect } from "@jest/globals";
 import dotenv from "dotenv";
 import { CHECKLY_COMMAND_NAME, checklyCommandHandler } from "./checkly";
 
