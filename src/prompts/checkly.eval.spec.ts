@@ -210,8 +210,10 @@ test('visit page and take screenshot', async ({ page }) => {
         ...result,
         error: result.error?.message!,
       }));
-      input.intervalStart = new Date(input.intervalStart);
-      input.intervalEnd = new Date(input.intervalEnd);
+      input.interval = {
+        from: new Date(input.interval.from),
+        to: new Date(input.interval.to),
+      };
 
       const promptDef = summarizeErrorsPrompt(input);
       const { object: errorGroups } =

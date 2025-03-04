@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`checkBlock should create a message block for a check summary 1`] = `
+[
+  {
+    "text": {
+      "emoji": true,
+      "text": "Test Check - Last 24 hours",
+      "type": "plain_text",
+    },
+    "type": "header",
+  },
+  {
+    "type": "divider",
+  },
+  {
+    "fields": [
+      {
+        "text": "*Type:*
+Browser",
+        "type": "mrkdwn",
+      },
+      {
+        "text": "*Frequency:*
+every \`10\` minutes",
+        "type": "mrkdwn",
+      },
+      {
+        "text": "*Locations:*
+\`us-east-1\`, \`eu-west-1\`",
+        "type": "mrkdwn",
+      },
+      {
+        "text": "*Link:*
+<https://app.checklyhq.com/checks/test-check-id|Link>",
+        "type": "mrkdwn",
+      },
+    ],
+    "type": "section",
+  },
+  {
+    "text": {
+      "emoji": true,
+      "text": "Detected Error Patterns",
+      "type": "plain_text",
+    },
+    "type": "header",
+  },
+  {
+    "type": "divider",
+  },
+  {
+    "text": {
+      "text": "*Pattern:* \`Test error message\`",
+      "type": "mrkdwn",
+    },
+    "type": "section",
+  },
+  {
+    "fields": [
+      {
+        "text": "*Count:* \`2\` failures",
+        "type": "mrkdwn",
+      },
+      {
+        "text": "*Affected Locations:* \`us-east-1\`, \`eu-west-1\`",
+        "type": "mrkdwn",
+      },
+    ],
+    "type": "section",
+  },
+]
+`;

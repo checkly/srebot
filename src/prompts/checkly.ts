@@ -86,8 +86,7 @@ export type CheckResult = {
 
 export function summarizeErrorsPrompt(input: {
   check: string;
-  intervalStart: Date;
-  intervalEnd: Date;
+  interval: { from: Date; to: Date };
   locations: string[];
   frequency: number;
   results: Array<CheckResult>;
@@ -102,8 +101,8 @@ export function summarizeErrorsPrompt(input: {
 
     Check details:
     - name: ${input.check}
-    - intervalStart: ${input.intervalStart.toISOString()}
-    - intervalEnd: ${input.intervalEnd.toISOString()}
+    - intervalStart: ${input.interval.from.toISOString()}
+    - intervalEnd: ${input.interval.to.toISOString()}
     - frequency: ${input.frequency}
     - locations: ${input.locations}
 

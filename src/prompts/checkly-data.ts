@@ -1,27 +1,26 @@
 import { ChecklyClient } from "../checkly/checklyclient";
 import { CheckResult } from "../checkly/models";
 
-export const LAST_30_DAYS = {
-  from: Date.now() - 30 * 24 * 60 * 60 * 1000,
-  to: Date.now(),
-};
-
-export const LAST_24_HOURS = {
-  from: Date.now() - 24 * 60 * 60 * 1000,
-  to: Date.now(),
-};
-
-export const LAST_1_HOURS = {
-  from: Date.now() - 60 * 60 * 1000,
-  to: Date.now(),
-};
-
-export const last24h = (date: Date) => {
+export function last1h(date: Date = new Date()) {
   return {
-    from: date.getTime() - 24 * 60 * 60 * 1000,
-    to: date.getTime(),
+    from: new Date(date.getTime() - 60 * 60 * 1000),
+    to: date,
+  };
+}
+
+export const last24h = (date: Date = new Date()) => {
+  return {
+    from: new Date(date.getTime() - 24 * 60 * 60 * 1000),
+    to: date,
   };
 };
+
+export function last30d(date: Date = new Date()) {
+  return {
+    from: new Date(date.getTime() - 30 * 24 * 60 * 60 * 1000),
+    to: date,
+  };
+}
 
 export async function fetchCheckResults(
   checkly: ChecklyClient,
@@ -31,14 +30,14 @@ export async function fetchCheckResults(
     to,
   }: {
     checkId: string;
-    from?: number;
-    to?: number;
+    from?: Date;
+    to?: Date;
   },
 ) {
   return await checkly.getCheckResultsByCheckId(checkId, {
     resultType: "ALL",
-    fromMs: from ?? Date.now() - 30 * 24 * 60 * 60 * 1000,
-    toMs: to ?? Date.now(),
+    from: from ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    to: to ?? new Date(),
     limit: 100,
   });
 }

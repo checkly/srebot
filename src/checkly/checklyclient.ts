@@ -119,8 +119,8 @@ export class ChecklyClient {
     config?: {
       hasFailures?: boolean;
       resultType?: "ALL" | "FINAL" | "ATTEMPT";
-      fromMs?: number;
-      toMs?: number;
+      from?: Date;
+      to?: Date;
       limit?: number;
     },
   ): Promise<CheckResult[]> {
@@ -133,12 +133,12 @@ export class ChecklyClient {
       resultTypeQuery = `&resultType=${config.resultType}`;
     }
     let fromQuery = "";
-    if (!!config && !!config.fromMs) {
-      fromQuery = `&from=${Math.floor(config.fromMs / 1000)}`;
+    if (!!config && !!config.from) {
+      fromQuery = `&from=${Math.floor(config.from.getTime() / 1000)}`;
     }
     let toQuery = "";
-    if (!!config && !!config.toMs) {
-      toQuery = `&to=${Math.floor(config.toMs / 1000)}`;
+    if (!!config && !!config.to) {
+      toQuery = `&to=${Math.floor(config.to.getTime() / 1000)}`;
     }
     let limitQuery = "";
     if (!!config && !!config.limit) {
