@@ -1,27 +1,26 @@
 import { ChecklyClient } from "../checkly/checklyclient";
 import { CheckResult } from "../checkly/models";
 
-export const LAST_30_DAYS = {
-  from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-  to: new Date(),
-};
+export function last1h(date: Date = new Date()) {
+  return {
+    from: new Date(date.getTime() - 60 * 60 * 1000),
+    to: date,
+  };
+}
 
-export const LAST_24_HOURS = {
-  from: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  to: new Date(),
-};
-
-export const LAST_1_HOURS = {
-  from: new Date(Date.now() - 60 * 60 * 1000),
-  to: new Date(),
-};
-
-export const last24h = (date: Date) => {
+export const last24h = (date: Date = new Date()) => {
   return {
     from: new Date(date.getTime() - 24 * 60 * 60 * 1000),
-    to: new Date(),
+    to: date,
   };
 };
+
+export function last30d(date: Date = new Date()) {
+  return {
+    from: new Date(date.getTime() - 30 * 24 * 60 * 60 * 1000),
+    to: date,
+  };
+}
 
 export async function fetchCheckResults(
   checkly: ChecklyClient,

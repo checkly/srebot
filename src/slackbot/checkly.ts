@@ -7,7 +7,6 @@ import {
 import {
   fetchCheckResults,
   last24h,
-  LAST_30_DAYS,
   summarizeCheckResult,
 } from "../prompts/checkly-data";
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
@@ -57,7 +56,7 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
     checkResultAppUrl,
     errorGroups,
     failingCheckResults,
-    intervalStart: LAST_30_DAYS.from,
+    intervalStart: interval.from,
   });
 }
 
