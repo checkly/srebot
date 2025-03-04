@@ -16,6 +16,8 @@
     "db:studio": "prisma studio",
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
+    "db:migrate:latest": "knex migrate:latest",
+    "db:migrate:rolback": "knex migrate:latest",
     "postinstall": "prisma generate",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "smee": "npx smee-client",
