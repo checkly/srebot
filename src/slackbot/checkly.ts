@@ -12,7 +12,7 @@ import {
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { generateHeatmapPNG } from "../heatmap/createHeatmap";
 import { createCheckBlock } from "./blocks/checkBlock";
-import { log } from "./log.ts";
+import { log } from "./log";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();

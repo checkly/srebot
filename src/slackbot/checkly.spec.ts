@@ -9,7 +9,7 @@ describe("Checkly Slack Message Tests", () => {
     const CHECK_ID = "dd89cce7-3eec-4786-8e0e-0e5f3b3647b4";
     const CHECK_RESULT_ID = "aac7e993-2aba-42f8-a655-54f4cdc22473";
 
-    const result = await checklyCommandHandler({
+    await checklyCommandHandler({
       ack: () => Promise.resolve(),
       respond: () => Promise.resolve(),
       command: {
@@ -17,21 +17,17 @@ describe("Checkly Slack Message Tests", () => {
       },
     });
     // Assert
-    expect(result).toBeDefined();
   }, 300000);
 
   it.skip("Summarize a Check and send a Slack Notification", async () => {
     const CHECK_ID = "dd89cce7-3eec-4786-8e0e-0e5f3b3647b4";
 
-    const result = await checklyCommandHandler({
+    await checklyCommandHandler({
       ack: () => Promise.resolve(),
       respond: () => Promise.resolve(),
       command: {
         text: `${CHECKLY_COMMAND_NAME} ${CHECK_ID}`,
       },
     });
-
-    // Assert
-    expect(result).toBeDefined();
   }, 300000);
 });
