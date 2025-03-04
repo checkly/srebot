@@ -23,7 +23,7 @@ import {
 } from "./feedback";
 import type { ChatPostMessageResponse } from "@slack/web-api/dist/types/response";
 import {
-  CHECKLY_COMMAN_NAME as CHECKLY_COMMAND_NAME,
+  CHECKLY_COMMAND_NAME as CHECKLY_COMMAND_NAME,
   checklyCommandHandler,
 } from "./checkly";
 

@@ -1,6 +1,6 @@
 import { expect } from "@jest/globals";
 import dotenv from "dotenv";
-import { CHECKLY_COMMAN_NAME, checklyCommandHandler } from "./checkly";
+import { CHECKLY_COMMAND_NAME, checklyCommandHandler } from "./checkly";
 
 dotenv.config();
 
@@ -13,7 +13,7 @@ describe("Checkly Slack Message Tests", () => {
       ack: () => Promise.resolve(),
       respond: () => Promise.resolve(),
       command: {
-        text: `${CHECKLY_COMMAN_NAME} ${CHECK_ID} ${CHECK_RESULT_ID}`,
+        text: `${CHECKLY_COMMAND_NAME} ${CHECK_ID} ${CHECK_RESULT_ID}`,
       },
     });
     // Assert
@@ -27,7 +27,7 @@ describe("Checkly Slack Message Tests", () => {
       ack: () => Promise.resolve(),
       respond: () => Promise.resolve(),
       command: {
-        text: `${CHECKLY_COMMAN_NAME} ${CHECK_ID}`,
+        text: `${CHECKLY_COMMAND_NAME} ${CHECK_ID}`,
       },
     });
 

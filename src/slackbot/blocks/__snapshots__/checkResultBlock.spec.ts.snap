@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`checkResultBlock should create a message block for a check result 1`] = `
+[
+  {
+    "text": {
+      "emoji": true,
+      "text": "Check Result Details",
+      "type": "plain_text",
+    },
+    "type": "header",
+  },
+  {
+    "fields": [
+      {
+        "text": "*Check Name:*
+<https://app.checklyhq.com/checks/test-check-id|Test Check>",
+        "type": "mrkdwn",
+      },
+      {
+        "text": "*Timestamp:*
+2024-01-01T00:00:00.000Z",
+        "type": "mrkdwn",
+      },
+      {
+        "text": "*Location:*
+\`us-east-1\`",
+        "type": "mrkdwn",
+      },
+      {
+        "text": "*Check Result:*
+<https://app.checklyhq.com/checks/test-check-id/results/test-result-id|Link>",
+        "type": "mrkdwn",
+      },
+    ],
+    "type": "section",
+  },
+  {
+    "text": {
+      "text": "*Error Message:*
+\`Test error message\`
+
+*Similar Failures:*
+This error occurred \`1 times\` across locations: \`us-east-1\`, \`eu-west-1\`. We saw \`1 Error Groups\` in total with \`1 failures\` in the same timeframe.",
+      "type": "mrkdwn",
+    },
+    "type": "section",
+  },
+]
+`;

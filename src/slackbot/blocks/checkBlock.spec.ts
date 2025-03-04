@@ -39,24 +39,6 @@ describe("checkBlock", () => {
       checkResults: mockCheckResults,
     });
 
-    expect(result.blocks).toBeDefined();
-    expect(result.blocks[0].type).toBe("header");
-    expect(result.blocks[0].text?.text).toContain("Test Check");
-
-    // Verify check details section
-    const fields = result.blocks[2]?.fields;
-    expect(fields?.[0]?.text).toContain("Browser");
-    expect(fields?.[1]?.text).toContain("\`10\` minutes");
-    expect(fields?.[2]?.text).toContain("us-east-1");
-    expect(fields?.[2]?.text).toContain("eu-west-1");
-
-    // Verify error patterns section
-    expect(result.blocks[3].text?.text).toBe("Detected Error Patterns");
-
-    // Verify error group details
-    const errorGroupFields = result.blocks[6].fields;
-    expect(errorGroupFields?.[0]?.text).toContain("\`2\` failures");
-    expect(errorGroupFields?.[1]?.text).toContain("us-east-1");
-    expect(errorGroupFields?.[1]?.text).toContain("eu-west-1");
+    expect(result.blocks).toMatchSnapshot();
   });
 });

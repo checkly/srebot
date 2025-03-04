@@ -36,19 +36,6 @@ describe("checkResultBlock", () => {
       intervalStart: new Date("2024-01-01T00:00:00.000Z"),
     });
 
-    expect(result.blocks).toHaveLength(3);
-    expect(result.blocks[0].type).toBe("header");
-    expect(result.blocks[1].type).toBe("section");
-    expect(result.blocks[2].type).toBe("section");
-
-    // Verify field contents
-    const fields = result.blocks[1].fields;
-    expect(fields?.[0]?.text).toContain("Test Check");
-    expect(fields?.[1]?.text).toContain("2024-01-01");
-    expect(fields?.[2]?.text).toContain("us-east-1");
-
-    // Verify error message section
-    expect(result.blocks[2].text?.text).toContain("Test error message");
-    expect(result.blocks[2].text?.text).toContain("1 times");
+    expect(result.blocks).toMatchSnapshot();
   });
 });

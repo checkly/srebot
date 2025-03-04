@@ -117,7 +117,7 @@ async function checkSummary(checkId: string) {
 
   return { message, image: heatmapImage };
 }
-export const CHECKLY_COMMAN_NAME = "/checkly";
+export const CHECKLY_COMMAND_NAME = "/checkly";
 
 export const checklyCommandHandler = async ({ ack, respond, command }) => {
   await ack();
@@ -129,12 +129,7 @@ export const checklyCommandHandler = async ({ ack, respond, command }) => {
       ...message,
     });
 
-    // await say({
-    //   text: "Check Summary",
-    //   file: image,
-    //   filename: "errorgroup.png",
-    //   title: "Show Error Group Details",
-    // });
+    // FIXME find a way to send the image to slack (al)
   } else if (args.length === 2) {
     const [checkId, checkResultId] = args;
     const summary = await checkResultSummary(checkId, checkResultId);
