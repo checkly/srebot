@@ -1,6 +1,7 @@
 import { plainToClass, plainToInstance } from "class-transformer";
 import * as fs from "node:fs";
 import fetch from "node-fetch";
+import process from "node:process";
 import {
   Check,
   CheckGroup,
@@ -54,7 +55,7 @@ export class ChecklyClient {
       `https://api.checklyhq.com/accounts/${this.accountId}/v2/prometheus/metrics`;
   }
 
-  async getCheck(
+  getCheck(
     checkid: string,
     options?: { includeDependencies?: boolean },
   ): Promise<Check> {
@@ -70,20 +71,20 @@ export class ChecklyClient {
     return `${this.checklyAppUrl}checks/${checkId}`;
   }
 
-  async getChecks(): Promise<Check[]> {
+  getChecks(): Promise<Check[]> {
     return this.getPaginatedDownload("checks", Check);
   }
 
-  async getChecksByGroup(groupId: number): Promise<Check[]> {
+  getChecksByGroup(groupId: number): Promise<Check[]> {
     const url = `check-groups/${groupId}/checks`;
     return this.getPaginatedDownload(url, Check) as Promise<Check[]>;
   }
 
-  async getCheckGroups(): Promise<CheckGroup[]> {
+  getCheckGroups(): Promise<CheckGroup[]> {
     return this.getPaginatedDownload("check-groups", CheckGroup);
   }
 
-  async getCheckGroup(groupId: number): Promise<CheckGroup> {
+  getCheckGroup(groupId: number): Promise<CheckGroup> {
     const url = `${this.checklyApiUrl}check-groups/${groupId}`;
     return this.makeRequest(url, CheckGroup, {
       method: "GET",
@@ -114,7 +115,7 @@ export class ChecklyClient {
     return s.filter((x) => x !== undefined) as Check[];
   }
 
-  async getCheckResultsByCheckId(
+  getCheckResultsByCheckId(
     checkId: string,
     config?: {
       hasFailures?: boolean;
@@ -140,10 +141,7 @@ export class ChecklyClient {
     if (!!config && !!config.to) {
       toQuery = `&to=${Math.floor(config.to.getTime() / 1000)}`;
     }
-    let limitQuery = "";
-    if (!!config && !!config.limit) {
-      limitQuery = `&limit=${config.limit}`;
-    }
+    const limitQuery = `&limit=${config?.limit ?? 100}`;
     const url =
       `${this.checklyApiUrl}check-results/${checkId}?${hasFailuresQuery}${resultTypeQuery}${fromQuery}${toQuery}${limitQuery}`.replace(
         "v1",
@@ -161,7 +159,7 @@ export class ChecklyClient {
     let page = 1;
     const result = Array<T>();
     while (true) {
-      let url = `${this.checklyApiUrl}${path}?limit=${limit}&page=${page}`;
+      const url = `${this.checklyApiUrl}${path}?limit=${limit}&page=${page}`;
       const checks = (await this.makeRequest(url, type)) as T[];
       result.push(...checks);
       if (checks.length < 100) {
@@ -172,10 +170,7 @@ export class ChecklyClient {
     return result;
   }
 
-  async getCheckResult(
-    checkid: string,
-    checkresultid: string,
-  ): Promise<CheckResult> {
+  getCheckResult(checkid: string, checkresultid: string): Promise<CheckResult> {
     const url = `${this.checklyApiUrl}check-results/${checkid}/${checkresultid}`;
     return this.makeRequest(url, CheckResult) as Promise<CheckResult>;
   }
@@ -184,34 +179,34 @@ export class ChecklyClient {
     return `${this.checklyAppUrl}checks/${checkId}/check-session/results/${checkResultId}`;
   }
 
-  async getDashboards() {
+  getDashboards() {
     const url = `${this.checklyApiUrl}dashboards`;
     return this.makeRequest(url, Object) as Promise<Object>;
   }
 
-  async getDashboard(id: string) {
+  getDashboard(id: string) {
     const url = `${this.checklyApiUrl}dashboards/${id}`;
     return this.makeRequest(url, Object) as Promise<Object>;
   }
 
-  async getCheckMetrics(
+  getCheckMetrics(
     checkType: "HEARTBEAT" | "BROWSER" | "API" | "MULTI_STEP" | "TCP",
   ) {
     const url = `${this.checklyApiUrl}analytics/metrics?checkType=${checkType}`;
     return this.makeRequest(url, Object) as Promise<Object>;
   }
 
-  async getReporting(options?: { quickRange: "last24Hrs" | "last7Days" }) {
+  getReporting(options?: { quickRange: "last24Hrs" | "last7Days" }) {
     const url = `${this.checklyApiUrl}reporting`;
     return this.makeRequest(url, Reporting) as Promise<Reporting[]>;
   }
 
-  async getStatuses() {
+  getStatuses() {
     const url = `${this.checklyApiUrl}check-statuses`;
     return this.makeRequest(url, CheckStatus) as Promise<CheckStatus[]>;
   }
 
-  async runCheck(checkId: string) {
+  runCheck(checkId: string) {
     const url = `${this.checklyApiUrl}triggers/checks/${checkId}`;
     return this.makeRequest(url, Object, { method: "POST" }) as Promise<Object>;
   }
@@ -229,7 +224,7 @@ export class ChecklyClient {
     });
     if (!response.ok) {
       throw new Error(
-        `Response status: ${response.status} url:${url}:\n${response.statusText}`,
+        `Response status: ${response.status} url:${url}:\n${response.statusText}, statusText: ${response.statusText}`,
       );
     }
 

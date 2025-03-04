@@ -149,6 +149,7 @@ export class CheckResult {
     assertions: Array<{
       source: string;
       target: number;
+      error: string | null;
     }>;
     request: {
       method: string;
