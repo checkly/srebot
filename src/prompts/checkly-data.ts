@@ -43,9 +43,7 @@ export async function fetchCheckResults(
 }
 
 export function summarizeCheckResult(checkResult: CheckResult) {
-  const error =
-    checkResult.browserCheckResult?.errors.find((e) => !!e.message)?.message ||
-    "No Error provided";
+  const error = getErrorMessageFromCheckResult(checkResult);
   return {
     id: checkResult.id,
     sequenceId: checkResult.sequenceId,
@@ -55,4 +53,72 @@ export function summarizeCheckResult(checkResult: CheckResult) {
     attempts: checkResult.attempts,
     error: error.split("\n")[0],
   };
+}
+
+export function getErrorMessageFromCheckResult(
+  checkResult: CheckResult,
+): string {
+  if (checkResult.apiCheckResult) {
+    return getErrorMessageFromApiError(checkResult);
+  }
+  if (checkResult.multiStepCheckResult) {
+    return getErrorMessageFromMultiStepError(checkResult);
+  }
+  if (checkResult.browserCheckResult) {
+    return getErrorMessageFromBrowserError(checkResult);
+  }
+
+  throw new Error("Unsupported Check Result Type");
+}
+export function getErrorMessageFromMultiStepError(
+  checkResult: CheckResult,
+): string {
+  return (
+    checkResult.multiStepCheckResult?.errors.find((e) => !!e.message)
+      ?.message || "No Error provided"
+  );
+}
+export function getErrorMessageFromBrowserError(
+  checkResult: CheckResult,
+): string {
+  return (
+    checkResult.browserCheckResult?.errors.find((e) => !!e.message)?.message ||
+    "No Error provided"
+  );
+}
+
+export function getErrorMessageFromApiError(checkResult: CheckResult): string {
+  const assertionErrors =
+    checkResult.apiCheckResult?.assertions
+      ?.filter((a) => (a.error ? a.error : null))
+      ?.map((a) => a.error)
+      ?.join("\n") || "";
+  if (assertionErrors.trim()) {
+    return assertionErrors.trim();
+  }
+
+  const overMaxResponseTime = checkResult.overMaxResponseTime;
+  if (overMaxResponseTime) {
+    return "Response time over max response time";
+  }
+
+  const requestError = checkResult.apiCheckResult?.requestError;
+  if (requestError) {
+    return requestError;
+  }
+
+  const setupErrors = checkResult.apiCheckResult?.jobLog?.setup?.filter(
+    (log) => log.level === "ERROR",
+  );
+  if (setupErrors?.length) {
+    return setupErrors[setupErrors.length - 1].msg;
+  }
+  const teardownErrors = checkResult.apiCheckResult?.jobLog?.teardown?.filter(
+    (log) => log.level === "ERROR",
+  );
+  if (teardownErrors?.length) {
+    return teardownErrors[teardownErrors.length - 1].msg;
+  }
+
+  return "Unable to extract error message";
 }
