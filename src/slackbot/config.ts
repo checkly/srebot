@@ -1,4 +1,6 @@
-import { LogLevel } from "@slack/bolt";
+import { log, pinoBoltLogger } from "./log";
+import { Logger, LogLevel } from "@slack/bolt";
+import process from "node:process";
 
 interface SlackConfig {
   signingSecret: string;
@@ -6,6 +8,7 @@ interface SlackConfig {
   appToken: string;
   socketMode: boolean;
   logLevel: LogLevel;
+  logger: Logger;
 }
 
 export const getSlackConfig = (): SlackConfig => ({
@@ -13,11 +16,12 @@ export const getSlackConfig = (): SlackConfig => ({
   token: process.env.SLACK_AUTH_TOKEN!,
   appToken: process.env.SLACK_APP_TOKEN!,
   socketMode: true,
+  logger: pinoBoltLogger,
   logLevel:
     process.env.NODE_ENV !== "production" ? LogLevel.DEBUG : LogLevel.INFO,
 });
 
-export const validateConfig = (config: SlackConfig): void => {
+export const validateConfig = (): void => {
   const requiredEnvVars = [
     "SLACK_SIGNING_SECRET",
     "SLACK_AUTH_TOKEN",

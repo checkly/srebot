@@ -30,7 +30,7 @@ import {
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
   const config = getSlackConfig();
-  validateConfig(config);
+  validateConfig();
   return new App(config);
 };
 

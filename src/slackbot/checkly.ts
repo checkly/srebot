@@ -103,7 +103,7 @@ async function checkSummary(checkId: string) {
     return {
       message: createCheckBlock({
         check,
-        checkAppUrl: checkly.getCheckUrl(check.id),
+        failureCount: 0,
         checkResults,
       }),
       image: null,
@@ -136,7 +136,7 @@ async function checkSummary(checkId: string) {
   );
   const message = createCheckBlock({
     check,
-    checkAppUrl: checkly.getCheckUrl(check.id),
+    failureCount: failingCheckResults.length,
     errorGroups,
     checkResults,
   });
