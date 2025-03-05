@@ -16,23 +16,28 @@ exports[`checkBlock should create a message block for a check summary 1`] = `
   {
     "fields": [
       {
-        "text": "*Type:*
-Browser",
+        "text": "*Type*
+Browser Check",
         "type": "mrkdwn",
       },
       {
-        "text": "*Frequency:*
-every \`10\` minutes",
+        "text": "*Frequency*
+every *10* minutes",
         "type": "mrkdwn",
       },
+    ],
+    "type": "section",
+  },
+  {
+    "fields": [
       {
-        "text": "*Locations:*
+        "text": "*Locations*
 \`us-east-1\`, \`eu-west-1\`",
         "type": "mrkdwn",
       },
       {
-        "text": "*Link:*
-<https://app.checklyhq.com/checks/test-check-id|Link>",
+        "text": "*Failure Rate*
+2100% (42 / 2)",
         "type": "mrkdwn",
       },
     ],
@@ -59,11 +64,13 @@ every \`10\` minutes",
   {
     "fields": [
       {
-        "text": "*Count:* \`2\` failures",
+        "text": "*Count*
+*2* failures",
         "type": "mrkdwn",
       },
       {
-        "text": "*Affected Locations:* \`us-east-1\`, \`eu-west-1\`",
+        "text": "*Affected Locations*
+\`us-east-1\`, \`eu-west-1\`",
         "type": "mrkdwn",
       },
     ],

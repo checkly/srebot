@@ -3,14 +3,14 @@ import { SummarizeErrorsPromptType } from "../../prompts/checkly";
 
 export interface CheckBlockProps {
   check: Check;
-  checkAppUrl: string;
+  failureCount: number;
   errorGroups?: SummarizeErrorsPromptType;
   checkResults: CheckResult[];
 }
 
 export function createCheckBlock({
   check,
-  checkAppUrl,
+  failureCount,
   errorGroups = { groups: [] },
   checkResults,
 }: CheckBlockProps) {
@@ -33,19 +33,30 @@ export function createCheckBlock({
         fields: [
           {
             type: "mrkdwn",
-            text: `*Type:*\n${check.checkType.charAt(0).toUpperCase() + check.checkType.slice(1).toLowerCase()}`,
+            text: `*Type*\n${
+              {
+                BROWSER: "Browser Check",
+                API: "API Check",
+                MULTI_STEP: "Multi-Step Check",
+              }[check.checkType]
+            }`,
           },
           {
             type: "mrkdwn",
-            text: `*Frequency:*\nevery \`${check.frequency}\` minute${check.frequency > 1 ? "s" : ""}`,
+            text: `*Frequency*\nevery *${check.frequency}* minute${check.frequency > 1 ? "s" : ""}`,
+          },
+        ],
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `*Locations*\n\`${check.locations.join("\`, \`")}\``,
           },
           {
             type: "mrkdwn",
-            text: `*Locations:*\n\`${check.locations.join("\`, \`")}\``,
-          },
-          {
-            type: "mrkdwn",
-            text: `*Link:*\n<${checkAppUrl}|Link>`,
+            text: `*Failure Rate*\n${((failureCount / checkResults.length) * 100).toFixed(2).replace(/\.00$/, "")}% (${failureCount} / ${checkResults.length})`,
           },
         ],
       },
@@ -85,11 +96,11 @@ export function createCheckBlock({
           fields: [
             {
               type: "mrkdwn",
-              text: `*Count:* \`${group.checkResults.length}\` failure${group.checkResults.length > 1 ? "s" : ""}`,
+              text: `*Count*\n*${group.checkResults.length}* failure${group.checkResults.length > 1 ? "s" : ""}`,
             },
             {
               type: "mrkdwn",
-              text: `*Affected Locations:* \`${[
+              text: `*Affected Locations*\n\`${[
                 ...new Set(
                   group.checkResults.map(
                     (id) => checkResults.find((r) => r.id === id)?.runLocation,

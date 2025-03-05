@@ -34,7 +34,7 @@ describe("checkBlock", () => {
 
     const result = createCheckBlock({
       check: mockCheck,
-      checkAppUrl: "https://app.checklyhq.com/checks/test-check-id",
+      failureCount: 42,
       errorGroups: mockErrorGroups,
       checkResults: mockCheckResults,
     });
