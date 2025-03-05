@@ -14,6 +14,8 @@ import { generateHeatmapPNG } from "../heatmap/createHeatmap";
 import { createCheckBlock } from "./blocks/checkBlock";
 import { log } from "./log";
 import { App, StringIndexed } from "@slack/bolt";
+import { db } from "../db/connection";
+import { CheckResult } from "../checkly/models";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -143,6 +145,36 @@ async function checkSummary(checkId: string) {
 
   return { message, image: heatmapImage };
 }
+
+async function saveCheckResult(checkResult: CheckResult) {
+  try {
+    await db("check_results").insert({
+      id: checkResult.id,
+      name: checkResult.name,
+      check_id: checkResult.checkId,
+      has_failures: checkResult.hasFailures,
+      has_errors: checkResult.hasErrors,
+      is_degraded: checkResult.isDegraded,
+      over_max_response_time: checkResult.overMaxResponseTime,
+      run_location: checkResult.runLocation,
+      started_at: checkResult.startedAt,
+      stopped_at: checkResult.stoppedAt,
+      created_at: checkResult.created_at,
+      response_time: checkResult.responseTime,
+      api_check_result: checkResult.apiCheckResult,
+      browser_check_result: checkResult.browserCheckResult,
+      multi_step_check_result: checkResult.multiStepCheckResult,
+      check_run_id: checkResult.checkRunId,
+      attempts: checkResult.attempts,
+      result_type: checkResult.resultType,
+      sequence_id: checkResult.sequenceId,
+    });
+  } catch (error) {
+    console.error("Error saving check result:", error);
+    throw error;
+  }
+}
+
 export const CHECKLY_COMMAND_NAME = "/checkly";
 
 export const checklyCommandHandler = (app: App<StringIndexed>) => {
