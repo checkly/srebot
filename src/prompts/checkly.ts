@@ -56,6 +56,11 @@ const SUMMARIZE_ERRORS_SCHEMA = z
     groups: z
       .array(
         z.object({
+          // errorSummary: z
+          //   .string()
+          //   .describe(
+          //     "A concise summary of the error message, max 80 characters",
+          //   ),
           errorMessage: z
             .string()
             .describe(
@@ -230,6 +235,38 @@ export function summarizeTestStepsPrompt(
       - Always prioritize accuracy and relevance in the summary
       - Be concise but comprehensive in your explanations
       - Focus on providing actionable information that can help judging user impact
+    `,
+    promptConfig("checklySummarizeFeatureCoverage", {
+      temperature: 1,
+      maxTokens: 500,
+    }),
+  ];
+}
+
+export function summarizeTestGoalPrompt(
+  testName: string,
+  scriptName: string,
+  scriptPath: string,
+  dependencies: { script: string; scriptPath: string }[],
+): [string, PromptConfig] {
+  return [
+    `
+      The following details describe a test which is used to monitor an application.
+
+      Test name: ${testName}
+      Script name: ${scriptName}
+      Script: ${scriptPath}
+
+      Dependent scripts of the main script:
+      ${dependencies.map((d) => `- ${d.scriptPath}\n  ${d.script}`).join("\n")}
+
+      Summarize what the test is validating in a single sentence with max 10 words.
+
+      CONSTITUTION:
+      - Always prioritize accuracy and relevance in the summary
+      - Be concise but comprehensive in your explanations
+      - Focus on providing actionable information that can help judging user impact
+      - Do not refer to technical details of the test, use the domain language from the application under test.
     `,
     promptConfig("checklySummarizeFeatureCoverage", {
       temperature: 1,
