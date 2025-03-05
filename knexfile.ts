@@ -12,13 +12,13 @@ const config = {
     client: "pg",
     connection: dbUrlEnv,
     pool: { min: 2, max: 10 },
-    debug: true,
+    debug: false,
   },
   dev: {
     client: "pg",
     connection: dbUrlEnv,
     pool: { min: 2, max: 10 },
-    debug: true,
+    debug: false,
   },
   production: {
     client: "pg",

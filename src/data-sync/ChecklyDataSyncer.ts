@@ -1,11 +1,11 @@
-import { checkly } from "../checkly/client";
 import postgres from "../common/connections/postgres";
+import { checkly } from "../checkly/client";
 import { Check, CheckGroup } from "../checkly/models";
 
-export class SyncDaemon {
+export class ChecklyDataSyncer {
   constructor() {}
 
-  async serialiseCheckResults({ from, to }: { from: Date; to: Date }) {
+  async syncCheckResults({ from, to }: { from: Date; to: Date }) {
     const startedAt = Date.now();
     const serialiseCheckResult = (cr) => ({
       ...cr,
@@ -22,6 +22,7 @@ export class SyncDaemon {
         resultType: "ALL",
         from,
         to,
+        limit: 100,
       });
 
       for (const result of items) {
@@ -37,6 +38,12 @@ export class SyncDaemon {
           .onConflict("id")
           .merge();
         synchronizedResults++;
+
+        if (synchronizedResults % 100 === 0) {
+          console.log(
+            `msg="Check result batch synced" count=${synchronizedResults} duration_ms=${Date.now() - startedAt}`,
+          );
+        }
       }
     }
 
@@ -65,7 +72,7 @@ export class SyncDaemon {
 
     // Remove checks that no longer exist
     const checkIds = allChecks.map((check) => check.id);
-    await postgres.delete("checks").whereNotIn("id", checkIds);
+    await postgres("checks").delete().whereNotIn("id", checkIds);
 
     console.log(
       `msg="Checks synced" count=${checkIds.length} duration_ms=${Date.now() - startedAt}`,
@@ -93,7 +100,7 @@ export class SyncDaemon {
 
     // Remove checks that no longer exist
     const groupIds = allCheckGroups.map((check) => check.id);
-    await postgres.delete("check_groups").whereNotIn("id", groupIds);
+    await postgres("check_groups").delete().whereNotIn("id", groupIds);
 
     console.log(
       `msg="Check Groups synced" count=${groupIds.length} duration_ms=${Date.now() - startedAt}`,
