@@ -62,11 +62,9 @@ const main = async () => {
 
   if (syncCheckResults) {
     console.log("🔄 Syncing check results...");
-    const from = new Date();
-    from.setMinutes(from.getMinutes() - minutesBack);
 
     await daemon.syncCheckResults({
-      from: from,
+      from: minutesAgo(minutesBack),
       to: new Date(),
     });
 
@@ -78,6 +76,10 @@ const main = async () => {
   console.log("✅ Sync completed.");
   process.exit(0);
 };
+
+function minutesAgo(minutesBack: number): Date {
+  return new Date(Date.now() - minutesBack * 60 * 1000);
+}
 
 main().catch((err) => {
   console.error("❌ Sync failed:", err);

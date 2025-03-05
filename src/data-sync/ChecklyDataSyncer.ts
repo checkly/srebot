@@ -1,13 +1,14 @@
-import postgres from "../common/connections/postgres";
+import postgres from "../db/postgres";
 import { checkly } from "../checkly/client";
 import { Check, CheckGroup } from "../checkly/models";
+import { log } from "../slackbot/log";
 
 export class ChecklyDataSyncer {
   constructor() {}
 
   async syncCheckResults({ from, to }: { from: Date; to: Date }) {
     const startedAt = Date.now();
-    const serialiseCheckResult = (cr) => ({
+    const serializeCheckResult = (cr) => ({
       ...cr,
       accountId: checkly.accountId,
       fetchedAt: new Date(),
@@ -18,37 +19,43 @@ export class ChecklyDataSyncer {
 
     let synchronizedResults = 0;
     for (const checkId of checkIds) {
-      const items = await checkly.getCheckResultsByCheckId(checkId, {
+      const checkResults = await checkly.getCheckResultsByCheckId(checkId, {
         resultType: "ALL",
         from,
         to,
         limit: 100,
       });
 
-      for (const result of items) {
-        const isFailing = result.hasErrors || result.hasFailures;
-        let resultToInsert = result;
-
+      for (let checkResult of checkResults) {
+        const isFailing = checkResult.hasErrors || checkResult.hasFailures;
         if (isFailing) {
-          resultToInsert = await checkly.getCheckResult(checkId, result.id);
+          checkResult = await checkly.getCheckResult(checkId, checkResult.id);
         }
 
         await postgres("check_results")
-          .insert(serialiseCheckResult(resultToInsert))
+          .insert(serializeCheckResult(checkResult))
           .onConflict("id")
           .merge();
         synchronizedResults++;
 
         if (synchronizedResults % 100 === 0) {
-          console.log(
-            `msg="Check result batch synced" count=${synchronizedResults} duration_ms=${Date.now() - startedAt}`,
+          log.info(
+            {
+              count: synchronizedResults,
+              duration_ms: Date.now() - startedAt,
+            },
+            "Check result batch synced",
           );
         }
       }
     }
 
-    console.log(
-      `msg="Check Results synced" count=${synchronizedResults} duration_ms=${Date.now() - startedAt}`,
+    log.info(
+      {
+        count: synchronizedResults,
+        duration_ms: Date.now() - startedAt,
+      },
+      "Check Results synced",
     );
   }
 
@@ -66,7 +73,7 @@ export class ChecklyDataSyncer {
     });
 
     await postgres("checks")
-      .insert(allChecks.map((check) => serializeCheck(check)))
+      .insert(allChecks.map(serializeCheck))
       .onConflict("id")
       .merge();
 
@@ -74,8 +81,12 @@ export class ChecklyDataSyncer {
     const checkIds = allChecks.map((check) => check.id);
     await postgres("checks").delete().whereNotIn("id", checkIds);
 
-    console.log(
-      `msg="Checks synced" count=${checkIds.length} duration_ms=${Date.now() - startedAt}`,
+    log.info(
+      {
+        count: allChecks.length,
+        duration_ms: Date.now() - startedAt,
+      },
+      "Checks synced",
     );
   }
 
@@ -94,7 +105,7 @@ export class ChecklyDataSyncer {
 
     const allGroups = await checkly.getCheckGroups();
     await postgres("check_groups")
-      .insert(allGroups.map((group) => serializeCheckGroup(group)))
+      .insert(allGroups.map(serializeCheckGroup))
       .onConflict("id")
       .merge();
 
@@ -102,8 +113,12 @@ export class ChecklyDataSyncer {
     const groupIds = allCheckGroups.map((check) => check.id);
     await postgres("check_groups").delete().whereNotIn("id", groupIds);
 
-    console.log(
-      `msg="Check Groups synced" count=${groupIds.length} duration_ms=${Date.now() - startedAt}`,
+    log.info(
+      {
+        count: allCheckGroups.length,
+        duration_ms: Date.now() - startedAt,
+      },
+      "Check Groups synced",
     );
   }
 }

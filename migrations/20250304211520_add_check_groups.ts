@@ -46,21 +46,11 @@ export async function up(knex: Knex): Promise<void> {
 
     table.specificType("privateLocations", "TEXT[]").defaultTo("{}");
 
-    // Embedding for vector search
-    table.specificType("embedding", "vector(1536)").nullable();
-    table.string("embeddingModel").nullable();
-
     //  Fetched timestamp for cron tracking
     table.timestamp("fetchedAt").nullable();
   });
-
-  // Create HNSW index for embedding (for similarity search)
-  await knex.raw(
-    `CREATE INDEX idx_check_groups_embedding ON check_groups USING hnsw (embedding vector_l2_ops);`,
-  );
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.raw("DROP INDEX IF EXISTS idx_check_groups_embedding;");
   await knex.schema.dropTableIfExists("check_groups");
 }

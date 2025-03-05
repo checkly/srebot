@@ -43,20 +43,12 @@ export async function up(knex: Knex): Promise<void> {
     table.jsonb("dependencies").defaultTo("[]");
     table.jsonb("environmentVariables").defaultTo("[]");
 
-    //  Embedding for vector search
-    table.specificType("embedding", "vector(1536)").nullable();
-    table.string("embeddingModel").nullable();
-
     // Checkly specific fields
     table.timestamp("fetchedAt").nullable(); // Last fetch time
 
     // Indexes for performance
     table.index(["groupId"]);
   });
-
-  await knex.schema.raw(
-    `CREATE INDEX idx_checks_embedding ON checks USING hnsw (embedding vector_l2_ops)`,
-  );
 }
 
 export async function down(knex: Knex): Promise<void> {

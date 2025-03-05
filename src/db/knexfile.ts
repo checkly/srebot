@@ -1,4 +1,5 @@
-import { initConfig } from "./src/lib/init-config";
+import { initConfig } from "../lib/init-config";
+import { log } from "../slackbot/log";
 
 initConfig();
 
@@ -29,6 +30,11 @@ const config = {
 
 const currentConfig = config[process.env.NODE_ENV || "local"];
 
-console.log(`msg="Loading Knex config" env=${process.env.NODE_ENV || "local"}`);
+log.info(
+  {
+    env: process.env.NODE_ENV || "local",
+  },
+  "Loading Knex config",
+);
 
 export default currentConfig;
