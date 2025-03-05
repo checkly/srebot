@@ -1,9 +1,6 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-  // Enable pgvector extension (if not already enabled)
-  await knex.raw("CREATE EXTENSION IF NOT EXISTS vector;");
-
   await knex.schema.createTable("checks", (table) => {
     table.uuid("id").primary(); // Unique Checkly ID
     table.uuid("accountId").notNullable().index(); // Account UUID
@@ -51,11 +48,10 @@ export async function up(knex: Knex): Promise<void> {
     table.string("embeddingModel").nullable();
 
     // Checkly specific fields
-    table.timestamp("fetched_at").nullable(); // Last fetch time
+    table.timestamp("fetchedAt").nullable(); // Last fetch time
 
     // Indexes for performance
     table.index(["groupId"]);
-    table.index(["fetched_at"]);
   });
 
   await knex.schema.raw(
