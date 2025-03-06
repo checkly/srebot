@@ -1,13 +1,14 @@
 import { plainToClass, plainToInstance } from "class-transformer";
 import * as fs from "node:fs";
+import type { RequestInfo, RequestInit } from "node-fetch";
 import fetch from "node-fetch";
 import process from "node:process";
 import {
   Check,
   CheckGroup,
   CheckResult,
-  Reporting,
   CheckStatus,
+  Reporting,
 } from "./models";
 import { PrometheusParser } from "./PrometheusParser";
 
@@ -19,6 +20,11 @@ interface ChecklyClientOptions {
   checklyPrometheusKey?: string;
   prometheusIntegrationUrl?: string;
 }
+
+type RetryOptions = {
+  attempt: number;
+  maxAttempts: number;
+};
 
 export class ChecklyClient {
   /**
@@ -125,6 +131,45 @@ export class ChecklyClient {
       limit?: number;
     },
   ): Promise<CheckResult[]> {
+    const url = this.buildCheckResultsUrl(config, checkId);
+
+    return this.fetchWithCursor<CheckResult>(url);
+  }
+
+  getCheckResultsByCheckIdGenerator(
+    checkId: string,
+    config?: {
+      hasFailures?: boolean;
+      resultType?: "ALL" | "FINAL" | "ATTEMPT";
+      from?: Date;
+      to?: Date;
+      limit?: number;
+    },
+  ): AsyncGenerator<CheckResult[]> {
+    const url = this.buildCheckResultsUrl(config, checkId);
+
+    return this.fetchWithCursorGenerator<CheckResult>(url);
+  }
+
+  private buildCheckResultsUrl = (
+    config:
+      | {
+          hasFailures?: boolean;
+          resultType?: "ALL" | "FINAL" | "ATTEMPT";
+          from?: Date;
+          to?: Date;
+          limit?: number;
+        }
+      | undefined
+      | {
+          hasFailures?: boolean | undefined;
+          resultType?: "ALL" | "FINAL" | "ATTEMPT" | undefined;
+          from?: Date | undefined;
+          to?: Date | undefined;
+          limit?: number | undefined;
+        },
+    checkId: string,
+  ) => {
     let hasFailuresQuery = "";
     if (!!config && !!config.hasFailures) {
       hasFailuresQuery = `&hasFailures=${config.hasFailures}`;
@@ -147,9 +192,8 @@ export class ChecklyClient {
         "v1",
         "v2",
       );
-
-    return this.fetchWithCursor<CheckResult>(url);
-  }
+    return url;
+  };
 
   async getPaginatedDownload<T>(
     path: string,
@@ -172,7 +216,9 @@ export class ChecklyClient {
 
   getCheckResult(checkid: string, checkresultid: string): Promise<CheckResult> {
     const url = `${this.checklyApiUrl}check-results/${checkid}/${checkresultid}`;
-    return this.makeRequest(url, CheckResult) as Promise<CheckResult>;
+    return this.makeRequest(url, CheckResult, {
+      retryOptions: { attempt: 1, maxAttempts: 3 },
+    }) as Promise<CheckResult>;
   }
 
   getCheckResultAppUrl(checkId: string, checkResultId: string): string {
@@ -213,15 +259,22 @@ export class ChecklyClient {
 
   private async fetch(
     url: string,
-    options?: { method: "GET" | "POST" },
+    options?: {
+      method?: "GET" | "POST";
+      retryOptions?: { attempt: number; maxAttempts: number };
+    },
   ): Promise<any> {
-    const response = await fetch(url, {
-      method: options?.method || "GET", // Optional, default is 'GET'
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`, // Add Authorization header
-        "X-Checkly-Account": this.accountId, // Add custom X-Checkly-Account header
+    const response = await this.fetchWithRetry(
+      url,
+      {
+        method: options?.method || "GET", // Optional, default is 'GET'
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`, // Add Authorization header
+          "X-Checkly-Account": this.accountId, // Add custom X-Checkly-Account header
+        },
       },
-    });
+      options?.retryOptions,
+    );
     if (!response.ok) {
       throw new Error(
         `Response status: ${response.status} url:${url}:\n${response.statusText}, statusText: ${response.statusText}`,
@@ -231,37 +284,116 @@ export class ChecklyClient {
     return response.json();
   }
 
+  private async fetchWithRetry(
+    url: RequestInfo,
+    init?: RequestInit,
+    options?: {
+      attempt: number;
+      maxAttempts: number;
+    },
+  ): Promise<any> {
+    try {
+      const response = await fetch(url, init);
+      if (response.ok) {
+        return response;
+      }
+
+      const isRetryable = response.status === 429 || response.status >= 500;
+      const hasAttemptsLeft =
+        options && options?.attempt <= options?.maxAttempts;
+      const willRetry = isRetryable && hasAttemptsLeft;
+
+      if (!willRetry) {
+        return response;
+      }
+
+      const retryAfterHeader = response.headers.get("Retry-After");
+      const exponentialDelay = Math.pow(2, options.attempt) * 1000; // exponential delay
+      const retryDelay = retryAfterHeader
+        ? parseInt(retryAfterHeader) * 1000
+        : exponentialDelay;
+
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      return this.fetchWithRetry(url, init, {
+        attempt: options.attempt + 1,
+        maxAttempts: options.maxAttempts,
+      });
+    } catch (err) {
+      const hasAttemptsLeft =
+        options && options?.attempt <= options?.maxAttempts;
+      if (!hasAttemptsLeft) {
+        throw err;
+      }
+
+      const retryDelay = Math.pow(2, options.attempt) * 1000; // exponential delay
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      return this.fetchWithRetry(url, init, {
+        attempt: options.attempt + 1,
+        maxAttempts: options.maxAttempts,
+      });
+    }
+  }
+
   private async fetchWithCursor<T>(
     url: string,
     options?: { method: "GET" | "POST" },
   ): Promise<T[]> {
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Sleep for 2 seconds between paginated requests
-
-    const { entries: results, nextId } = await this.fetch(url, options);
+    const retryOptions: RetryOptions = { attempt: 1, maxAttempts: 3 };
+    const { entries: results, nextId } = await this.fetch(url, {
+      ...options,
+      retryOptions,
+    });
 
     let cursor = nextId;
     while (cursor) {
-      //FIXME remove this
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Sleep for 2 seconds between paginated requests
-
-      const { entries, nextId } = await this.fetch(
-        url + "&nextId=" + cursor,
-        options,
-      );
+      const { entries, nextId } = await this.fetch(url + "&nextId=" + cursor, {
+        ...options,
+        retryOptions,
+      });
       results.push(...entries);
+      console.log("entries", results.length);
       cursor = nextId;
     }
 
     return results;
   }
 
+  private async *fetchWithCursorGenerator<T>(
+    url: string,
+    options?: { method: "GET" | "POST" },
+  ): AsyncGenerator<T[]> {
+    const retryOptions: RetryOptions = { attempt: 1, maxAttempts: 3 };
+    const { entries, nextId } = await this.fetch(url, {
+      ...options,
+      retryOptions,
+    });
+    yield entries;
+
+    let cursor = nextId;
+    while (cursor) {
+      const { entries, nextId } = await this.fetch(url + "&nextId=" + cursor, {
+        ...options,
+        retryOptions,
+      });
+      yield entries;
+      cursor = nextId;
+    }
+  }
+
   private async makeRequest<T>(
     url: string,
     type: { new (): T },
-    options?: { method: "GET" | "POST" | undefined; version?: "v1" | "v2" },
+    options?: {
+      method?: "GET" | "POST";
+      version?: "v1" | "v2";
+      retryOptions?: RetryOptions;
+    },
   ): Promise<T | T[]> {
     try {
-      const json = await this.fetch(url, { method: options?.method || "GET" });
+      const json = await this.fetch(url, {
+        method: options?.method || "GET",
+        retryOptions: options?.retryOptions,
+      });
       if (Array.isArray(json)) {
         return plainToInstance(type, json) as T[];
       } else {
