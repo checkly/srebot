@@ -26,7 +26,7 @@ export class ChecklyClient {
    */
   private readonly checklyApiUrl: string;
   private readonly checklyAppUrl: string;
-  private readonly accountId: string;
+  public readonly accountId: string;
   private readonly apiKey: string;
   private readonly checklyPrometheusKey: string;
   private readonly prometheusIntegrationUrl: string;
