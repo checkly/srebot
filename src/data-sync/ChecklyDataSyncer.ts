@@ -3,11 +3,19 @@ import { checkly } from "../checkly/client";
 import { Check, CheckGroup, CheckResult } from "../checkly/models";
 import { log } from "../slackbot/log";
 import { promiseAllWithConcurrency } from "../lib/async-utils";
+import { insertChecks } from "../db/check";
+import { insertCheckGroups } from "../db/check_groups";
 
 export class ChecklyDataSyncer {
   constructor() {}
 
-  async syncCheckResults({ from, to }: { from: Date; to: Date }) {
+  async syncCheckResults({
+    from,
+    to,
+  }: {
+    from: Date;
+    to: Date;
+  }): Promise<CheckResult[]> {
     const startedAt = Date.now();
     const serializeCheckResult = (cr) => ({
       ...cr,
@@ -16,9 +24,16 @@ export class ChecklyDataSyncer {
     });
 
     const allChecks = await checkly.getChecks();
-    const checkIds = allChecks.map((c) => c.id);
+    const checkIds = allChecks
+      .filter(
+        (c) =>
+          c.checkType === "API" ||
+          c.checkType === "BROWSER" ||
+          c.checkType === "MULTI_STEP",
+      )
+      .map((c) => c.id);
 
-    let totalSynchronized = 0;
+    const allResults: CheckResult[] = [];
     for (const checkId of checkIds) {
       for await (const checkResults of checkly.getCheckResultsByCheckIdGenerator(
         checkId,
@@ -46,18 +61,19 @@ export class ChecklyDataSyncer {
           .insert(enrichedResults.map(serializeCheckResult))
           .onConflict("id")
           .merge();
-        totalSynchronized += enrichedResults.length;
+        allResults.push(...enrichedResults);
       }
 
       log.info(
         {
-          count: totalSynchronized,
+          count: allResults.length,
           duration_ms: Date.now() - startedAt,
           checkId,
         },
         "Check Results synced",
       );
     }
+    return allResults;
   }
 
   private async enrichResult(checkResult: CheckResult): Promise<CheckResult> {
@@ -72,19 +88,7 @@ export class ChecklyDataSyncer {
     const startedAt = Date.now();
     const allChecks = await checkly.getChecks();
 
-    const serializeCheck = (check: Check) => ({
-      ...check,
-      alertChannelSubscriptions: JSON.stringify(
-        check.alertChannelSubscriptions,
-      ),
-      accountId: checkly.accountId,
-      fetchedAt: new Date(),
-    });
-
-    await postgres("checks")
-      .insert(allChecks.map(serializeCheck))
-      .onConflict("id")
-      .merge();
+    await insertChecks(allChecks);
 
     // Remove checks that no longer exist
     const checkIds = allChecks.map((check) => check.id);
@@ -101,30 +105,17 @@ export class ChecklyDataSyncer {
 
   async syncCheckGroups() {
     const startedAt = Date.now();
-    const allCheckGroups = await checkly.getCheckGroups();
-
-    const serializeCheckGroup = (group: CheckGroup) => ({
-      ...group,
-      alertChannelSubscriptions: JSON.stringify(
-        group.alertChannelSubscriptions,
-      ),
-      accountId: checkly.accountId,
-      fetchedAt: new Date(),
-    });
 
     const allGroups = await checkly.getCheckGroups();
-    await postgres("check_groups")
-      .insert(allGroups.map(serializeCheckGroup))
-      .onConflict("id")
-      .merge();
+    await insertCheckGroups(allGroups);
 
     // Remove checks that no longer exist
-    const groupIds = allCheckGroups.map((check) => check.id);
+    const groupIds = allGroups.map((check) => check.id);
     await postgres("check_groups").delete().whereNotIn("id", groupIds);
 
     log.info(
       {
-        count: allCheckGroups.length,
+        count: allGroups.length,
         duration_ms: Date.now() - startedAt,
       },
       "Check Groups synced",
