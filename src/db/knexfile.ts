@@ -14,17 +14,29 @@ const config = {
     connection: dbUrlEnv,
     pool: { min: 2, max: 10 },
     debug: false,
+    migrations: {
+      directory: "./migrations", // Directory where migration files are stored
+      extension: "ts", // Migration files will be TypeScript
+    },
   },
   dev: {
     client: "pg",
     connection: dbUrlEnv,
     pool: { min: 2, max: 10 },
     debug: false,
+    migrations: {
+      directory: "./migrations", // Directory where migration files are stored
+      extension: "ts", // Migration files will be TypeScript
+    },
   },
   production: {
     client: "pg",
     connection: dbUrlEnv,
     pool: { min: 2, max: 20 },
+    migrations: {
+      directory: "./migrations", // Directory where migration files are stored
+      extension: "ts", // Migration files will be TypeScript
+    },
   },
 };
 
