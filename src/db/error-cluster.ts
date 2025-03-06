@@ -37,7 +37,6 @@ export async function insertErrorCluster(
 export async function findMatchingErrorCluster(
   accountId: string,
   embedding: number[],
-  limit: number = 1,
 ): Promise<ErrorClusterTable | null> {
   const clusters = await postgres<ErrorClusterTable>("error_cluster")
     .select("*")

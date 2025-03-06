@@ -4,7 +4,7 @@ import { Check, CheckGroup, CheckResult } from "../checkly/models";
 import { log } from "../slackbot/log";
 import { promiseAllWithConcurrency } from "../lib/async-utils";
 import { insertChecks } from "../db/check";
-import { insertCheckGroups } from "../db/check_groups";
+import { insertCheckGroups } from "../db/check-groups";
 
 export class ChecklyDataSyncer {
   constructor() {}

@@ -112,6 +112,7 @@ describe("Prompt Validation Tests", () => {
       },
       alertChannelSubscriptions: [],
       privateLocations: [],
+      dependencies: [],
     };
 
     const validReleases: GithubReleaseForPrompt[] = [

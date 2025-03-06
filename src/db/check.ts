@@ -29,9 +29,5 @@ export async function insertChecks(checks: Check[]) {
     localTearDownScript: check.localTearDownScript,
   }));
 
-  serializedChecks.forEach((check) => {
-    console.log(JSON.stringify(check, null, 2));
-  });
-
   await postgres("checks").insert(serializedChecks).onConflict("id").merge();
 }
