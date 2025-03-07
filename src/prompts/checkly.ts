@@ -332,7 +332,7 @@ export const formatMultipleChecks = (
   characterLimit = 100_000,
 ): string => {
   const checkInputs: SummariseCheckInput[] = checks.map((check) => {
-    const dependencies = [...check.dependencies];
+    const dependencies = [...(check.dependencies ?? [])];
 
     if (check.localSetupScript) {
       dependencies.push({

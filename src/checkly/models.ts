@@ -131,7 +131,7 @@ export class Check {
   }[];
   privateLocations: any[];
   group?: CheckGroup;
-  dependencies: { path: string; content: string }[];
+  dependencies?: { path: string; content: string }[];
 }
 
 export class CheckResult {
