@@ -1,4 +1,8 @@
-import dotenv from "dotenv";
+import { initConfig } from "./lib/init-config";
+
+initConfig();
+console.log(process.env.OPEN_API_KEY);
+
 import express, { Request, Response } from "express";
 import { getOpenaiClient } from "./ai/openai";
 import { getRunMessages } from "./ai/utils";
@@ -17,7 +21,6 @@ process
   });
 
 // configures dotenv to work in your application
-dotenv.config();
 const app = express();
 
 // Start the OpenTelemetry SDK to collect traces in Langfuse
