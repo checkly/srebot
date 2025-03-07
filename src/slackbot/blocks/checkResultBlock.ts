@@ -1,4 +1,3 @@
-import { ChecklyClient } from "../../checkly/checklyclient";
 import { Check, CheckResult } from "../../checkly/models";
 import { SummarizeErrorsPromptType } from "../../prompts/checkly";
 

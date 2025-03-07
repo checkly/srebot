@@ -1,4 +1,4 @@
-import { log } from "../slackbot/log";
+import { log } from "../log";
 import postgres from "./postgres";
 import pgvector from "pgvector/knex";
 
@@ -15,6 +15,7 @@ export interface ErrorClusterTable {
 export interface ErrorClusterMemberTable {
   error_id: string;
   result_check_id: string;
+  check_id: string;
   date: Date;
   embedding: number[];
   embedding_model: string;
@@ -61,6 +62,19 @@ export async function findMatchingErrorCluster(
   );
 
   return clusters[0]?.distance <= 0.05 ? clusters[0] : null;
+}
+
+export async function findErrorClustersForCheck(
+  checkId: string,
+): Promise<ErrorClusterTable[]> {
+  return postgres<ErrorClusterTable>("error_cluster")
+    .distinct("error_cluster.*")
+    .join(
+      "error_cluster_membership",
+      "error_cluster.id",
+      "error_cluster_membership.error_id",
+    )
+    .where("error_cluster_membership.check_id", checkId);
 }
 
 export async function insertErrorClusterMember(

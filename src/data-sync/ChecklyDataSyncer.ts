@@ -1,8 +1,8 @@
 import postgres from "../db/postgres";
 import { checkly } from "../checkly/client";
-import { Check, CheckGroup, CheckResult } from "../checkly/models";
-import { log } from "../slackbot/log";
+import { CheckResult } from "../checkly/models";
 import { promiseAllWithConcurrency } from "../lib/async-utils";
+import { log } from "../log";
 import { insertChecks } from "../db/check";
 import { insertCheckGroups } from "../db/check-groups";
 

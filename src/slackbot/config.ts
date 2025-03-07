@@ -1,4 +1,4 @@
-import { log, pinoBoltLogger } from "./log";
+import { log, pinoBoltLogger } from "../log";
 import { Logger, LogLevel } from "@slack/bolt";
 import process from "node:process";
 

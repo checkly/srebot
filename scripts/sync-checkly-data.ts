@@ -11,7 +11,7 @@ import {
 } from "../src/db/error-cluster";
 import { embedMany } from "ai";
 import { checkly } from "../src/checkly/client";
-import { log } from "../src/slackbot/log";
+import { log } from "../src/log";
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
@@ -115,6 +115,7 @@ const main = async () => {
       await insertErrorClusterMember({
         error_id: matchingCluster.id,
         result_check_id: checkResult.id,
+        check_id: checkResult.checkId,
         date: new Date(checkResult.created_at),
         embedding,
         embedding_model: embeddingModel,

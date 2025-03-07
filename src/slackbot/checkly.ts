@@ -12,8 +12,12 @@ import {
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { generateHeatmapPNG } from "../heatmap/createHeatmap";
 import { createCheckBlock } from "./blocks/checkBlock";
-import { log } from "./log";
+import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
+import { readCheck } from "../db/check";
+import { findErrorClustersForCheck } from "../db/error-cluster";
+import { findCheckResults } from "../db/check-results";
+import { readCheckGroup } from "../db/check-groups";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -82,47 +86,41 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
 
 async function checkSummary(checkId: string) {
   const start = Date.now();
-  const check = await checkly.getCheck(checkId);
+  const check = await readCheck(checkId);
   if (check.groupId) {
-    const checkGroup = await checkly.getCheckGroup(check.groupId);
+    const checkGroup = await readCheckGroup(BigInt(check.groupId));
     check.locations = checkGroup.locations;
   }
 
   const interval = last24h(new Date());
 
-  const checkResults = await fetchCheckResults(checkly, {
-    checkId: check.id,
-    ...interval,
-  });
+  const checkResults = await findCheckResults(
+    check.id,
+    interval.from,
+    interval.to,
+  );
+
+  const runLocations = checkResults.reduce((acc, cr) => {
+    acc.add(cr.runLocation);
+    return acc;
+  }, new Set<string>());
 
   const failingCheckResults = checkResults.filter(
     (result) => result.hasFailures || result.hasErrors,
   );
 
-  if (failingCheckResults.length === 0) {
+  const failureClusters = await findErrorClustersForCheck(check.id);
+  const errorGroups = failureClusters.map((fc) => {
     return {
-      message: createCheckBlock({
-        check,
-        failureCount: 0,
-        checkResults,
-      }),
-      image: null,
+      error_message: fc.error_message,
+      error_count: -1,
+      locations: [],
     };
-  }
-
-  const promptDef = summarizeErrorsPrompt({
-    check: check.id,
-    locations: check.locations,
-    frequency: check.frequency,
-    interval,
-    results: failingCheckResults.map(summarizeCheckResult),
   });
-  const { object: errorGroups } =
-    await generateObject<SummarizeErrorsPromptType>(promptDef);
 
   const heatmapImage = generateHeatmapPNG(checkResults, {
-    bucketSizeInMinutes: check.frequency * 10,
-    verticalSeries: check.locations.length,
+    bucketSizeInMinutes: 30,
+    verticalSeries: runLocations.size,
   });
 
   log.info(
@@ -139,6 +137,8 @@ async function checkSummary(checkId: string) {
     failureCount: failingCheckResults.length,
     errorGroups,
     checkResults,
+    frequency: check.frequency || -1,
+    locations: Array.from(runLocations),
   });
 
   return { message, image: heatmapImage };

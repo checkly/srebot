@@ -19,16 +19,22 @@ export async function up(knex: Knex): Promise<void> {
 
   await knex.schema.createTable("error_cluster_membership", (table) => {
     table
-      .string("error_id")
+      .uuid("error_id")
       .notNullable()
       .references("id")
       .inTable("error_cluster")
       .onDelete("CASCADE");
     table
-      .string("result_check_id")
+      .uuid("result_check_id")
       .notNullable()
       .references("id")
       .inTable("check_results")
+      .onDelete("CASCADE");
+    table
+      .uuid("check_id")
+      .notNullable()
+      .references("id")
+      .inTable("checks")
       .onDelete("CASCADE");
     table.timestamp("date").notNullable();
     table.specificType("embedding", "float[]").notNullable();
