@@ -1,7 +1,8 @@
 import postgres from "../db/postgres";
 import { checkly } from "../checkly/client";
-import { Check, CheckGroup } from "../checkly/models";
+import { Check, CheckGroup, CheckResult } from "../checkly/models";
 import { log } from "../slackbot/log";
+import { promiseAllWithConcurrency } from "../lib/async-utils";
 
 export class ChecklyDataSyncer {
   constructor() {}
@@ -17,46 +18,54 @@ export class ChecklyDataSyncer {
     const allChecks = await checkly.getChecks();
     const checkIds = allChecks.map((c) => c.id);
 
-    let synchronizedResults = 0;
+    let totalSynchronized = 0;
     for (const checkId of checkIds) {
-      const checkResults = await checkly.getCheckResultsByCheckId(checkId, {
-        resultType: "ALL",
-        from,
-        to,
-        limit: 100,
-      });
-
-      for (let checkResult of checkResults) {
-        const isFailing = checkResult.hasErrors || checkResult.hasFailures;
-        if (isFailing) {
-          checkResult = await checkly.getCheckResult(checkId, checkResult.id);
-        }
+      for await (const checkResults of checkly.getCheckResultsByCheckIdGenerator(
+        checkId,
+        {
+          resultType: "ALL",
+          from,
+          to,
+          limit: 100,
+        },
+      )) {
+        const enrichStartedAt = Date.now();
+        const enrichedResults = await promiseAllWithConcurrency(
+          checkResults.map((result) => () => this.enrichResult(result)),
+          30,
+        );
+        log.debug(
+          {
+            duration_ms: Date.now() - enrichStartedAt,
+            enriched_count: enrichedResults.length,
+          },
+          "Results batch enriched",
+        );
 
         await postgres("check_results")
-          .insert(serializeCheckResult(checkResult))
+          .insert(enrichedResults.map(serializeCheckResult))
           .onConflict("id")
           .merge();
-        synchronizedResults++;
-
-        if (synchronizedResults % 100 === 0) {
-          log.info(
-            {
-              count: synchronizedResults,
-              duration_ms: Date.now() - startedAt,
-            },
-            "Check result batch synced",
-          );
-        }
+        totalSynchronized += enrichedResults.length;
       }
-    }
 
-    log.info(
-      {
-        count: synchronizedResults,
-        duration_ms: Date.now() - startedAt,
-      },
-      "Check Results synced",
-    );
+      log.info(
+        {
+          count: totalSynchronized,
+          duration_ms: Date.now() - startedAt,
+          checkId,
+        },
+        "Check Results synced",
+      );
+    }
+  }
+
+  private async enrichResult(checkResult: CheckResult): Promise<CheckResult> {
+    const isFailing = checkResult.hasErrors || checkResult.hasFailures;
+    if (!isFailing) {
+      return checkResult;
+    }
+    return checkly.getCheckResult(checkResult.checkId, checkResult.id);
   }
 
   async syncChecks() {

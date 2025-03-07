@@ -4,6 +4,7 @@ import { LogLevel } from "@slack/bolt";
 
 export const log = pino({
   level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  base: null,
   transport: {
     target: "pino-logfmt",
     options: {
