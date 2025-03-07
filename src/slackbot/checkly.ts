@@ -19,6 +19,8 @@ import { findErrorClustersForCheck } from "../db/error-cluster";
 import { findCheckResults } from "../db/check-results";
 import { readCheckGroup } from "../db/check-groups";
 import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
+import { z } from "zod";
+import { openai } from "@ai-sdk/openai";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -119,13 +121,7 @@ async function checkSummary(checkId: string) {
   );
 
   const failureClusters = await findErrorClustersForCheck(check.id);
-  const errorGroups = failureClusters.map((fc) => {
-    return {
-      error_message: fc.error_message,
-      error_count: -1,
-      locations: [],
-    };
-  });
+  const failurePatterns = failureClusters.map((fc) => fc.error_message);
 
   const lastFailure =
     failingCheckResults.length > 0
@@ -144,6 +140,7 @@ async function checkSummary(checkId: string) {
     bucketSizeInMinutes: 30,
     verticalSeries: runLocations.size,
   });
+  const checkCategory = await categorizeCheckResultHeatMap(heatmapImage);
 
   log.info(
     {
@@ -157,10 +154,11 @@ async function checkSummary(checkId: string) {
   const message = generateCheckSummaryBlock({
     checkName: check.name,
     checkSummary: checkSummary,
-    checkState: "FAILING",
+    checkState: checkCategory,
     lastFailure: new Date(lastFailure),
     successRate,
     failureCount: failingCheckResults.length,
+    failurePatterns,
   });
 
   return { message, image: heatmapImage };
@@ -214,3 +212,41 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     }
   };
 };
+
+enum ErrorCategory {
+  PASSING = "PASSING",
+  FLAKY = "FLAKY",
+  FAILING = "FAILING",
+}
+
+async function categorizeCheckResultHeatMap(
+  heatMap: Buffer,
+): Promise<ErrorCategory> {
+  const result = await generateObject({
+    model: openai("gpt-4-turbo"),
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are an SRE Engineer. You are given a heatmap which shows test results in different locations over time and you need to categorize the test into one of the following categories: PASSING, FLAKY, FAILING",
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Is this check passing, flaky or failing?" },
+          {
+            type: "image",
+            image: `data:image/jpeg;base64,${heatMap.toString("base64")}`,
+          },
+        ],
+      },
+    ],
+    schema: z.object({
+      category: z
+        .nativeEnum(ErrorCategory)
+        .describe("The category of the check results heat map"),
+    }),
+  });
+
+  return result.object.category;
+}

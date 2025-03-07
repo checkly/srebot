@@ -34,43 +34,46 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Check:* ${stats.checkName} (${getStateEmoji(stats.checkState)} ${stats.checkState}${extraTitlte})`,
+          text: `*Check:* ${stats.checkName} (${getStateEmoji(stats.checkState)} ${stats.checkState}${extraTitlte})
+*Check summary:* ${stats.checkSummary}`,
         },
       },
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Check summary:* ${stats.checkSummary}`,
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Last failure:* <!date^${Math.floor(stats.lastFailure.getTime() / 1000)}^{ago}|${stats.lastFailure.toLocaleString()}>`,
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Success Rate:* ${stats.successRate}% in the last 24 hours`,
+          text: `*Last failure:* <!date^${Math.floor(stats.lastFailure.getTime() / 1000)}^{ago}|${stats.lastFailure.toLocaleString()}>
+*Success Rate:* ${stats.successRate}% in the last 24 hours`,
         },
       },
       ...(stats.failurePatterns && stats.failurePatterns.length > 0
         ? [
             {
-              type: "divider",
-            },
-            {
               type: "section",
               text: {
                 type: "mrkdwn",
-                text: `*Failure Patterns:*
-- ${stats.failurePatterns.join("\n - ")}
-            `,
+                text: `*Failure Patterns:*`,
               },
+            },
+            {
+              type: "rich_text",
+              elements: [
+                {
+                  type: "rich_text_list",
+                  style: "bullet",
+                  indent: 0,
+                  border: 0,
+                  elements: stats.failurePatterns.map((pattern) => ({
+                    type: "rich_text_section",
+                    elements: [
+                      {
+                        type: "text",
+                        text: pattern,
+                      },
+                    ],
+                  })),
+                },
+              ],
             },
           ]
         : []),
