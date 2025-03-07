@@ -153,21 +153,21 @@ test('visit page and take screenshot', async ({ page }) => {
       ),
       expect(summary).toScoreGreaterThanOrEqual(
         Factuality({
-          input: promptDef.prompt,
+          input: promptDef.prompt!,
           expected: expected,
         }),
         0.5,
       ),
       expect(summary).toScoreGreaterThanOrEqual(
         Battle({
-          instructions: promptDef.prompt,
+          instructions: promptDef.prompt!,
           expected: expected,
         }),
         0.5,
       ),
       expect(summary).toScorePerfect(
         Summary({
-          input: promptDef.prompt,
+          input: promptDef.prompt!,
           expected: expectedBad,
         }),
       ),

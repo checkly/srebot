@@ -20,8 +20,6 @@ import { findErrorClustersForCheck } from "../db/error-cluster";
 import { findCheckResults } from "../db/check-results";
 import { readCheckGroup } from "../db/check-groups";
 import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
-import { z } from "zod";
-import { openai } from "@ai-sdk/openai";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();

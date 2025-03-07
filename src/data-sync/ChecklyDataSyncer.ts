@@ -44,6 +44,10 @@ export class ChecklyDataSyncer {
           limit: 100,
         },
       )) {
+        if (checkResults.length === 0) {
+          continue;
+        }
+
         const enrichStartedAt = Date.now();
         const enrichedResults = await promiseAllWithConcurrency(
           checkResults.map((result) => () => this.enrichResult(result)),
