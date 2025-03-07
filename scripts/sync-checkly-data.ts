@@ -1,4 +1,4 @@
-#!/usr/bin/env node_modules/.bin/ts-node
+#!/usr/bin/env ts-node
 
 import { openai } from "@ai-sdk/openai";
 import { ChecklyDataSyncer } from "../src/data-sync/ChecklyDataSyncer";
