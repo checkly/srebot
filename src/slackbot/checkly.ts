@@ -20,6 +20,8 @@ import { findErrorClustersForCheck } from "../db/error-cluster";
 import { findCheckResults } from "../db/check-results";
 import { readCheckGroup } from "../db/check-groups";
 import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
+import { analyseMultipleChecks } from "../use-cases/analyse-multiple/analyse-multiple-checks";
+import { createMultipleCheckAnalysisBlock } from "./blocks/multipleChecksAnalysisBlock";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -164,14 +166,29 @@ async function checkSummary(checkId: string) {
 
   return { message, image: heatmapImage };
 }
-export const CHECKLY_COMMAND_NAME = "/checkly";
+
+// Allow overriding the command name for local dev
+export const CHECKLY_COMMAND_NAME =
+  process.env.CHECKLY_COMMAND_NAME_OVERRIDE || "/checkly";
+
+const getIsUUID = (str: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    str,
+  );
+};
 
 export const checklyCommandHandler = (app: App<StringIndexed>) => {
   return async ({ ack, respond, command }) => {
     await ack();
 
     const args = command.text.split(" ");
-    if (args.length === 1 && !!args[0]) {
+
+    if (args.length <= 1 && !getIsUUID(args[0])) {
+      const multipleCheckAnalysisResult = await analyseMultipleChecks(args[0]);
+      await respond(
+        createMultipleCheckAnalysisBlock(multipleCheckAnalysisResult),
+      );
+    } else if (args.length === 1 && !!args[0] && getIsUUID(args[0])) {
       const { message, image } = await checkSummary(args[0]);
       await respond({
         ...message,

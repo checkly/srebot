@@ -312,6 +312,106 @@ export function summarizeTestStepsPrompt(
   ];
 }
 
+type SummariseCheckInput = {
+  name: string;
+  tags: string[];
+  groupName?: string;
+  checkType: string;
+  dependencies: { path: string; content: string }[];
+  locations: string[];
+  request?: {
+    method: string;
+    url: string;
+    assertions: string[];
+  };
+};
+
+export const formatMultipleChecks = (checks: Check[]): string => {
+  const checkInputs: SummariseCheckInput[] = checks.map((check) => {
+    const dependencies = [...check.dependencies];
+
+    if (check.localSetupScript) {
+      dependencies.push({
+        path: "localSetupScript",
+        content: check.localSetupScript,
+      });
+    }
+    if (check.localTearDownScript) {
+      dependencies.push({
+        path: "localTearDownScript",
+        content: check.localTearDownScript,
+      });
+    }
+
+    return {
+      name: check.name,
+      tags: check.tags,
+      groupName: check.group?.name,
+      checkType: check.checkType,
+      request: check.request,
+      locations: check.locations,
+      dependencies,
+    };
+  });
+
+  return checkInputs
+    .map(
+      (check) => `
+  - Name: ${check.name}
+  - Group: ${check.groupName}
+  - Type: ${check.checkType}
+  - Tags: ${check.tags.join(", ") || "None"}
+  - Locations: ${check.locations.join(", ")}
+  ${
+    check.request
+      ? `- Request: [${check.request.method}] ${check.request.url}\n  - Assertions: ${check.request.assertions.join(
+          ", ",
+        )}`
+      : ""
+  }
+  - Dependencies: ${
+    check.dependencies.length
+      ? check.dependencies.map((d) => `${d.path}\n  ${d.content}`).join(", ")
+      : "None"
+  }
+  `,
+    )
+    .join("\n");
+};
+
+export function summariseMultipleChecksGoal(
+  checks: Check[],
+  maxTokens: number = 500,
+): PromptDefinitionForText {
+  const checksFormatted = formatMultipleChecks(checks);
+
+  return {
+    prompt: `
+### **Task**
+Analyze the following monitoring checks and provide a **high-level summary** of their **common goal**.
+
+### **Instructions**
+1. Identify what user-facing feature(s) these checks are monitoring.
+2. Do **not** focus on technical details (e.g., URLs, assertions, scripts).
+3. Prioritize accuracy and clarity in your response.
+4. Provide a concise but meaningful summary in **natural language**.
+5. Take into account the url/name of the service that is being monitored. Output it if possible
+6. The obvious goals of the checks is to monitor functionality and reliability of services - do not focus on this, focus on WHAT is monitored.
+
+### **Checks Data**
+${checksFormatted}
+
+### **Expected Output**
+Provide a **brief summary** explaining the **common purpose** of these checks, focusing on the user impact rather than implementation details.
+Answer in no more than: ${maxTokens} tokens.
+    `,
+    ...promptConfig("checklySummarizeMultipleChecksGoal", {
+      temperature: 1,
+      maxTokens: maxTokens,
+    }),
+  };
+}
+
 /**
  * Generates a comprehensive analysis prompt for multiple context entries.
  * Creates a structured prompt for analyzing check state changes and generating
