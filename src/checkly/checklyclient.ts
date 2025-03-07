@@ -351,7 +351,6 @@ export class ChecklyClient {
         retryOptions,
       });
       results.push(...entries);
-      console.log("entries", results.length);
       cursor = nextId;
     }
 

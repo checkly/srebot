@@ -11,6 +11,7 @@ export const promiseAllWithConcurrency = async <T>(
       return result;
     });
 
+    // Limit the number of concurrent promises
     results.push(await promise);
     executing.push(promise);
 

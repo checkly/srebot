@@ -18,7 +18,7 @@ export class ChecklyDataSyncer {
     const allChecks = await checkly.getChecks();
     const checkIds = allChecks.map((c) => c.id);
 
-    let totalSynchronised = 0;
+    let totalSynchronized = 0;
     for (const checkId of checkIds) {
       for await (const checkResults of checkly.getCheckResultsByCheckIdGenerator(
         checkId,
@@ -46,12 +46,12 @@ export class ChecklyDataSyncer {
           .insert(enrichedResults.map(serializeCheckResult))
           .onConflict("id")
           .merge();
-        totalSynchronised += enrichedResults.length;
+        totalSynchronized += enrichedResults.length;
       }
 
       log.info(
         {
-          count: totalSynchronised,
+          count: totalSynchronized,
           duration_ms: Date.now() - startedAt,
           checkId,
         },
