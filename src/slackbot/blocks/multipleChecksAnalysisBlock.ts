@@ -7,18 +7,10 @@ export function createMultipleCheckAnalysisBlock(
     text: `*Multiple Check Analysis*`,
     blocks: [
       {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: `Blast radius`,
-          emoji: true,
-        },
-      },
-      {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `* ${analysisResult.allAnalysedChecks.length} checks analysed\n* ${analysisResult.goalSummary}`,
+          text: `Blast Radius:\n* ${analysisResult.allAnalysedChecks.length} checks analysed\n* ${analysisResult.goalSummary}`,
         },
       },
     ],

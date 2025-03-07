@@ -64,7 +64,7 @@ export const findTargetChecks = async (arg?: string): Promise<Check[]> => {
   const checksWithoutGroupSettings = await checkly.getChecks();
   // TODO adapt this to work with more check types
   const filteredChecksWithoutGroupSettings = checksWithoutGroupSettings.filter(
-    (check) => ["BROWSER", "API", "MULTISTEP"].includes(check.checkType),
+    (check) => ["BROWSER", "API", "MULTI_STEP"].includes(check.checkType),
   );
   const allGroups = await checkly.getCheckGroups();
   const groupsById: Record<number, CheckGroup> = keyBy(allGroups, "id");

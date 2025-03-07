@@ -5,6 +5,7 @@ import { promiseAllWithConcurrency } from "../lib/async-utils";
 import { log } from "../log";
 import { insertChecks } from "../db/check";
 import { insertCheckGroups } from "../db/check-groups";
+import { keyBy } from "lodash";
 
 export class ChecklyDataSyncer {
   constructor() {}
@@ -24,6 +25,9 @@ export class ChecklyDataSyncer {
     });
 
     const allChecks = await checkly.getChecks();
+    const groups = await checkly.getCheckGroups();
+    const groupsById = keyBy(groups, "id");
+
     const checkIds = allChecks
       .filter(
         (c) =>
@@ -31,6 +35,14 @@ export class ChecklyDataSyncer {
           c.checkType === "BROWSER" ||
           c.checkType === "MULTI_STEP",
       )
+      .filter((c) => {
+        if (c.groupId) {
+          const group = groupsById[c.groupId];
+          return group && group.activated && c.activated;
+        }
+        return c.activated;
+      })
+      .filter((c) => c.frequency >= 5)
       .map((c) => c.id);
 
     const allResults: CheckResult[] = [];
@@ -96,7 +108,10 @@ export class ChecklyDataSyncer {
 
     // Remove checks that no longer exist
     const checkIds = allChecks.map((check) => check.id);
-    await postgres("checks").delete().whereNotIn("id", checkIds);
+    await postgres("checks")
+      .delete()
+      .whereNotIn("id", checkIds)
+      .where("accountId", checkly.accountId);
 
     log.info(
       {
@@ -115,7 +130,10 @@ export class ChecklyDataSyncer {
 
     // Remove checks that no longer exist
     const groupIds = allGroups.map((check) => check.id);
-    await postgres("check_groups").delete().whereNotIn("id", groupIds);
+    await postgres("check_groups")
+      .delete()
+      .whereNotIn("id", groupIds)
+      .where("accountId", checkly.accountId);
 
     log.info(
       {
