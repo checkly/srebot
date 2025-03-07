@@ -1,6 +1,7 @@
 import { generateObject, generateText } from "ai";
 import { checkly } from "../checkly/client";
 import {
+  categorizeTestResultHeatMap,
   summarizeErrorsPrompt,
   SummarizeErrorsPromptType,
   summarizeTestGoalPrompt,
@@ -140,7 +141,9 @@ async function checkSummary(checkId: string) {
     bucketSizeInMinutes: 30,
     verticalSeries: runLocations.size,
   });
-  const checkCategory = await categorizeCheckResultHeatMap(heatmapImage);
+  const checkCategory = (
+    await generateObject(categorizeTestResultHeatMap(heatmapImage))
+  ).object.category;
 
   log.info(
     {
@@ -212,41 +215,3 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     }
   };
 };
-
-enum ErrorCategory {
-  PASSING = "PASSING",
-  FLAKY = "FLAKY",
-  FAILING = "FAILING",
-}
-
-async function categorizeCheckResultHeatMap(
-  heatMap: Buffer,
-): Promise<ErrorCategory> {
-  const result = await generateObject({
-    model: openai("gpt-4-turbo"),
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are an SRE Engineer. You are given a heatmap which shows test results in different locations over time and you need to categorize the test into one of the following categories: PASSING, FLAKY, FAILING",
-      },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "Is this check passing, flaky or failing?" },
-          {
-            type: "image",
-            image: `data:image/jpeg;base64,${heatMap.toString("base64")}`,
-          },
-        ],
-      },
-    ],
-    schema: z.object({
-      category: z
-        .nativeEnum(ErrorCategory)
-        .describe("The category of the check results heat map"),
-    }),
-  });
-
-  return result.object.category;
-}

@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import { LanguageModel, LanguageModelV1 } from "ai";
+import { CoreMessage, LanguageModel, LanguageModelV1, Message } from "ai";
 import { trace } from "@opentelemetry/api";
 import { z, ZodSchema } from "zod";
 export const model = openai("gpt-4o");
@@ -18,7 +18,8 @@ export interface PromptConfig {
 export type PromptDefinition<
   T extends "array" | "object" | "enum" | "no-schema" = "object",
 > = PromptConfig & {
-  prompt: string;
+  prompt?: string;
+  messages?: CoreMessage[];
   schema: z.Schema<any, z.ZodTypeDef, any>;
   output: T;
 };
@@ -53,6 +54,22 @@ export function definePrompt<
   return {
     output: "object" as T, // type assertion here since we know config.output will override if provided
     prompt,
+    schema,
+    ...promptConfig(id, config),
+  };
+}
+
+export function defineMessagesPrompt<
+  T extends "array" | "object" | "enum" | "no-schema" = "object",
+>(
+  id: string,
+  messages: CoreMessage[],
+  schema: ZodSchema,
+  config?: Partial<PromptConfig> & { output?: T },
+): PromptDefinition<T> & { output: T } {
+  return {
+    output: "object" as T, // type assertion here since we know config.output will override if provided
+    messages,
     schema,
     ...promptConfig(id, config),
   };

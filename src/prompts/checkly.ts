@@ -4,6 +4,7 @@ import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
 import { validObjectList, validObject } from "./validation";
 import {
+  defineMessagesPrompt,
   definePrompt,
   promptConfig,
   PromptConfig,
@@ -12,6 +13,7 @@ import {
 } from "./common";
 import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
+import { CoreSystemMessage, CoreUserMessage } from "ai";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
@@ -161,6 +163,43 @@ export function summarizeTestGoalPrompt(
       maxTokens: 500,
     }),
   };
+}
+
+enum ErrorCategory {
+  PASSING = "PASSING",
+  FLAKY = "FLAKY",
+  FAILING = "FAILING",
+}
+
+export function categorizeTestResultHeatMap(heatmap: Buffer): PromptDefinition {
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are an SRE Engineer. You are given a heatmap which shows test results in different locations over time and you need to categorize the test into one of the following categories: PASSING, FLAKY, FAILING",
+    } as CoreSystemMessage,
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "Is this check passing, flaky or failing?" },
+        {
+          type: "image",
+          image: `data:image/jpeg;base64,${heatmap.toString("base64")}`,
+        },
+      ],
+    } as CoreUserMessage,
+  ];
+
+  const schema = z.object({
+    category: z
+      .nativeEnum(ErrorCategory)
+      .describe("The category of the check results heat map"),
+  });
+
+  return defineMessagesPrompt("categorizeTestResultHeatMap", messages, schema, {
+    temperature: 0.1,
+    maxTokens: 1000,
+  });
 }
 
 export function clusterCheckResults(
