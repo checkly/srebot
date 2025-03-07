@@ -1,8 +1,9 @@
-import { generateObject } from "ai";
+import { generateObject, generateText } from "ai";
 import { checkly } from "../checkly/client";
 import {
   summarizeErrorsPrompt,
   SummarizeErrorsPromptType,
+  summarizeTestGoalPrompt,
 } from "../prompts/checkly";
 import {
   fetchCheckResults,
@@ -11,13 +12,13 @@ import {
 } from "../prompts/checkly-data";
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { generateHeatmapPNG } from "../heatmap/createHeatmap";
-import { createCheckBlock } from "./blocks/checkBlock";
 import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
 import { readCheck } from "../db/check";
 import { findErrorClustersForCheck } from "../db/error-cluster";
 import { findCheckResults } from "../db/check-results";
 import { readCheckGroup } from "../db/check-groups";
+import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -92,6 +93,14 @@ async function checkSummary(checkId: string) {
     check.locations = checkGroup.locations;
   }
 
+  const prompt = summarizeTestGoalPrompt(
+    check.name,
+    check.script || "",
+    check.scriptPath || "",
+    [],
+  );
+  const { text: checkSummary } = await generateText(prompt);
+
   const interval = last24h(new Date());
 
   const checkResults = await findCheckResults(
@@ -118,6 +127,19 @@ async function checkSummary(checkId: string) {
     };
   });
 
+  const lastFailure =
+    failingCheckResults.length > 0
+      ? failingCheckResults.sort(
+          (a, b) =>
+            new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+        )[0].startedAt
+      : checkResults[0].startedAt;
+
+  const successRate = Math.round(
+    ((checkResults.length - failingCheckResults.length) / checkResults.length) *
+      100,
+  );
+
   const heatmapImage = generateHeatmapPNG(checkResults, {
     bucketSizeInMinutes: 30,
     verticalSeries: runLocations.size,
@@ -132,13 +154,13 @@ async function checkSummary(checkId: string) {
     },
     "checkSummary",
   );
-  const message = createCheckBlock({
-    check,
+  const message = generateCheckSummaryBlock({
+    checkName: check.name,
+    checkSummary: checkSummary,
+    checkState: "FAILING",
+    lastFailure: new Date(lastFailure),
+    successRate,
     failureCount: failingCheckResults.length,
-    errorGroups,
-    checkResults,
-    frequency: check.frequency || -1,
-    locations: Array.from(runLocations),
   });
 
   return { message, image: heatmapImage };

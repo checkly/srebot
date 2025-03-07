@@ -8,7 +8,7 @@ interface CheckStats {
   failurePatterns?: string[];
 }
 
-function generateCheckStatusBlock(stats: CheckStats) {
+function generateCheckSummaryBlock(stats: CheckStats) {
   // Helper to get emoji based on state
   const getStateEmoji = (state: string) => {
     switch (state) {
@@ -25,7 +25,7 @@ function generateCheckStatusBlock(stats: CheckStats) {
 
   const extraTitlte =
     stats.checkState != "PASSING"
-      ? `- ${stats.failureCount} failures in the last 24 hours)`
+      ? ` - ${stats.failureCount} failures in the last 24 hours`
       : "";
 
   return {
@@ -34,7 +34,7 @@ function generateCheckStatusBlock(stats: CheckStats) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Check:* ${stats.checkName} (${getStateEmoji(stats.checkState)} ${stats.checkState} ${extraTitlte}`,
+          text: `*Check:* ${stats.checkName} (${getStateEmoji(stats.checkState)} ${stats.checkState}${extraTitlte})`,
         },
       },
       {
@@ -55,7 +55,7 @@ function generateCheckStatusBlock(stats: CheckStats) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Availability:* ${stats.successRate}% in the last 24 hours`,
+          text: `*Success Rate:* ${stats.successRate}% in the last 24 hours`,
         },
       },
       ...(stats.failurePatterns && stats.failurePatterns.length > 0
@@ -78,4 +78,4 @@ function generateCheckStatusBlock(stats: CheckStats) {
   };
 }
 
-export default generateCheckStatusBlock;
+export default generateCheckSummaryBlock;

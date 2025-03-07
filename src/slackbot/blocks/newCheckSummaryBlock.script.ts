@@ -1,10 +1,10 @@
 #! /usr/bin/env ts-node
 import { WebClient } from "@slack/web-api";
-import generateCheckStatusBlock from "./newCheckSummaryBlock";
+import generateCheckSummaryBlock from "./newCheckSummaryBlock";
 
 async function main() {
   [
-    generateCheckStatusBlock({
+    generateCheckSummaryBlock({
       checkName: "My Passing Check",
       checkSummary: "This is a summary of my passing check",
       checkState: "PASSING",
@@ -12,7 +12,7 @@ async function main() {
       successRate: 100,
       failureCount: 0,
     }),
-    generateCheckStatusBlock({
+    generateCheckSummaryBlock({
       checkName: "My Flaky Check",
       checkSummary: "This is a summary of my flaky check",
       checkState: "FLAKY",
@@ -24,7 +24,7 @@ async function main() {
         "This is another failure pattern",
       ],
     }),
-    generateCheckStatusBlock({
+    generateCheckSummaryBlock({
       checkName: "My Check",
       checkSummary: "This is a summary of my check",
       checkState: "FAILING",

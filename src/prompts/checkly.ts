@@ -8,6 +8,7 @@ import {
   promptConfig,
   PromptConfig,
   PromptDefinition,
+  PromptDefinitionForText,
 } from "./common";
 import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
@@ -126,6 +127,40 @@ export function summarizeErrorsPrompt(input: {
     temperature: 0.1,
     maxTokens: 10000,
   });
+}
+
+export function summarizeTestGoalPrompt(
+  testName: string,
+  scriptName: string,
+  scriptPath: string,
+  dependencies: { script: string; scriptPath: string }[],
+): PromptDefinitionForText {
+  const prompt = `
+      The following details describe a test which is used to monitor an application.
+
+      Test name: ${testName}
+      Script name: ${scriptName}
+      Script: ${scriptPath}
+
+      Dependent scripts of the main script:
+      ${dependencies.map((d) => `- ${d.scriptPath}\n  ${d.script}`).join("\n")}
+
+      Summarize what the test is validating in a single sentence with max 10 words.
+
+      CONSTITUTION:
+      - Always prioritize accuracy and relevance in the summary
+      - Be concise but comprehensive in your explanations
+      - Focus on providing actionable information that can help judging user impact
+      - Do not refer to technical details of the test, use the domain language from the application under test.
+    `;
+
+  return {
+    prompt,
+    ...promptConfig("checklySummarizeFeatureCoverage", {
+      temperature: 1,
+      maxTokens: 500,
+    }),
+  };
 }
 
 export function clusterCheckResults(
