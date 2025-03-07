@@ -14,6 +14,7 @@ import {
 import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
 import { CoreSystemMessage, CoreUserMessage } from "ai";
+import { log } from "../log";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
@@ -326,7 +327,10 @@ type SummariseCheckInput = {
   };
 };
 
-export const formatMultipleChecks = (checks: Check[]): string => {
+export const formatMultipleChecks = (
+  checks: Check[],
+  characterLimit = 100_000,
+): string => {
   const checkInputs: SummariseCheckInput[] = checks.map((check) => {
     const dependencies = [...check.dependencies];
 
@@ -354,29 +358,45 @@ export const formatMultipleChecks = (checks: Check[]): string => {
     };
   });
 
-  return checkInputs
-    .map(
-      (check) => `
-  - Name: ${check.name}
-  - Group: ${check.groupName}
-  - Type: ${check.checkType}
-  - Tags: ${check.tags.join(", ") || "None"}
-  - Locations: ${check.locations.join(", ")}
-  ${
-    check.request
-      ? `- Request: [${check.request.method}] ${check.request.url}\n  - Assertions: ${check.request.assertions.join(
-          ", ",
-        )}`
-      : ""
-  }
-  - Dependencies: ${
+  const describeCheck = (check) => `
+- Name: ${check.name}
+- Group: ${check.groupName}
+- Type: ${check.checkType}
+- Tags: ${check.tags.join(", ") || "None"}
+- Locations: ${check.locations.join(", ")}
+${
+  check.request
+    ? `- Request: [${check.request.method}] ${check.request.url}\n  - Assertions: ${check.request.assertions.join(
+        ", ",
+      )}`
+    : ""
+}
+- Dependencies: ${
     check.dependencies.length
       ? check.dependencies.map((d) => `${d.path}\n  ${d.content}`).join(", ")
       : "None"
   }
-  `,
-    )
-    .join("\n");
+`;
+
+  // Keep appending until we reach the character limit
+  let totalLength = 0;
+  let formattedOutput = "";
+
+  for (const check of checkInputs) {
+    const description = describeCheck(check);
+    if (totalLength + description.length > characterLimit) {
+      log.warn(
+        { limit: characterLimit, checks_length: checks.length },
+        "Character limit reached formatMultipleChecks",
+      );
+      break; // Stop when limit is reached
+    }
+
+    formattedOutput += description + "\n";
+    totalLength += description.length;
+  }
+
+  return formattedOutput;
 };
 
 export function summariseMultipleChecksGoal(
