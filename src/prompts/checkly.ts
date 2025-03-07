@@ -385,6 +385,7 @@ ${
   for (const check of checkInputs) {
     const description = describeCheck(check);
     if (totalLength + description.length > characterLimit) {
+      // TODO handle this case better
       log.warn(
         { limit: characterLimit, checks_length: checks.length },
         "Character limit reached formatMultipleChecks",
