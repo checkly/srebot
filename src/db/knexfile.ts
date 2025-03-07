@@ -1,5 +1,5 @@
 import { initConfig } from "../lib/init-config";
-import { log } from "../slackbot/log";
+import { log } from "../log";
 
 initConfig();
 

@@ -130,6 +130,10 @@ export class Check {
     activated: boolean;
   }[];
   privateLocations: any[];
+  dependencies: {
+    path: string;
+    content: string;
+  }[];
 }
 
 export class CheckResult {

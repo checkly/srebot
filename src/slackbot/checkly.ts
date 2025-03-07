@@ -1,8 +1,10 @@
-import { generateObject } from "ai";
+import { generateObject, generateText } from "ai";
 import { checkly } from "../checkly/client";
 import {
+  categorizeTestResultHeatMap,
   summarizeErrorsPrompt,
   SummarizeErrorsPromptType,
+  summarizeTestGoalPrompt,
 } from "../prompts/checkly";
 import {
   fetchCheckResults,
@@ -11,9 +13,13 @@ import {
 } from "../prompts/checkly-data";
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { generateHeatmapPNG } from "../heatmap/createHeatmap";
-import { createCheckBlock } from "./blocks/checkBlock";
-import { log } from "./log";
+import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
+import { readCheck } from "../db/check";
+import { findErrorClustersForCheck } from "../db/error-cluster";
+import { findCheckResults } from "../db/check-results";
+import { readCheckGroup } from "../db/check-groups";
+import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -82,48 +88,60 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
 
 async function checkSummary(checkId: string) {
   const start = Date.now();
-  const check = await checkly.getCheck(checkId);
+  const check = await readCheck(checkId);
   if (check.groupId) {
-    const checkGroup = await checkly.getCheckGroup(check.groupId);
+    const checkGroup = await readCheckGroup(BigInt(check.groupId));
     check.locations = checkGroup.locations;
   }
 
+  const prompt = summarizeTestGoalPrompt(
+    check.name,
+    check.script || "",
+    check.scriptPath || "",
+    [],
+  );
+  const { text: checkSummary } = await generateText(prompt);
+
   const interval = last24h(new Date());
 
-  const checkResults = await fetchCheckResults(checkly, {
-    checkId: check.id,
-    ...interval,
-  });
+  const checkResults = await findCheckResults(
+    check.id,
+    interval.from,
+    interval.to,
+  );
+
+  const runLocations = checkResults.reduce((acc, cr) => {
+    acc.add(cr.runLocation);
+    return acc;
+  }, new Set<string>());
 
   const failingCheckResults = checkResults.filter(
     (result) => result.hasFailures || result.hasErrors,
   );
 
-  if (failingCheckResults.length === 0) {
-    return {
-      message: createCheckBlock({
-        check,
-        failureCount: 0,
-        checkResults,
-      }),
-      image: null,
-    };
-  }
+  const failureClusters = await findErrorClustersForCheck(check.id);
+  const failurePatterns = failureClusters.map((fc) => fc.error_message);
 
-  const promptDef = summarizeErrorsPrompt({
-    check: check.id,
-    locations: check.locations,
-    frequency: check.frequency,
-    interval,
-    results: failingCheckResults.map(summarizeCheckResult),
-  });
-  const { object: errorGroups } =
-    await generateObject<SummarizeErrorsPromptType>(promptDef);
+  const lastFailure =
+    failingCheckResults.length > 0
+      ? failingCheckResults.sort(
+          (a, b) =>
+            new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+        )[0].startedAt
+      : checkResults[0].startedAt;
+
+  const successRate = Math.round(
+    ((checkResults.length - failingCheckResults.length) / checkResults.length) *
+      100,
+  );
 
   const heatmapImage = generateHeatmapPNG(checkResults, {
-    bucketSizeInMinutes: check.frequency * 10,
-    verticalSeries: check.locations.length,
+    bucketSizeInMinutes: 30,
+    verticalSeries: runLocations.size,
   });
+  const checkCategory = (
+    await generateObject(categorizeTestResultHeatMap(heatmapImage))
+  ).object.category;
 
   log.info(
     {
@@ -134,11 +152,14 @@ async function checkSummary(checkId: string) {
     },
     "checkSummary",
   );
-  const message = createCheckBlock({
-    check,
+  const message = generateCheckSummaryBlock({
+    checkName: check.name,
+    checkSummary: checkSummary,
+    checkState: checkCategory,
+    lastFailure: new Date(lastFailure),
+    successRate,
     failureCount: failingCheckResults.length,
-    errorGroups,
-    checkResults,
+    failurePatterns,
   });
 
   return { message, image: heatmapImage };

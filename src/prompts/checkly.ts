@@ -4,13 +4,16 @@ import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
 import { validObjectList, validObject } from "./validation";
 import {
+  defineMessagesPrompt,
   definePrompt,
   promptConfig,
   PromptConfig,
   PromptDefinition,
+  PromptDefinitionForText,
 } from "./common";
 import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
+import { CoreSystemMessage, CoreUserMessage } from "ai";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
@@ -125,6 +128,77 @@ export function summarizeErrorsPrompt(input: {
   return definePrompt("summarizeErrors", prompt, SUMMARIZE_ERRORS_SCHEMA, {
     temperature: 0.1,
     maxTokens: 10000,
+  });
+}
+
+export function summarizeTestGoalPrompt(
+  testName: string,
+  scriptName: string,
+  scriptPath: string,
+  dependencies: { script: string; scriptPath: string }[],
+): PromptDefinitionForText {
+  const prompt = `
+      The following details describe a test which is used to monitor an application.
+
+      Test name: ${testName}
+      Script name: ${scriptName}
+      Script: ${scriptPath}
+
+      Dependent scripts of the main script:
+      ${dependencies.map((d) => `- ${d.scriptPath}\n  ${d.script}`).join("\n")}
+
+      Summarize what the test is validating in a single sentence with max 10 words.
+
+      CONSTITUTION:
+      - Always prioritize accuracy and relevance in the summary
+      - Be concise but comprehensive in your explanations
+      - Focus on providing actionable information that can help judging user impact
+      - Do not refer to technical details of the test, use the domain language from the application under test.
+    `;
+
+  return {
+    prompt,
+    ...promptConfig("checklySummarizeFeatureCoverage", {
+      temperature: 1,
+      maxTokens: 500,
+    }),
+  };
+}
+
+enum ErrorCategory {
+  PASSING = "PASSING",
+  FLAKY = "FLAKY",
+  FAILING = "FAILING",
+}
+
+export function categorizeTestResultHeatMap(heatmap: Buffer): PromptDefinition {
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are an SRE Engineer. You are given a heatmap which shows test results in different locations over time and you need to categorize the test into one of the following categories: PASSING, FLAKY, FAILING",
+    } as CoreSystemMessage,
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "Is this check passing, flaky or failing?" },
+        {
+          type: "image",
+          image: `data:image/jpeg;base64,${heatmap.toString("base64")}`,
+        },
+      ],
+    } as CoreUserMessage,
+  ];
+
+  const schema = z.object({
+    category: z
+      .nativeEnum(ErrorCategory)
+      .describe("The category of the check results heat map"),
+  });
+
+  return defineMessagesPrompt("categorizeTestResultHeatMap", messages, schema, {
+    temperature: 0.1,
+    maxTokens: 1000,
   });
 }
 

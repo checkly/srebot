@@ -6,13 +6,13 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid("accountId").notNullable().index(); // Account UUID
     table.string("checkType").notNullable(); // e.g., BROWSER, API
     table.string("name").notNullable();
-    table.integer("frequency").notNullable();
-    table.integer("frequencyOffset").notNullable();
+    table.integer("frequency").nullable();
+    table.integer("frequencyOffset").nullable();
     table.boolean("activated").defaultTo(true);
     table.boolean("muted").defaultTo(false);
     table.boolean("shouldFail").defaultTo(false);
 
-    table.specificType("locations", "TEXT[]").notNullable();
+    table.specificType("locations", "TEXT[]").nullable();
     table.text("script").nullable();
     table.timestamp("created_at");
     table.timestamp("updated_at");
@@ -33,6 +33,7 @@ export async function up(knex: Knex): Promise<void> {
 
     table.integer("groupId").nullable();
     table.integer("groupOrder").defaultTo(0);
+    table.string("heartbeat").nullable();
     table.string("runtimeId").nullable();
     table.string("scriptPath").nullable();
     table.jsonb("retryStrategy").defaultTo("{}");

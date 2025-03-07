@@ -1,18 +1,29 @@
 import { Check, CheckResult } from "../../checkly/models";
+import { CheckTable } from "../../db/check";
+import { CheckResultTable } from "../../db/check-results";
+import { ErrorClusterTable } from "../../db/error-cluster";
 import { SummarizeErrorsPromptType } from "../../prompts/checkly";
 
 export interface CheckBlockProps {
-  check: Check;
+  check: Check | CheckTable;
   failureCount: number;
-  errorGroups?: SummarizeErrorsPromptType;
-  checkResults: CheckResult[];
+  errorGroups?: {
+    error_message: string;
+    error_count: number;
+    locations: string[];
+  }[];
+  checkResults: CheckResult[] | CheckResultTable[];
+  frequency: number;
+  locations: string[];
 }
 
 export function createCheckBlock({
   check,
   failureCount,
-  errorGroups = { groups: [] },
+  errorGroups = [],
   checkResults,
+  frequency,
+  locations,
 }: CheckBlockProps) {
   return {
     text: `*Check Details*`,
@@ -43,7 +54,7 @@ export function createCheckBlock({
           },
           {
             type: "mrkdwn",
-            text: `*Frequency*\nevery *${check.frequency}* minute${check.frequency > 1 ? "s" : ""}`,
+            text: `*Frequency*\nevery *${frequency}* minute${frequency || -1 > 1 ? "s" : ""}`,
           },
         ],
       },
@@ -52,7 +63,7 @@ export function createCheckBlock({
         fields: [
           {
             type: "mrkdwn",
-            text: `*Locations*\n\`${check.locations.join("\`, \`")}\``,
+            text: `*Locations*\n\`${locations.join("\`, \`")}\``,
           },
           {
             type: "mrkdwn",
@@ -60,7 +71,7 @@ export function createCheckBlock({
           },
         ],
       },
-      ...(errorGroups.groups.length === 0
+      ...(errorGroups.length === 0
         ? [
             {
               type: "section",
@@ -75,12 +86,12 @@ export function createCheckBlock({
               type: "header",
               text: {
                 type: "plain_text",
-                text: `${errorGroups.groups.length > 0 ? "Detected" : "No"} Error Patterns`,
+                text: `${errorGroups.length > 0 ? "Detected" : "No"} Error Patterns`,
                 emoji: true,
               },
             },
           ]),
-      ...errorGroups.groups.flatMap((group) => [
+      ...errorGroups.flatMap((group) => [
         {
           type: "divider",
         },
@@ -88,7 +99,7 @@ export function createCheckBlock({
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Pattern:* \`${group.errorMessage}\``,
+            text: `*Pattern:* \`${group.error_message}\``,
           },
         },
         {
@@ -96,19 +107,11 @@ export function createCheckBlock({
           fields: [
             {
               type: "mrkdwn",
-              text: `*Count*\n*${group.checkResults.length}* failure${group.checkResults.length > 1 ? "s" : ""}`,
+              text: `*Count*\n*${group.error_count}* failure${group.error_count > 1 ? "s" : ""}`,
             },
             {
               type: "mrkdwn",
-              text: `*Affected Locations*\n\`${[
-                ...new Set(
-                  group.checkResults.map(
-                    (id) => checkResults.find((r) => r.id === id)?.runLocation,
-                  ),
-                ),
-              ]
-                .filter(Boolean)
-                .join("\`, \`")}\``,
+              text: `*Affected Locations*\n\`${group.locations.join("\`, \`")}\``,
             },
           ],
         },

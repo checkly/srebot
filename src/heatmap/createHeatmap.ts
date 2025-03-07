@@ -2,9 +2,10 @@ import { createCanvas } from "canvas";
 import * as echarts from "echarts";
 import fs from "node:fs";
 import { CheckResult } from "../checkly/models";
+import { CheckResultTable } from "../db/check-results";
 
 export const createHeatmap = (
-  data: CheckResult[],
+  data: CheckResultTable[] | CheckResult[],
   bucketSizeInMinutes = 10,
 ) => {
   // 1. Group by runLocation + time bucket.
