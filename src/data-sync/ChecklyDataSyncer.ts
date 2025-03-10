@@ -52,7 +52,7 @@ export class ChecklyDataSyncer {
       .map((c) => c.id);
 
     log.info({ checks_count: checkIds.length }, "Syncing check results");
-    const chunkedCheckIds = chunk(checkIds, 3);
+    const chunkedCheckIds = chunk(checkIds, 1);
 
     for (const idsBatch of chunkedCheckIds) {
       await Promise.all(
