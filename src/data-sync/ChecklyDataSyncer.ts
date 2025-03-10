@@ -1,12 +1,19 @@
 import postgres from "../db/postgres";
 import { checkly } from "../checkly/client";
-import { CheckResult } from "../checkly/models";
+import { CheckResult, CheckSyncStatus } from "../checkly/models";
 import { log } from "../log";
 import { insertChecks } from "../db/check";
 import { insertCheckGroups } from "../db/check-groups";
 import { chunk, keyBy } from "lodash";
 import crypto from "node:crypto";
-import { addMinutes, addSeconds, isAfter, isBefore, isEqual } from "date-fns";
+import {
+  addMinutes,
+  addSeconds,
+  isAfter,
+  isBefore,
+  isEqual,
+  subMinutes,
+} from "date-fns";
 import { getErrorMessageFromCheckResult } from "../prompts/checkly-data";
 import {
   findMatchingErrorCluster,
@@ -15,6 +22,8 @@ import {
 } from "../db/error-cluster";
 import { embedMany } from "ai";
 import { openai } from "@ai-sdk/openai";
+
+const SAFETY_MARGIN_MINUTES = 5;
 
 export class ChecklyDataSyncer {
   constructor() {}
@@ -72,6 +81,12 @@ export class ChecklyDataSyncer {
 
     for (const period of chunkedPeriods) {
       await this.syncCheckResultsChunk(checkId, period.from, period.to);
+      await this.trackCheckSyncStatus(
+        checkId,
+        checkly.accountId,
+        period.from,
+        period.to,
+      );
     }
   }
 
@@ -80,29 +95,22 @@ export class ChecklyDataSyncer {
     from: Date,
     to: Date,
   ): Promise<{ from: Date; to: Date }[]> => {
-    const oldestRecord = await postgres("check_results")
-      .select("startedAt")
+    const checkSyncStatus = await postgres<CheckSyncStatus>("check_sync_status")
       .where({ checkId })
-      .orderBy([
-        { column: "startedAt", order: "asc" },
-        { column: "id", order: "asc" },
-      ])
-      .first(); // Oldest record
-
-    const newestRecord = await postgres("check_results")
-      .select("startedAt")
-      .where({ checkId })
-      .orderBy([
-        { column: "startedAt", order: "desc" },
-        { column: "id", order: "desc" },
-      ])
-      .first(); // Newest record
-
-    const oldestRecordDate = oldestRecord?.startedAt;
-    const newestRecordDate = newestRecord?.startedAt;
-
+      .first();
     // If no records exist, sync the entire period
-    if (!oldestRecordDate || !newestRecordDate) {
+    if (!checkSyncStatus) {
+      return [{ from, to }];
+    }
+
+    const oldestRecordDate = checkSyncStatus.from;
+    const latestSafeDate = subMinutes(new Date(), SAFETY_MARGIN_MINUTES);
+    const newestRecordDate =
+      checkSyncStatus?.to && checkSyncStatus.to <= latestSafeDate
+        ? checkSyncStatus.to
+        : latestSafeDate;
+
+    if (isAfter(oldestRecordDate, newestRecordDate)) {
       return [{ from, to }];
     }
 
@@ -125,6 +133,27 @@ export class ChecklyDataSyncer {
     }
 
     return missingPeriods;
+  };
+
+  private trackCheckSyncStatus = async (
+    checkId: string,
+    accountId: string,
+    from: Date,
+    to: Date,
+  ) => {
+    await postgres<CheckSyncStatus>("check_sync_status")
+      .insert({
+        checkId,
+        accountId,
+        from, // Keep initial `from`
+        to, // Update `to`
+        syncedAt: new Date(),
+      })
+      .onConflict("checkId")
+      .merge({
+        to: postgres.raw("GREATEST(EXCLUDED.to, check_sync_status.to)"), // Keep the latest `to`
+        syncedAt: postgres.fn.now(), // Always update `syncedAt`
+      });
   };
 
   private divideIntoPeriodChunks(
