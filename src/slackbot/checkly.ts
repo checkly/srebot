@@ -191,6 +191,7 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     } else if (args.length === 1 && !!args[0] && getIsUUID(args[0])) {
       const { message, image } = await checkSummary(args[0]);
       await respond({
+        response_type: "in_channel",
         ...message,
       });
 
@@ -221,6 +222,7 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
       }
 
       await respond({
+        response_type: "in_channel",
         ...message,
       });
     } else {

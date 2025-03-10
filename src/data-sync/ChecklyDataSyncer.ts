@@ -1,12 +1,19 @@
 import postgres from "../db/postgres";
 import { checkly } from "../checkly/client";
-import { CheckResult } from "../checkly/models";
+import { CheckResult, CheckSyncStatus } from "../checkly/models";
 import { log } from "../log";
 import { insertChecks } from "../db/check";
 import { insertCheckGroups } from "../db/check-groups";
 import { chunk, keyBy } from "lodash";
 import crypto from "node:crypto";
-import { addMinutes, addSeconds, isAfter, isBefore, isEqual } from "date-fns";
+import {
+  addMinutes,
+  addSeconds,
+  isAfter,
+  isBefore,
+  isEqual,
+  subMinutes,
+} from "date-fns";
 import { getErrorMessageFromCheckResult } from "../prompts/checkly-data";
 import {
   findMatchingErrorCluster,
@@ -15,6 +22,8 @@ import {
 } from "../db/error-cluster";
 import { embedMany } from "ai";
 import { openai } from "@ai-sdk/openai";
+
+const SAFETY_MARGIN_MINUTES = 2;
 
 export class ChecklyDataSyncer {
   constructor() {}
@@ -43,16 +52,13 @@ export class ChecklyDataSyncer {
       .map((c) => c.id);
 
     log.info({ checks_count: checkIds.length }, "Syncing check results");
+    const chunkedCheckIds = chunk(checkIds, 1);
 
-    for (const checkId of checkIds) {
-      const checkStartedAt = Date.now();
-      await this.syncCheckResultsBetter(checkId, from, to);
-      log.info(
-        {
-          duration_ms: Date.now() - checkStartedAt,
-          checkId,
-        },
-        "Check results for check synced",
+    for (const idsBatch of chunkedCheckIds) {
+      await Promise.all(
+        idsBatch.map((checkId) =>
+          this.syncCheckResultsBetter(checkId, from, to),
+        ),
       );
     }
     log.info(
@@ -65,6 +71,8 @@ export class ChecklyDataSyncer {
   }
 
   private async syncCheckResultsBetter(checkId: string, from: Date, to: Date) {
+    const startedAt = Date.now();
+
     const periodsToSync = await this.getPeriodsToSync(checkId, from, to);
     const chunkedPeriods = periodsToSync.flatMap((period) =>
       this.divideIntoPeriodChunks(period.from, period.to, 60),
@@ -72,7 +80,21 @@ export class ChecklyDataSyncer {
 
     for (const period of chunkedPeriods) {
       await this.syncCheckResultsChunk(checkId, period.from, period.to);
+      await this.trackCheckSyncStatus(
+        checkId,
+        checkly.accountId,
+        period.from,
+        period.to,
+      );
     }
+
+    log.info(
+      {
+        duration_ms: Date.now() - startedAt,
+        checkId,
+      },
+      "Check results for check synced",
+    );
   }
 
   private getPeriodsToSync = async (
@@ -80,29 +102,22 @@ export class ChecklyDataSyncer {
     from: Date,
     to: Date,
   ): Promise<{ from: Date; to: Date }[]> => {
-    const oldestRecord = await postgres("check_results")
-      .select("startedAt")
+    const checkSyncStatus = await postgres<CheckSyncStatus>("check_sync_status")
       .where({ checkId })
-      .orderBy([
-        { column: "startedAt", order: "asc" },
-        { column: "id", order: "asc" },
-      ])
-      .first(); // Oldest record
-
-    const newestRecord = await postgres("check_results")
-      .select("startedAt")
-      .where({ checkId })
-      .orderBy([
-        { column: "startedAt", order: "desc" },
-        { column: "id", order: "desc" },
-      ])
-      .first(); // Newest record
-
-    const oldestRecordDate = oldestRecord?.startedAt;
-    const newestRecordDate = newestRecord?.startedAt;
-
+      .first();
     // If no records exist, sync the entire period
-    if (!oldestRecordDate || !newestRecordDate) {
+    if (!checkSyncStatus) {
+      return [{ from, to }];
+    }
+
+    const oldestRecordDate = checkSyncStatus.from;
+    const latestSafeDate = subMinutes(new Date(), SAFETY_MARGIN_MINUTES);
+    const newestRecordDate =
+      checkSyncStatus?.to && checkSyncStatus.to <= latestSafeDate
+        ? checkSyncStatus.to
+        : latestSafeDate;
+
+    if (isAfter(oldestRecordDate, newestRecordDate)) {
       return [{ from, to }];
     }
 
@@ -125,6 +140,27 @@ export class ChecklyDataSyncer {
     }
 
     return missingPeriods;
+  };
+
+  private trackCheckSyncStatus = async (
+    checkId: string,
+    accountId: string,
+    from: Date,
+    to: Date,
+  ) => {
+    await postgres<CheckSyncStatus>("check_sync_status")
+      .insert({
+        checkId,
+        accountId,
+        from, // Keep initial `from`
+        to, // Update `to`
+        syncedAt: new Date(),
+      })
+      .onConflict("checkId")
+      .merge({
+        to: postgres.raw("GREATEST(EXCLUDED.to, check_sync_status.to)"), // Keep the latest `to`
+        syncedAt: postgres.fn.now(), // Always update `syncedAt`
+      });
   };
 
   private divideIntoPeriodChunks(
@@ -220,12 +256,10 @@ export class ChecklyDataSyncer {
       resultType: "ALL",
       from,
       to,
-      hasFailures: true,
       limit: 100,
     });
     const allCheckResultsFromOldest = allCheckResults.reverse();
     if (allCheckResultsFromOldest.length === 0) {
-      log.info({ checkId, from, to }, "No check results to sync");
       return;
     }
 
