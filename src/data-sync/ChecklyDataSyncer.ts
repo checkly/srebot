@@ -23,7 +23,7 @@ import {
 import { embedMany } from "ai";
 import { openai } from "@ai-sdk/openai";
 
-const SAFETY_MARGIN_MINUTES = 3;
+const SAFETY_MARGIN_MINUTES = 2;
 
 export class ChecklyDataSyncer {
   constructor() {}
