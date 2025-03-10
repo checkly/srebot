@@ -256,7 +256,6 @@ export class ChecklyDataSyncer {
       resultType: "ALL",
       from,
       to,
-      hasFailures: true,
       limit: 100,
     });
     const allCheckResultsFromOldest = allCheckResults.reverse();

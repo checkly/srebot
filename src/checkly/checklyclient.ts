@@ -302,6 +302,9 @@ export class ChecklyClient {
       const hasAttemptsLeft =
         options && options?.attempt <= options?.maxAttempts;
       const willRetry = isRetryable && hasAttemptsLeft;
+      console.log(
+        `Got a response: ${hasAttemptsLeft} ${willRetry} ${response.status}`,
+      );
 
       if (!willRetry) {
         return response;
@@ -338,7 +341,7 @@ export class ChecklyClient {
     url: string,
     options?: { method: "GET" | "POST" },
   ): Promise<T[]> {
-    const retryOptions: RetryOptions = { attempt: 1, maxAttempts: 3 };
+    const retryOptions: RetryOptions = { attempt: 1, maxAttempts: 5 };
     const { entries: results, nextId } = await this.fetch(url, {
       ...options,
       retryOptions,
