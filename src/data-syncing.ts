@@ -32,18 +32,11 @@ const syncCheckResults = async (syncer: ChecklyDataSyncer) => {
   }
 };
 
-const main = async () => {
+export const startSyncingData = async () => {
   const daemon = new ChecklyDataSyncer();
 
   const checksAndGroups = syncChecksAndGroups(daemon);
   const checkResults = syncCheckResults(daemon);
 
   await Promise.all([checksAndGroups, checkResults]);
-  process.exit(0);
 };
-
-process.on("SIGINT", () => {
-  shouldRun = false;
-});
-
-main();
