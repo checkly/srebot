@@ -279,12 +279,3 @@ export class CheckStatus {
   sslDaysRemaining: number | null;
   isDegraded: boolean;
 }
-
-export class CheckSyncTracking {
-  checkId: string;
-  accountId: string;
-  from: Date;
-  to: Date;
-  hasData: boolean;
-  syncedAt: Date;
-}

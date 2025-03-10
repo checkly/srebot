@@ -5,6 +5,7 @@ import { log } from "../log";
 import { insertChecks } from "../db/check";
 import { insertCheckGroups } from "../db/check-groups";
 import { chunk, keyBy } from "lodash";
+import crypto from "node:crypto";
 import { addMinutes, addSeconds, isAfter, isBefore, isEqual } from "date-fns";
 import { getErrorMessageFromCheckResult } from "../prompts/checkly-data";
 import {
