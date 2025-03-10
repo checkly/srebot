@@ -80,9 +80,10 @@ export async function findErrorClustersForCheck(
 export async function insertErrorClusterMember(
   member: ErrorClusterMemberTable,
 ): Promise<void> {
-  await postgres<ErrorClusterMemberTable>("error_cluster_membership").insert(
-    member,
-  );
+  await postgres<ErrorClusterMemberTable>("error_cluster_membership")
+    .insert(member)
+    .onConflict(["error_id", "result_check_id"])
+    .ignore();
 
   await postgres("error_cluster").where({ id: member.error_id }).update({
     last_seen_at: member.date,
