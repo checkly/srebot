@@ -23,7 +23,7 @@ import {
 import { embedMany } from "ai";
 import { openai } from "@ai-sdk/openai";
 
-const SAFETY_MARGIN_MINUTES = 5;
+const SAFETY_MARGIN_MINUTES = 3;
 
 export class ChecklyDataSyncer {
   constructor() {}
@@ -52,16 +52,13 @@ export class ChecklyDataSyncer {
       .map((c) => c.id);
 
     log.info({ checks_count: checkIds.length }, "Syncing check results");
+    const chunkedCheckIds = chunk(checkIds, 3);
 
-    for (const checkId of checkIds) {
-      const checkStartedAt = Date.now();
-      await this.syncCheckResultsBetter(checkId, from, to);
-      log.info(
-        {
-          duration_ms: Date.now() - checkStartedAt,
-          checkId,
-        },
-        "Check results for check synced",
+    for (const idsBatch of chunkedCheckIds) {
+      await Promise.all(
+        idsBatch.map((checkId) =>
+          this.syncCheckResultsBetter(checkId, from, to),
+        ),
       );
     }
     log.info(
@@ -74,6 +71,8 @@ export class ChecklyDataSyncer {
   }
 
   private async syncCheckResultsBetter(checkId: string, from: Date, to: Date) {
+    const startedAt = Date.now();
+
     const periodsToSync = await this.getPeriodsToSync(checkId, from, to);
     const chunkedPeriods = periodsToSync.flatMap((period) =>
       this.divideIntoPeriodChunks(period.from, period.to, 60),
@@ -88,6 +87,14 @@ export class ChecklyDataSyncer {
         period.to,
       );
     }
+
+    log.info(
+      {
+        duration_ms: Date.now() - startedAt,
+        checkId,
+      },
+      "Check results for check synced",
+    );
   }
 
   private getPeriodsToSync = async (
@@ -254,7 +261,6 @@ export class ChecklyDataSyncer {
     });
     const allCheckResultsFromOldest = allCheckResults.reverse();
     if (allCheckResultsFromOldest.length === 0) {
-      log.info({ checkId, from, to }, "No check results to sync");
       return;
     }
 
