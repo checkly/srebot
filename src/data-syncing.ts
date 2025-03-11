@@ -27,7 +27,7 @@ const syncCheckResults = async (syncer: ChecklyDataSyncer) => {
     } catch (err) {
       console.error("❌ Sync failed:", err);
     } finally {
-      await timers.setTimeout(2 * 60_000);
+      await timers.setTimeout(10_000);
     }
   }
 };
