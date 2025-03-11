@@ -138,6 +138,7 @@ export class CheckResult {
   id: string;
   name: string;
   checkId: string;
+  accountId?: string;
   hasFailures: boolean;
   hasErrors: boolean;
   isDegraded: boolean;

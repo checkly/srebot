@@ -1,9 +1,9 @@
-import { ChecklyDataSyncer } from "./data-sync/ChecklyDataSyncer";
 import timers from "node:timers/promises";
+import { PublicApiImporter } from "./data-import/PublicApiImporter";
 
 let shouldRun = true;
 
-const syncChecksAndGroups = async (syncer: ChecklyDataSyncer) => {
+const syncChecksAndGroups = async (syncer: PublicApiImporter) => {
   while (shouldRun) {
     try {
       await syncer.syncChecks();
@@ -16,7 +16,7 @@ const syncChecksAndGroups = async (syncer: ChecklyDataSyncer) => {
   }
 };
 
-const syncCheckResults = async (syncer: ChecklyDataSyncer) => {
+const syncCheckResults = async (syncer: PublicApiImporter) => {
   while (shouldRun) {
     try {
       const from = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -33,10 +33,10 @@ const syncCheckResults = async (syncer: ChecklyDataSyncer) => {
 };
 
 export const startSyncingData = async () => {
-  const daemon = new ChecklyDataSyncer();
+  const importer = new PublicApiImporter();
 
-  const checksAndGroups = syncChecksAndGroups(daemon);
-  const checkResults = syncCheckResults(daemon);
+  const checksAndGroups = syncChecksAndGroups(importer);
+  const checkResults = syncCheckResults(importer);
 
   await Promise.all([checksAndGroups, checkResults]);
 };
