@@ -1,23 +1,31 @@
-import postgres from "../db/postgres";
 import { checkly } from "../checkly/client";
 import { CheckResult } from "../checkly/models";
 import { log } from "../log";
-import { insertChecks } from "../db/check";
-import { insertCheckGroups } from "../db/check-groups";
-import { chunk, keyBy } from "lodash";
-import crypto from "node:crypto";
-import { addMinutes, addSeconds, isAfter, isBefore, isEqual } from "date-fns";
-import { getErrorMessageFromCheckResult } from "../prompts/checkly-data";
+import { insertChecks, removeAccountChecks } from "../db/check";
 import {
-  findMatchingErrorCluster,
-  insertErrorCluster,
-  insertErrorClusterMember,
-} from "../db/error-cluster";
-import { embedMany } from "ai";
-import { openai } from "@ai-sdk/openai";
+  insertCheckGroups,
+  removeAccountCheckGroups,
+} from "../db/check-groups";
+import { chunk, keyBy } from "lodash";
+import {
+  addMinutes,
+  addSeconds,
+  isAfter,
+  isBefore,
+  isEqual,
+  subMinutes,
+} from "date-fns";
+import { CheckResultsInserter } from "./DataInserter";
+import { findCheckSyncStatus } from "../db/check-sync-status";
 
-export class ChecklyDataSyncer {
-  constructor() {}
+const SAFETY_MARGIN_MINUTES = 2;
+
+export class PublicApiImporter {
+  private inserter: CheckResultsInserter;
+
+  constructor(props: { inserter?: CheckResultsInserter } = {}) {
+    this.inserter = props.inserter || new CheckResultsInserter();
+  }
 
   async syncCheckResults({ from, to }: { from: Date; to: Date }) {
     const startedAt = Date.now();
@@ -43,16 +51,11 @@ export class ChecklyDataSyncer {
       .map((c) => c.id);
 
     log.info({ checks_count: checkIds.length }, "Syncing check results");
+    const chunkedCheckIds = chunk(checkIds, 1);
 
-    for (const checkId of checkIds) {
-      const checkStartedAt = Date.now();
-      await this.syncCheckResultsBetter(checkId, from, to);
-      log.info(
-        {
-          duration_ms: Date.now() - checkStartedAt,
-          checkId,
-        },
-        "Check results for check synced",
+    for (const idsBatch of chunkedCheckIds) {
+      await Promise.all(
+        idsBatch.map((checkId) => this.syncResultsForCheck(checkId, from, to)),
       );
     }
     log.info(
@@ -64,7 +67,9 @@ export class ChecklyDataSyncer {
     );
   }
 
-  private async syncCheckResultsBetter(checkId: string, from: Date, to: Date) {
+  private async syncResultsForCheck(checkId: string, from: Date, to: Date) {
+    const startedAt = Date.now();
+
     const periodsToSync = await this.getPeriodsToSync(checkId, from, to);
     const chunkedPeriods = periodsToSync.flatMap((period) =>
       this.divideIntoPeriodChunks(period.from, period.to, 60),
@@ -72,7 +77,21 @@ export class ChecklyDataSyncer {
 
     for (const period of chunkedPeriods) {
       await this.syncCheckResultsChunk(checkId, period.from, period.to);
+      await this.inserter.trackCheckSyncStatus(
+        checkId,
+        checkly.accountId,
+        period.from,
+        period.to,
+      );
     }
+
+    log.info(
+      {
+        duration_ms: Date.now() - startedAt,
+        checkId,
+      },
+      "Check results for check synced",
+    );
   }
 
   private getPeriodsToSync = async (
@@ -80,29 +99,20 @@ export class ChecklyDataSyncer {
     from: Date,
     to: Date,
   ): Promise<{ from: Date; to: Date }[]> => {
-    const oldestRecord = await postgres("check_results")
-      .select("startedAt")
-      .where({ checkId })
-      .orderBy([
-        { column: "startedAt", order: "asc" },
-        { column: "id", order: "asc" },
-      ])
-      .first(); // Oldest record
-
-    const newestRecord = await postgres("check_results")
-      .select("startedAt")
-      .where({ checkId })
-      .orderBy([
-        { column: "startedAt", order: "desc" },
-        { column: "id", order: "desc" },
-      ])
-      .first(); // Newest record
-
-    const oldestRecordDate = oldestRecord?.startedAt;
-    const newestRecordDate = newestRecord?.startedAt;
-
+    const checkSyncStatus = await findCheckSyncStatus(checkId);
     // If no records exist, sync the entire period
-    if (!oldestRecordDate || !newestRecordDate) {
+    if (!checkSyncStatus) {
+      return [{ from, to }];
+    }
+
+    const oldestRecordDate = checkSyncStatus.from;
+    const latestSafeDate = subMinutes(new Date(), SAFETY_MARGIN_MINUTES);
+    const newestRecordDate =
+      checkSyncStatus?.to && checkSyncStatus.to <= latestSafeDate
+        ? checkSyncStatus.to
+        : latestSafeDate;
+
+    if (isAfter(oldestRecordDate, newestRecordDate)) {
       return [{ from, to }];
     }
 
@@ -171,10 +181,8 @@ export class ChecklyDataSyncer {
 
     // Remove checks that no longer exist
     const checkIds = allChecks.map((check) => check.id);
-    await postgres("checks")
-      .delete()
-      .whereNotIn("id", checkIds)
-      .where("accountId", checkly.accountId);
+
+    await removeAccountChecks(checkIds, checkly.accountId);
 
     log.info(
       {
@@ -193,10 +201,7 @@ export class ChecklyDataSyncer {
 
     // Remove checks that no longer exist
     const groupIds = allGroups.map((check) => check.id);
-    await postgres("check_groups")
-      .delete()
-      .whereNotIn("id", groupIds)
-      .where("accountId", checkly.accountId);
+    await removeAccountCheckGroups(groupIds, checkly.accountId);
 
     log.info(
       {
@@ -207,25 +212,15 @@ export class ChecklyDataSyncer {
     );
   }
 
-  private serialiseCheckResultForDBInsert(result: CheckResult) {
-    return {
-      ...result,
-      accountId: checkly.accountId,
-      fetchedAt: new Date(),
-    };
-  }
-
   private async syncCheckResultsChunk(checkId: string, from: Date, to: Date) {
     const allCheckResults = await checkly.getCheckResultsByCheckId(checkId, {
       resultType: "ALL",
       from,
       to,
-      hasFailures: true,
       limit: 100,
     });
     const allCheckResultsFromOldest = allCheckResults.reverse();
     if (allCheckResultsFromOldest.length === 0) {
-      log.info({ checkId, from, to }, "No check results to sync");
       return;
     }
 
@@ -236,77 +231,12 @@ export class ChecklyDataSyncer {
         chunkOfResults.map((result) => this.enrichResult(result)),
       );
 
-      const mapped = enrichedResults.map((cr) =>
-        this.serialiseCheckResultForDBInsert(cr),
-      );
-      await postgres("check_results").insert(mapped).onConflict("id").ignore();
-
-      const onlyFailing = enrichedResults.filter(
-        (cr) => cr.hasErrors || cr.hasFailures,
-      );
-      if (onlyFailing.length > 0) {
-        await this.generateClustering(onlyFailing);
-      }
+      await this.inserter.insertCheckResults(enrichedResults);
       insertedCount += enrichedResults.length;
       log.debug(
         { insertedCount, checkId, periodTotal: chunkedCheckResults.length },
         "Inserted check results",
       );
     }
-  }
-
-  private async generateClustering(checkResults: CheckResult[]) {
-    const errorMessages = checkResults.map(getErrorMessageFromCheckResult);
-    const { embeddingModel, embeddings } =
-      await this.generateEmbeddings(errorMessages);
-
-    for (let i = 0; i < checkResults.length; i++) {
-      const checkResult = checkResults[i];
-      const errorMessage = errorMessages[i];
-      const embedding = embeddings[i];
-
-      // Find matching error cluster or create new one
-      log.info({ errorMessage }, "Finding matching error cluster");
-      let matchingCluster = await findMatchingErrorCluster(
-        checkly.accountId,
-        embedding,
-      );
-
-      if (!matchingCluster) {
-        matchingCluster = {
-          id: crypto.randomUUID(),
-          account_id: checkly.accountId,
-          error_message: errorMessage,
-          first_seen_at: new Date(checkResult.created_at),
-          last_seen_at: new Date(checkResult.created_at),
-          embedding,
-          embedding_model: embeddingModel,
-        };
-        await insertErrorCluster(matchingCluster);
-        log.info({ cluster: matchingCluster }, "New error cluster created");
-      }
-
-      // Add this result to the cluster
-      await insertErrorClusterMember({
-        error_id: matchingCluster.id,
-        result_check_id: checkResult.id,
-        check_id: checkResult.checkId,
-        date: new Date(checkResult.created_at),
-        embedding,
-        embedding_model: embeddingModel,
-      });
-    }
-  }
-
-  private async generateEmbeddings(values: string[]) {
-    // 'embeddings' is an array of embedding objects (number[][]).
-    // It is sorted in the same order as the input values.
-    const embeddingModel = "text-embedding-3-small";
-    const { embeddings } = await embedMany({
-      model: openai.embedding(embeddingModel),
-      values: values,
-    });
-
-    return { embeddingModel, embeddings };
   }
 }

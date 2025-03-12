@@ -71,3 +71,13 @@ export async function insertCheckGroups(groups: CheckGroup[]) {
     .onConflict("id")
     .merge();
 }
+
+export const removeAccountCheckGroups = async (
+  groupIdsToKeep: number[],
+  accountId: string,
+): Promise<void> => {
+  await postgres("check_groups")
+    .delete()
+    .whereNotIn("id", groupIdsToKeep)
+    .where("accountId", accountId);
+};

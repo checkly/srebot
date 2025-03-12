@@ -138,6 +138,7 @@ export class CheckResult {
   id: string;
   name: string;
   checkId: string;
+  accountId?: string;
   hasFailures: boolean;
   hasErrors: boolean;
   isDegraded: boolean;
@@ -278,4 +279,12 @@ export class CheckStatus {
   lastCheckRunId: string | null;
   sslDaysRemaining: number | null;
   isDegraded: boolean;
+}
+
+export class CheckSyncStatus {
+  checkId: string;
+  accountId: string;
+  from: Date;
+  to: Date;
+  syncedAt: Date;
 }

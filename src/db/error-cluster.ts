@@ -1,4 +1,3 @@
-import { log } from "../log";
 import postgres from "./postgres";
 import pgvector from "pgvector/knex";
 
@@ -49,17 +48,6 @@ export async function findMatchingErrorCluster(
     .where("account_id", accountId)
     .orderBy("distance")
     .limit(1);
-
-  log.info(
-    {
-      clusters: JSON.stringify(
-        { clusters: clusters.map((c) => ({ ...c, embedding: "[hidden]" })) },
-        null,
-        2,
-      ),
-    },
-    "Found matching error cluster",
-  );
 
   return clusters[0]?.distance <= 0.05 ? clusters[0] : null;
 }

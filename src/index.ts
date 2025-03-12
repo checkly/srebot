@@ -11,6 +11,7 @@ import githubWebhookRouter from "./routes/githubwebhook";
 import { app as slackApp } from "./slackbot/app";
 import { SreAssistant } from "./sre-assistant/SreAssistant";
 import { startLangfuseTelemetrySDK } from "./langfuse";
+import { startSyncingData } from "./data-syncing";
 
 process
   .on("unhandledRejection", (reason, promise) => {
@@ -76,4 +77,7 @@ slackApp.error(async (error) => {
 (async () => {
   await slackApp.start();
   console.log("⚡️ Bolt app is running!");
+  startSyncingData().catch((err) => {
+    console.error("Data syncing failed:", err);
+  });
 })();
