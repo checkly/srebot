@@ -215,7 +215,7 @@ export class AthenaImporter {
     const groupedById = groupBy(sorted, "checkId");
 
     const newestRecordInBatch = new Date(
-      new Date(sorted[sorted.length - 1].startedAt!).getTime() - 2 * 60_00,
+      new Date(sorted[sorted.length - 1].startedAt!).getTime() - 2 * 60_000,
     );
     for (const checkId of checkIds) {
       const resultsForCheck = groupedById[checkId] || [];
