@@ -110,7 +110,9 @@ export class AthenaImporter {
     const sequenceIdToMaxAttemptsMap: Record<string, number> = {};
     records.forEach((record) => {
       const sequenceId = record.sequenceid;
-      const latestStartedAt = new Date(record.startedat).getTime();
+      const latestStartedAt = this.parseTimestampAsUTC(
+        record.startedat,
+      ).getTime();
 
       if (!sequenceIdToMaxAttemptsMap[sequenceId]) {
         sequenceIdToMaxAttemptsMap[sequenceId] = latestStartedAt;
@@ -126,13 +128,13 @@ export class AthenaImporter {
           ["API", "BROWSER", "MULTI_STEP"].includes(record.type),
       )
       .map((record) => {
-        const startedAt = new Date(record.startedat);
-        const stoppedAt = new Date(record.stoppedat);
+        const startedAt = this.parseTimestampAsUTC(record.startedat);
+        const stoppedAt = this.parseTimestampAsUTC(record.stoppedat);
         const responseTime = parseInt(record.durationinms);
         const attempts = parseInt(record.attempts);
         const resultType =
           sequenceIdToMaxAttemptsMap[record.sequenceid] ===
-          new Date(record.startedat).getTime()
+          this.parseTimestampAsUTC(record.startedat).getTime()
             ? "FINAL"
             : "ATTEMPT";
 
@@ -199,6 +201,15 @@ export class AthenaImporter {
       });
   }
 
+  private parseTimestampAsUTC(timestamp: string): Date {
+    // endsWith has better performance than a regexp
+    const stringTimestamp = timestamp.endsWith("Z")
+      ? timestamp
+      : timestamp + "Z"; // Add explicit Z to mark it as a UTC date
+
+    return new Date(stringTimestamp);
+  }
+
   private settleCheckIds(
     checkResults: Partial<CheckResult>[],
     externalIds: string[],
@@ -214,12 +225,18 @@ export class AthenaImporter {
     checkIds: string[],
     accountId: string,
   ) {
-    const sorted = sortBy(checkResults, "startedAt");
-    const groupedById = groupBy(sorted, "checkId");
+    if (checkResults.length === 0) {
+      return;
+    }
 
-    const newestRecordInBatch = new Date(
-      new Date(sorted[sorted.length - 1].startedAt!).getTime() - 2 * 60_000,
+    const sorted = sortBy(checkResults, "startedAt");
+    const newestRecord = sorted[sorted.length - 1];
+
+    // mark checks as synced until 2 minutes away from the newest record in batch (just to be on the safe side)
+    const checksSyncedUntilDateWithBuffer = new Date(
+      this.parseTimestampAsUTC(newestRecord.startedAt!).getTime() - 2 * 60_000,
     );
+    const groupedById = groupBy(sorted, "checkId");
     for (const checkId of checkIds) {
       const resultsForCheck = groupedById[checkId] || [];
       await this.inserter.insertCheckResults(resultsForCheck as CheckResult[]);
@@ -227,7 +244,7 @@ export class AthenaImporter {
         checkId,
         accountId,
         from,
-        newestRecordInBatch,
+        checksSyncedUntilDateWithBuffer,
       );
     }
   }
