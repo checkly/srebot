@@ -11,6 +11,7 @@ import {
   Reporting,
 } from "./models";
 import { PrometheusParser } from "./PrometheusParser";
+import { log } from "../log";
 
 interface ChecklyClientOptions {
   accountId?: string;
@@ -308,15 +309,23 @@ export class ChecklyClient {
 
       const retryAfterHeader = response.headers.get("Retry-After");
       const exponentialDelay = Math.pow(2, options.attempt) * 1000; // exponential delay
-      const retryDelay = retryAfterHeader
+      const retryDelayMs = retryAfterHeader
         ? parseInt(retryAfterHeader) * 1000 + 1000 // add 1 second to the retry delay just to be on the safe side
         : exponentialDelay;
 
-      console.log(
-        `msg="Got 429 Waiting for retry" attempt=${options.attempt} maxAttempts=${options.maxAttempts} retryDelay=${retryDelay} url=${url}`,
+      log.debug(
+        {
+          attempt: options?.attempt,
+          maxAttempts: options?.maxAttempts,
+          retryDelayMs: retryDelayMs,
+          url: url,
+          retryAfterHeader: retryAfterHeader,
+          responseStatus: response.status,
+        },
+        `Fetch failed, waiting for retry`,
       );
 
-      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
       return this.fetchWithRetry(url, init, {
         attempt: options.attempt + 1,
         maxAttempts: options.maxAttempts,
