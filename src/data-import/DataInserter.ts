@@ -42,7 +42,7 @@ export class CheckResultsInserter {
   }
 
   async insertCheckResults(checkResults: CheckResult[]) {
-    const chunkedCheckResults = chunk(checkResults, 100);
+    const chunkedCheckResults = chunk(checkResults, 500); // Max batch size supported in knex insert is 1000
     for (const chunkOfResults of chunkedCheckResults) {
       await upsertCheckResults(chunkOfResults);
 
@@ -70,21 +70,14 @@ export class CheckResultsInserter {
       }
 
       // Find matching error cluster or create new one
-
       let matchingCluster: ErrorClusterTable | null =
         this.messageToClusterMap[errorMessage] || null;
-      if (matchingCluster) {
-        log.debug({ errorMessage }, "Found cached cluster");
-      } else {
+      if (!matchingCluster) {
         matchingCluster = await findMatchingErrorCluster(
           checkly.accountId,
           embedding,
         );
         if (matchingCluster) {
-          log.info(
-            { ...matchingCluster, embedding: "[hidden]" },
-            "Found matching error cluster in the DB",
-          );
           // If a cluster was found in the DB we can cache it
           this.messageToClusterMap[errorMessage] = matchingCluster;
         }
@@ -101,7 +94,7 @@ export class CheckResultsInserter {
           embedding_model: this.embeddingModel,
         };
         await insertErrorCluster(matchingCluster);
-        log.info({ cluster: matchingCluster }, "New error cluster created");
+        log.info("New error cluster created");
       }
 
       // Add this result to the cluster
@@ -131,7 +124,7 @@ export class CheckResultsInserter {
       log.debug(
         {
           missingEmbeddings: missingValues.length,
-          durationMs: startedAt - Date.now(),
+          durationMs: Date.now() - startedAt,
         },
         "Generated new embeddings",
       );
