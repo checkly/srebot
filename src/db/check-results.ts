@@ -31,13 +31,11 @@ export async function findCheckResults(
   from: Date,
   to: Date,
 ): Promise<CheckResultTable[]> {
-  const results = await postgres<CheckResultTable>("check_results")
+  return postgres<CheckResultTable>("check_results")
     .where("checkId", checkId)
     .where("startedAt", ">=", from)
     .where("startedAt", "<=", to)
     .orderBy("startedAt", "asc");
-
-  return results;
 }
 
 export const upsertCheckResults = async (input: CheckResult[]) => {
