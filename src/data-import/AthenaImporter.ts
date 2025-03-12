@@ -3,6 +3,7 @@ import { CheckResult } from "../checkly/models";
 import { groupBy, parseInt, sortBy } from "lodash";
 import { CheckResultsInserter } from "./DataInserter";
 import { ChecklyClient } from "../checkly/checklyclient";
+import { log } from "../log";
 
 type RawCsvRecord = {
   id: string;
@@ -56,6 +57,8 @@ export class AthenaImporter {
     const file = await this.fetchCsv(from, to);
     const csvAsText = await file.text();
     const parsedRecords = this.parseCsv(csvAsText);
+
+    log.info({ recordsFound: parsedRecords.length }, "Found parsed records");
 
     // We need to provide explicit list of known checkIds to correctly mark checks without any results as synced
     const checkIds = checks.map((check) => check.id);
