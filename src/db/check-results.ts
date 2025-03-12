@@ -33,9 +33,23 @@ export async function findCheckResults(
 ): Promise<CheckResultTable[]> {
   return postgres<CheckResultTable>("check_results")
     .where("checkId", checkId)
-    .where("startedAt", ">=", from)
-    .where("startedAt", "<=", to)
-    .orderBy("startedAt", "asc");
+    .where("startedAt", ">=", from.toISOString())
+    .where("startedAt", "<=", to.toISOString())
+    .orderBy("startedAt", "desc"); // Returns newest results first
+}
+
+export async function findCheckResultsByAccountId(
+  accountId: string,
+  from: Date,
+  to: Date,
+): Promise<CheckResultTable[]> {
+  const results = await postgres<CheckResultTable>("check_results")
+    .where("accountId", accountId)
+    .where("startedAt", ">=", from.toISOString())
+    .where("startedAt", "<=", to.toISOString())
+    .orderBy("startedAt", "desc");
+
+  return results;
 }
 
 export const upsertCheckResults = async (input: CheckResult[]) => {

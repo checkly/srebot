@@ -15,6 +15,7 @@ import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
 import { CoreSystemMessage, CoreUserMessage } from "ai";
 import { log } from "../log";
+import { CheckResultsTimeSlice } from "../slackbot/check-result-slices";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
@@ -132,6 +133,70 @@ export function summarizeErrorsPrompt(input: {
   });
 }
 
+enum CheckSeverity {
+  PASSING = "PASSING",
+  DEGRADED = "DEGRADED",
+  FAILING = "FAILING",
+  NEW_FAILING = "NEW_FAILING",
+  NEW_DEGRADED = "NEW_DEGRADED",
+  RECOVERED = "RECOVERED",
+}
+
+type CheckStatus = {
+  checkId: string;
+  location: string;
+  severity: CheckSeverity;
+  patternStart: string;
+};
+
+export function summarizeMultipleChecksStatus(
+  checks: CheckStatus[],
+): PromptDefinitionForText {
+  const interestingChecks = checks.filter(
+    (check) =>
+      check.severity !== CheckSeverity.PASSING &&
+      check.severity != CheckSeverity.FAILING,
+  );
+
+  const prompt = `
+    The following json data describes the state of multiple monitoring checks in different locations.
+    ${interestingChecks
+      .map(
+        (check) => `
+      - checkId: ${check.checkId}
+      - location: ${check.location}
+      - severity: ${check.severity}
+      - patternStart: ${new Date(check.patternStart).toLocaleString()}
+    `,
+      )
+      .join("\n")}
+
+    Current time: ${new Date().toLocaleString()}
+
+    Explanation of the data:
+    - checkId: The ID of the check (do not mention in the summary, rather call out the number of affected checks)
+    - location: The location of the check (this can be used in the summary to indicate the affected locations)
+    - severity: The severity of the check (do not use the enum values but rather use words describing there meaning)
+    - patternStart: unix timestamp at which the severity changed from one state to another, render this in time ago format
+
+    Be an SRE Engineer which answers the question what the state of the current checks is. Use max 3 sentences with max 50 words.
+
+    Constitution:
+    - Always prioritize accuracy and relevance in the summary
+    - Be concise but comprehensive in your explanations
+    - Prioritize ${CheckSeverity.NEW_FAILING} > ${CheckSeverity.NEW_DEGRADED} > ${CheckSeverity.RECOVERED}
+    - do not include any call for actions, just describe the current state
+  `;
+
+  return {
+    prompt,
+    ...promptConfig("summarizeMultipleChecksStatus", {
+      temperature: 1,
+      maxTokens: 100,
+    }),
+  };
+}
+
 export function summarizeTestGoalPrompt(
   testName: string,
   scriptName: string,
@@ -166,7 +231,7 @@ export function summarizeTestGoalPrompt(
   };
 }
 
-enum ErrorCategory {
+export enum SimpleErrorCategory {
   PASSING = "PASSING",
   FLAKY = "FLAKY",
   FAILING = "FAILING",
@@ -228,7 +293,7 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
 
   const schema = z.object({
     category: z
-      .nativeEnum(ErrorCategory)
+      .nativeEnum(SimpleErrorCategory)
       .describe("The category of the check results heat map"),
 
     failureIncidentsSummary: z

@@ -61,6 +61,14 @@ describe("ChecklyService", () => {
     expect(result).toBeDefined();
   });
 
+  it.skip("can retrieve account", async () => {
+    const result = await client.getAccount(
+      "04fec768-8ac4-4a9c-ae72-5522045772f5",
+    );
+
+    expect(result).toBeDefined();
+  });
+
   it("can retrieve dashboards", async () => {
     const result = await client.getDashboards();
 
