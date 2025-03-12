@@ -1,6 +1,5 @@
-import postgres from "../db/postgres";
 import { checkly } from "../checkly/client";
-import { CheckResult, CheckSyncStatus } from "../checkly/models";
+import { CheckResult } from "../checkly/models";
 import { log } from "../log";
 import { chunk } from "lodash";
 import crypto from "node:crypto";
@@ -12,6 +11,8 @@ import {
 } from "../db/error-cluster";
 import { embedMany } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { upsertCheckSyncStatus } from "../db/check-sync-status";
+import { upsertCheckResults } from "../db/check-results";
 
 export class CheckResultsInserter {
   constructor() {}
@@ -22,28 +23,19 @@ export class CheckResultsInserter {
     from: Date,
     to: Date,
   ) {
-    await postgres<CheckSyncStatus>("check_sync_status")
-      .insert({
-        checkId,
-        accountId,
-        from, // Keep initial `from`
-        to, // Update `to`
-        syncedAt: new Date(),
-      })
-      .onConflict("checkId")
-      .merge({
-        to: postgres.raw("GREATEST(EXCLUDED.to, check_sync_status.to)"), // Keep the latest `to`
-        syncedAt: postgres.fn.now(), // Always update `syncedAt`
-      });
+    await upsertCheckSyncStatus({
+      checkId,
+      accountId,
+      from,
+      to,
+      syncedAt: new Date(),
+    });
   }
 
   async insertCheckResults(checkResults: CheckResult[]) {
     const chunkedCheckResults = chunk(checkResults, 100);
     for (const chunkOfResults of chunkedCheckResults) {
-      const mapped = chunkOfResults.map((cr) =>
-        this.serialiseCheckResultForDBInsert(cr),
-      );
-      await postgres("check_results").insert(mapped).onConflict("id").ignore();
+      await upsertCheckResults(chunkOfResults);
 
       const onlyFailing = chunkOfResults.filter(
         (cr) => cr.hasErrors || cr.hasFailures,
@@ -52,14 +44,6 @@ export class CheckResultsInserter {
         await this.generateClustering(onlyFailing);
       }
     }
-  }
-
-  private serialiseCheckResultForDBInsert(result: CheckResult) {
-    return {
-      ...result,
-      accountId: checkly.accountId,
-      fetchedAt: new Date(),
-    };
   }
 
   private async generateClustering(checkResults: CheckResult[]) {

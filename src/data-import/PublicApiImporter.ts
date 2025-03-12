@@ -1,9 +1,11 @@
-import postgres from "../db/postgres";
 import { checkly } from "../checkly/client";
-import { CheckResult, CheckSyncStatus } from "../checkly/models";
+import { CheckResult } from "../checkly/models";
 import { log } from "../log";
-import { insertChecks } from "../db/check";
-import { insertCheckGroups } from "../db/check-groups";
+import { insertChecks, removeAccountChecks } from "../db/check";
+import {
+  insertCheckGroups,
+  removeAccountCheckGroups,
+} from "../db/check-groups";
 import { chunk, keyBy } from "lodash";
 import {
   addMinutes,
@@ -14,6 +16,7 @@ import {
   subMinutes,
 } from "date-fns";
 import { CheckResultsInserter } from "./DataInserter";
+import { findCheckSyncStatus } from "../db/check-sync-status";
 
 const SAFETY_MARGIN_MINUTES = 2;
 
@@ -52,9 +55,7 @@ export class PublicApiImporter {
 
     for (const idsBatch of chunkedCheckIds) {
       await Promise.all(
-        idsBatch.map((checkId) =>
-          this.syncCheckResultsBetter(checkId, from, to),
-        ),
+        idsBatch.map((checkId) => this.syncResultsForCheck(checkId, from, to)),
       );
     }
     log.info(
@@ -66,7 +67,7 @@ export class PublicApiImporter {
     );
   }
 
-  private async syncCheckResultsBetter(checkId: string, from: Date, to: Date) {
+  private async syncResultsForCheck(checkId: string, from: Date, to: Date) {
     const startedAt = Date.now();
 
     const periodsToSync = await this.getPeriodsToSync(checkId, from, to);
@@ -98,9 +99,7 @@ export class PublicApiImporter {
     from: Date,
     to: Date,
   ): Promise<{ from: Date; to: Date }[]> => {
-    const checkSyncStatus = await postgres<CheckSyncStatus>("check_sync_status")
-      .where({ checkId })
-      .first();
+    const checkSyncStatus = await findCheckSyncStatus(checkId);
     // If no records exist, sync the entire period
     if (!checkSyncStatus) {
       return [{ from, to }];
@@ -182,10 +181,8 @@ export class PublicApiImporter {
 
     // Remove checks that no longer exist
     const checkIds = allChecks.map((check) => check.id);
-    await postgres("checks")
-      .delete()
-      .whereNotIn("id", checkIds)
-      .where("accountId", checkly.accountId);
+
+    await removeAccountChecks(checkIds, checkly.accountId);
 
     log.info(
       {
@@ -204,10 +201,7 @@ export class PublicApiImporter {
 
     // Remove checks that no longer exist
     const groupIds = allGroups.map((check) => check.id);
-    await postgres("check_groups")
-      .delete()
-      .whereNotIn("id", groupIds)
-      .where("accountId", checkly.accountId);
+    await removeAccountCheckGroups(groupIds, checkly.accountId);
 
     log.info(
       {

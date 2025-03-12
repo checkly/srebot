@@ -26,21 +26,36 @@ type RawCsvRecord = {
 
 export class AthenaImporter {
   private inserter: CheckResultsInserter;
+  private readonly athenaApiKey: string;
+  private readonly checklyApiKey: string;
+  private readonly athenaAccessEndpointUrl: string;
+  private readonly accountId: string;
 
-  constructor(props: { inserter?: CheckResultsInserter } = {}) {
+  constructor(props: {
+    inserter?: CheckResultsInserter;
+    athenaApiKey: string;
+    checklyApiKey: string;
+    athenaAccessEndpointUrl: string;
+    accountId: string;
+  }) {
     this.inserter = props.inserter || new CheckResultsInserter();
+    this.athenaApiKey = props.athenaApiKey;
+    this.checklyApiKey = props.checklyApiKey;
+    this.athenaAccessEndpointUrl = props.athenaAccessEndpointUrl;
+    this.accountId = props.accountId;
   }
 
-  async importAccountData(accountId: string, from: Date, to: Date) {
+  async importAccountData(from: Date, to: Date) {
+    // We need to fetch
     const checklyClient = new ChecklyClient({
-      apiKey: process.env.CHECKLY_API_KEY,
-      accountId: accountId,
+      apiKey: this.checklyApiKey,
+      accountId: this.accountId,
     });
     const checks = await checklyClient.getChecks();
 
-    const file = await this.fetchCsv(accountId, from, to);
+    const file = await this.fetchCsv(from, to);
     const csvAsText = await file.text();
-    const parsedRecords = this.parseCsv(accountId, csvAsText);
+    const parsedRecords = this.parseCsv(csvAsText);
 
     // We need to provide explicit list of known checkIds to correctly mark checks without any results as synced
     const checkIds = checks.map((check) => check.id);
@@ -50,25 +65,17 @@ export class AthenaImporter {
       parsedRecords,
       from,
       listOfKnownCheckIds,
-      accountId,
+      this.accountId,
     );
   }
 
-  private async fetchCsv(
-    accountId: string,
-    from: Date,
-    to: Date,
-  ): Promise<Response> {
-    const url = `${process.env.ATHENA_ACCESS_ENDPOINT_URL}?from=${from.getTime()}&to=${to.getTime()}`;
+  private async fetchCsv(from: Date, to: Date): Promise<Response> {
+    const url = `${this.athenaAccessEndpointUrl}?from=${from.getTime()}&to=${to.getTime()}`;
 
-    // You can supply these via environment variables or replace with your literal values.
-    const apiKey = process.env.CHECKLY_API_KEY;
-
-    // Fetch the CSV file using node fetch with the required headers.
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "x-checkly-account": accountId,
+        Authorization: `Bearer ${this.athenaApiKey}`,
+        "x-checkly-account": this.accountId,
       },
     });
 
@@ -89,7 +96,7 @@ export class AthenaImporter {
     return await fetch(signedUrl);
   }
 
-  parseCsv(accountId: string, csvData: string): Partial<CheckResult>[] {
+  private parseCsv(csvData: string): Partial<CheckResult>[] {
     const records: RawCsvRecord[] = parse(csvData, {
       columns: true, // Use the first row as header names for object keys
       skip_empty_lines: true,
@@ -97,7 +104,6 @@ export class AthenaImporter {
     });
 
     // This is ugly but it works
-    //
     const sequenceIdToMaxAttemptsMap: Record<string, number> = {};
     records.forEach((record) => {
       const sequenceId = record.sequenceid;
@@ -145,7 +151,7 @@ export class AthenaImporter {
           startedAt: startedAt.toISOString(),
           stoppedAt: stoppedAt.toISOString(),
           id: record.id,
-          accountId: accountId,
+          accountId: this.accountId,
           checkId: record.checkid,
         };
 

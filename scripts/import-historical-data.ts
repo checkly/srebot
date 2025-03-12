@@ -1,84 +1,63 @@
 #!/usr/bin/env ts-node
 
+import { Command } from "commander";
 import { AthenaImporter } from "../src/data-import/AthenaImporter";
+import { log } from "../src/log";
+import { initConfig } from "../src/lib/init-config";
 
-const parseArgs = () => {
-  const args = process.argv.slice(2);
-  const parsedArgs: Record<string, string | boolean | number> = {};
+initConfig();
 
-  args.forEach((arg, index) => {
-    if (arg.startsWith("--")) {
-      const key = arg.replace(/^--/, "");
-      const value = args[index + 1]?.startsWith("--")
-        ? true
-        : (args[index + 1] ?? true);
-      parsedArgs[key] = isNaN(Number(value)) ? value : Number(value);
-    }
-  });
+const program = new Command();
 
-  return parsedArgs;
-};
+program
+  .name("import-historical-data")
+  .description("Import historical data for an account")
+  .requiredOption("--account-id <string>", "The account ID to import")
+  .option(
+    "--days-back <number>",
+    "Number of days back to import",
+    (value: string) => {
+      const num = Number(value);
+      if (isNaN(num) || num <= 0) {
+        throw new Error(
+          "Invalid argument. Please provide a positive number of days.",
+        );
+      }
+      return num;
+    },
+    1,
+  )
+  .helpOption("--help", "Show this help message");
 
-const showHelp = () => {
-  console.log(`
-Usage: ts-node import-historical-data.ts [options]
+program.parse(process.argv);
 
-Options:
-  --days-back <number>         Number of days back to import (default: 1)
-  --account-id <string>        The account ID to import (required)
-  --help                       Show this help message
+const options = program.opts();
+const accountId = options.accountId;
+const daysBack = options.daysBack; // Already converted to number by our custom parser
 
-Examples:
-  ts-node import-historical-data.ts --account-id YOUR_ACCOUNT_ID                      # Import last 1 day (default)
-  ts-node import-historical-data.ts --account-id YOUR_ACCOUNT_ID --days-back 4        # Import last 2 days
-`);
-  process.exit(0);
-};
+const daysAgo = (daysBack: number): Date =>
+  new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
 
 const main = async () => {
-  // parse arguments
-  const args = parseArgs();
+  log.info({ daysBack, accountId }, `Starting to import data`);
 
-  if (args["help"]) {
-    showHelp();
-  }
-
-  // Require account-id argument
-  const accountId = args["account-id"] ? String(args["account-id"]) : undefined;
-  if (!accountId) {
-    console.error("❌ Missing required argument: --account-id");
-    process.exit(1);
-  }
-
-  const daysBack = args["days-back"] ? Number(args["days-back"]) : 1;
-
-  if (isNaN(daysBack) || daysBack <= 0) {
-    console.error(
-      "❌ Invalid argument. Please provide a positive number of days.",
-    );
-    process.exit(1);
-  }
-
-  console.log(
-    `🔄 Importing data from the last ${daysBack} day(s) for account ${accountId}...`,
-  );
-
-  const importer = new AthenaImporter();
+  const importer = new AthenaImporter({
+    accountId: accountId,
+    checklyApiKey: process.env.CHECKLY_API_KEY!,
+    athenaApiKey: process.env.CHECKLY_API_KEY!,
+    athenaAccessEndpointUrl: process.env.ATHENA_ACCESS_ENDPOINT_URL!,
+  });
 
   const fromDate = daysAgo(daysBack);
   const toDate = new Date();
 
-  await importer.importAccountData(accountId, fromDate, toDate);
+  await importer.importAccountData(fromDate, toDate);
 
-  console.log("✅ Import completed.");
+  log.info("Import completed.");
   process.exit(0);
 };
 
-function daysAgo(daysBack: number): Date {
-  return new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
-}
-
 main().catch((err) => {
-  console.error("❌ Import failed:", err);
+  console.error("Import failed:", err); // For some reason log.error is serialising the error as [Object object]
   process.exit(1);
 });

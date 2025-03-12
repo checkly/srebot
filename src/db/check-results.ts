@@ -1,10 +1,12 @@
 import postgres from "./postgres";
+import { CheckResult } from "../checkly/models";
+import { checkly } from "../checkly/client";
 
 export interface CheckResultTable {
   id: string;
   checkId: string;
   accountId: string;
-  checkRunId: bigint;
+  checkRunId: number;
   name: string;
   hasErrors: boolean;
   hasFailures: boolean;
@@ -37,3 +39,22 @@ export async function findCheckResults(
 
   return results;
 }
+
+export const upsertCheckResults = async (input: CheckResult[]) => {
+  const serializedResults: CheckResultTable[] = input.map((result) => ({
+    ...result,
+    accountId: checkly.accountId,
+    fetchedAt: new Date(),
+    checkRunId: result.checkRunId,
+    startedAt: new Date(result.startedAt),
+    stoppedAt: new Date(result.stoppedAt),
+    created_at: result.created_at
+      ? new Date(result.created_at)
+      : new Date(result.stoppedAt),
+  }));
+
+  await postgres<CheckResultTable>("check_results")
+    .insert(serializedResults)
+    .onConflict("id")
+    .ignore();
+};

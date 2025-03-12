@@ -79,3 +79,13 @@ export async function readCheck(id: string) {
   }
   return check;
 }
+
+export const removeAccountChecks = async (
+  checkIdsToKeep: string[],
+  accountId: string,
+) => {
+  await postgres("checks")
+    .delete()
+    .whereNotIn("id", checkIdsToKeep)
+    .where("accountId", accountId);
+};
