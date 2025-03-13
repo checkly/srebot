@@ -66,6 +66,13 @@ export const createHeatmap = (
       text: "Check Failures Percentage",
       left: "center",
     },
+    backgroundColor: "#FFFFFF",
+    grid: {
+      left: "180px", // Adjust as needed
+      right: "50px", // Adjust as needed
+      bottom: "150px", // Increase this value to give more space for x-axis labels
+      top: "50px", // Adjust as needed
+    },
     animation: false,
     xAxis: {
       type: "category",
@@ -74,10 +81,18 @@ export const createHeatmap = (
         const msInBucket = bucketSizeInMinutes * 60_000;
         const timeInMs = bIndex * msInBucket;
         const date = new Date(timeInMs);
-        return date.toISOString().slice(0, 16); // e.g. "2025-02-27T12:50"
+        return date.toISOString().slice(0, 16).replace("T", "  "); // e.g. "2025-02-27T12:50"
       }),
       splitArea: {
         show: true,
+      },
+      axisLabel: {
+        rotate: 90, // Rotate labels vertically
+        interval: 0, // Show all labels
+        align: "right",
+        verticalAlign: "middle",
+        fontSize: 15, // Adjust font size if needed
+        color: "#000000",
       },
     },
     yAxis: {
@@ -85,6 +100,10 @@ export const createHeatmap = (
       data: runLocations,
       splitArea: {
         show: true,
+      },
+      axisLabel: {
+        color: "#000000",
+        fontSize: 20,
       },
     },
     visualMap: {
@@ -104,8 +123,12 @@ export const createHeatmap = (
         type: "heatmap",
         data: heatmapData,
         label: {
-          show: false,
+          show: true,
           formatter: (params) => {
+            if (params.value[2] === 0) {
+              return "";
+            }
+
             // Show the fail ratio, formatted (e.g., "0.25")
             return params.value[2].toFixed(2);
           },
@@ -135,8 +158,8 @@ export const generateHeatmapPNG = (
     verticalSeries: number;
   },
 ) => {
-  const width = 1200; // Image width
-  const height = 150 * verticalSeries + 100; // Image height
+  const width = 2000; // Image width
+  const height = 45 * verticalSeries + 200; // Image height
   const canvas = createCanvas(width, height);
   const chart = echarts.init(canvas as any, null, {
     renderer: "canvas",

@@ -1,12 +1,17 @@
 interface CheckStats {
   checkName: string;
+  checkId: string;
   checkSummary: string;
   checkState: "PASSING" | "FLAKY" | "FAILING";
   lastFailure: Date;
   failureCount: number;
   successRate: number;
   failurePatterns?: string[];
+  lastFailureId?: string;
+  timeLocationSummary: string;
 }
+
+const CHECKLY_APP_BASE_URL = "https://app.checklyhq.com/checks/";
 
 function generateCheckSummaryBlock(stats: CheckStats) {
   // Helper to get emoji based on state
@@ -23,10 +28,14 @@ function generateCheckSummaryBlock(stats: CheckStats) {
     }
   };
 
-  const extraTitlte =
+  const extraTitle =
     stats.checkState != "PASSING"
       ? ` - ${stats.failureCount} failures in the last 24 hours`
       : "";
+
+  const checkUrl = `${CHECKLY_APP_BASE_URL}${stats.checkId}`;
+
+  const lastFailureLink = `${checkUrl}/results/${stats.lastFailureId}`;
 
   return {
     blocks: [
@@ -34,7 +43,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Check:* ${stats.checkName} (${getStateEmoji(stats.checkState)} ${stats.checkState}${extraTitlte})
+          text: `*Check:* <${checkUrl}|${stats.checkName}> (${getStateEmoji(stats.checkState)} ${stats.checkState}${extraTitle})
 *Check summary:* ${stats.checkSummary}`,
         },
       },
@@ -42,8 +51,15 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Last failure:* <!date^${Math.floor(stats.lastFailure.getTime() / 1000)}^{ago}|${stats.lastFailure.toLocaleString()}>
+          text: `*Last failure:* <!date^${Math.floor(stats.lastFailure.getTime() / 1000)}^{ago}|${stats.lastFailure.toLocaleString()}> <${lastFailureLink}|view>
 *Success Rate:* ${stats.successRate}% in the last 24 hours`,
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Summary:* ${stats.timeLocationSummary}`,
         },
       },
       ...(stats.failurePatterns && stats.failurePatterns.length > 0
