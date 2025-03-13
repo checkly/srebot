@@ -74,7 +74,7 @@ export function getErrorMessageFromMultiStepError(
   checkResult: CheckResult,
 ): string {
   return (
-    checkResult.multiStepCheckResult?.errors.find((e) => !!e.message)
+    checkResult.multiStepCheckResult?.errors?.find((e) => !!e.message)
       ?.message || "No Error provided"
   );
 }
@@ -82,7 +82,7 @@ export function getErrorMessageFromBrowserError(
   checkResult: CheckResult,
 ): string {
   return (
-    checkResult.browserCheckResult?.errors.find((e) => !!e.message)?.message ||
+    checkResult.browserCheckResult?.errors?.find((e) => !!e.message)?.message ||
     "No Error provided"
   );
 }

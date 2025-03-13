@@ -44,19 +44,35 @@ export class CheckResultsInserter {
   async insertCheckResults(checkResults: CheckResult[]) {
     const chunkedCheckResults = chunk(checkResults, 500); // Max batch size supported in knex insert is 1000
     for (const chunkOfResults of chunkedCheckResults) {
+      const startedAt = Date.now();
       await upsertCheckResults(chunkOfResults);
 
+      const clusteringStartedAt = Date.now();
       const onlyFailing = chunkOfResults.filter(
         (cr) => cr.hasErrors || cr.hasFailures,
       );
       if (onlyFailing.length > 0) {
         await this.generateClustering(onlyFailing);
       }
+      log.debug(
+        {
+          batchSize: chunkOfResults.length,
+          clusteringBatchSize: onlyFailing.length,
+          durationMs: Date.now() - startedAt,
+          clusteringDurationMs: Date.now() - clusteringStartedAt,
+        },
+        "batch inserted",
+      );
     }
   }
 
   private async generateClustering(checkResults: CheckResult[]) {
-    const errorMessages = checkResults.map(getErrorMessageFromCheckResult);
+    let errorMessages: string[] = [];
+    try {
+      errorMessages = checkResults.map(getErrorMessageFromCheckResult);
+    } catch (err) {
+      console.log(err);
+    }
     await this.generateMissingEmbeddings(errorMessages);
 
     for (let i = 0; i < checkResults.length; i++) {

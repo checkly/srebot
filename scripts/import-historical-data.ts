@@ -14,18 +14,33 @@ program
   .description("Import historical data for an account")
   .requiredOption("--account-id <string>", "The account ID to import")
   .option(
-    "--days-back <number>",
-    "Number of days back to import",
+    "--hours-back <number>",
+    "Number of hours back to import",
     (value: string) => {
       const num = Number(value);
       if (isNaN(num) || num <= 0) {
         throw new Error(
-          "Invalid argument. Please provide a positive number of days.",
+          "Invalid argument. Please provide a positive number of hours.",
         );
       }
       return num;
     },
     1,
+  )
+  .option(
+    "--checkly-api-key <string>",
+    "Checkly API key",
+    process.env.CHECKLY_API_KEY,
+  )
+  .option(
+    "--athena-api-key <string>",
+    "Athena API key",
+    process.env.CHECKLY_API_KEY,
+  )
+  .option(
+    "--athena-endpoint-url <string>",
+    "Athena endpoint URL",
+    process.env.ATHENA_ACCESS_ENDPOINT_URL,
   )
   .helpOption("--help", "Show this help message");
 
@@ -33,22 +48,25 @@ program.parse(process.argv);
 
 const options = program.opts();
 const accountId = options.accountId;
-const daysBack = options.daysBack; // Already converted to number by our custom parser
+const hoursBack = options.hoursBack; // Already converted to number by our custom parser
+const checklyApiKey = options.checklyApiKey;
+const athenaApiKey = options.athenaApiKey;
+const athenaEndpointUrl = options.athenaEndpointUrl;
 
-const daysAgo = (daysBack: number): Date =>
-  new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+const hoursAgo = (hoursBack: number): Date =>
+  new Date(Date.now() - hoursBack * 60 * 60 * 1000);
 
 const main = async () => {
-  log.info({ daysBack, accountId }, `Starting to import data`);
+  log.info({ hoursBack, accountId }, "Starting to import data");
 
   const importer = new AthenaImporter({
     accountId: accountId,
-    checklyApiKey: process.env.CHECKLY_API_KEY!,
-    athenaApiKey: process.env.CHECKLY_API_KEY!,
-    athenaAccessEndpointUrl: process.env.ATHENA_ACCESS_ENDPOINT_URL!,
+    checklyApiKey: checklyApiKey!,
+    athenaApiKey: athenaApiKey!,
+    athenaAccessEndpointUrl: athenaEndpointUrl!,
   });
 
-  const fromDate = daysAgo(daysBack);
+  const fromDate = hoursAgo(hoursBack);
   const toDate = new Date();
 
   await importer.importAccountData(fromDate, toDate);
@@ -58,6 +76,6 @@ const main = async () => {
 };
 
 main().catch((err) => {
-  console.error("Import failed:", err); // For some reason log.error is serialising the error as [Object object]
+  console.error("Import failed:", err);
   process.exit(1);
 });
