@@ -27,14 +27,33 @@ export class PublicApiImporter {
     this.inserter = props.inserter || new CheckResultsInserter();
   }
 
-  async syncCheckResults({ from, to }: { from: Date; to: Date }) {
+  async syncCheckResults(minutesToSyncBack: number) {
     const startedAt = Date.now();
 
+    const checkIds = await this.getCheckIdsToSync();
+    log.info(
+      { checks_count: checkIds.length },
+      "Starting to sync check results",
+    );
+
+    for (const checkId of checkIds) {
+      await this.syncResultsForCheck(checkId, minutesToSyncBack);
+    }
+    log.info(
+      {
+        duration_ms: Date.now() - startedAt,
+        checks_count: checkIds.length,
+      },
+      "All checks synced",
+    );
+  }
+
+  private getCheckIdsToSync = async () => {
     const allChecks = await checkly.getChecks();
     const groups = await checkly.getCheckGroups();
     const groupsById = keyBy(groups, "id");
 
-    const checkIds = allChecks
+    return allChecks
       .filter(
         (c) =>
           c.checkType === "API" ||
@@ -49,30 +68,28 @@ export class PublicApiImporter {
         return c.activated;
       })
       .map((c) => c.id);
+  };
 
-    log.info({ checks_count: checkIds.length }, "Syncing check results");
-    const chunkedCheckIds = chunk(checkIds, 1);
-
-    for (const idsBatch of chunkedCheckIds) {
-      await Promise.all(
-        idsBatch.map((checkId) => this.syncResultsForCheck(checkId, from, to)),
-      );
-    }
-    log.info(
-      {
-        duration_ms: Date.now() - startedAt,
-        checks_count: checkIds.length,
-      },
-      "All checks synced",
-    );
-  }
-
-  private async syncResultsForCheck(checkId: string, from: Date, to: Date) {
+  private async syncResultsForCheck(
+    checkId: string,
+    minutesBackToSync: number,
+  ) {
     const startedAt = Date.now();
+
+    const to = new Date();
+    const from = subMinutes(to, minutesBackToSync);
 
     const periodsToSync = await this.getPeriodsToSync(checkId, from, to);
     const chunkedPeriods = periodsToSync.flatMap((period) =>
       this.divideIntoPeriodChunks(period.from, period.to, 60),
+    );
+
+    log.info(
+      {
+        checkId,
+        chunkedPeriods: chunkedPeriods.length,
+      },
+      "Starting to sync check results for check",
     );
 
     for (const period of chunkedPeriods) {

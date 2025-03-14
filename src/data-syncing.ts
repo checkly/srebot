@@ -9,7 +9,7 @@ const syncChecksAndGroups = async (syncer: PublicApiImporter) => {
       await syncer.syncChecks();
       await syncer.syncCheckGroups();
     } catch (err) {
-      console.error("❌ Sync failed:", err);
+      console.error(`msg="Syncing Checks or Check Groups failed" err=`, err);
     } finally {
       await timers.setTimeout(60_000);
     }
@@ -18,16 +18,17 @@ const syncChecksAndGroups = async (syncer: PublicApiImporter) => {
 
 const syncCheckResults = async (syncer: PublicApiImporter) => {
   while (shouldRun) {
+    const startedAt = Date.now();
     try {
-      const from = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      await syncer.syncCheckResults({
-        from: from,
-        to: new Date(),
-      });
+      const minutesBackToSync = 24 * 60;
+      await syncer.syncCheckResults(minutesBackToSync);
     } catch (err) {
-      console.error("❌ Sync failed:", err);
+      console.error(`msg="Syncing Check Results failed" err=`, err);
     } finally {
-      await timers.setTimeout(10_000);
+      const durationMs = Date.now() - startedAt;
+      if (durationMs < 60_000) {
+        await timers.setTimeout(60_000 - durationMs);
+      }
     }
   }
 };
@@ -37,6 +38,14 @@ export const startSyncingData = async () => {
 
   const checksAndGroups = syncChecksAndGroups(importer);
   const checkResults = syncCheckResults(importer);
+
+  const signalsToHandle = ["SIGINT", "SIGTERM"];
+
+  signalsToHandle.forEach((signal) => {
+    process.on(signal, () => {
+      shouldRun = false;
+    });
+  });
 
   await Promise.all([checksAndGroups, checkResults]);
 };

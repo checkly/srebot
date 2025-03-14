@@ -1,8 +1,4 @@
 import { initConfig } from "./lib/init-config";
-
-initConfig();
-console.log(process.env.OPEN_API_KEY);
-
 import express, { Request, Response } from "express";
 import { getOpenaiClient } from "./ai/openai";
 import { getRunMessages } from "./ai/utils";
@@ -12,6 +8,9 @@ import { app as slackApp } from "./slackbot/app";
 import { SreAssistant } from "./sre-assistant/SreAssistant";
 import { startLangfuseTelemetrySDK } from "./langfuse";
 import { startSyncingData } from "./data-syncing";
+import { log } from "./log";
+
+initConfig();
 
 process
   .on("unhandledRejection", (reason, promise) => {
@@ -61,7 +60,7 @@ app.post("/test/:alertId", async (req: Request, res: Response) => {
 
 app
   .listen(PORT, () => {
-    console.log("Server running at PORT: ", PORT);
+    log.info({ port: PORT }, "HTTP Server listening for connections");
   })
   .on("error", (error) => {
     // gracefully handle error
@@ -76,8 +75,16 @@ slackApp.error(async (error) => {
 
 (async () => {
   await slackApp.start();
-  console.log("⚡️ Bolt app is running!");
-  startSyncingData().catch((err) => {
-    console.error("Data syncing failed:", err);
-  });
+  log.info("Slack Bolt app is running!");
+
+  // Allow disabling sync with an environment variable
+  const shouldEnableSync = process.env.DISABLE_DATA_SYNC !== "true";
+
+  if (shouldEnableSync) {
+    startSyncingData().catch((err) => {
+      console.error("Data syncing failed:", err);
+    });
+  } else {
+    log.info("Data syncing is disabled with DISABLE_DATA_SYNC env-var flag");
+  }
 })();
