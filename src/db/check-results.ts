@@ -35,7 +35,65 @@ export async function findCheckResults(
     .where("checkId", checkId)
     .where("startedAt", ">=", from.toISOString())
     .where("startedAt", "<=", to.toISOString())
-    .orderBy("startedAt", "desc"); // Returns newest results first
+    .orderBy("startedAt", "asc");
+}
+
+export type CheckResultAggregate = {
+  checkId: string;
+  runLocation: string;
+  count: number;
+  passingCount: number;
+  errorCount: number;
+  degradedCount: number;
+  startedAtBin: Date;
+};
+
+export async function findCheckResultsAggregated(
+  query: {
+    from: Date;
+    to: Date;
+  } & (
+    | { accountId: string }
+    | { checkId: string }
+    | { accountId: string; checkId: string }
+  ),
+  intervalMinutes: number = 30,
+): Promise<CheckResultAggregate[]> {
+  return postgres("check_results")
+    .select(
+      "checkId",
+      "runLocation",
+      postgres.raw('count(*)::integer as "count"'),
+      postgres.raw(
+        'count(*) filter (where "hasErrors" = false and "hasFailures" = false and "isDegraded" = false)::integer as "passingCount"',
+      ),
+      postgres.raw(
+        'count(*) filter (where "hasErrors" = true or "hasFailures" = true)::integer as "errorCount"',
+      ),
+      postgres.raw(
+        'count(*) filter (where "isDegraded" = true)::integer as "degradedCount"',
+      ),
+      postgres.raw(
+        `date_bin('${intervalMinutes} minutes', "startedAt", timestamp '2000-01-01') as "startedAtBin"`,
+      ),
+    )
+    .modify((queryBuilder) => {
+      if ("checkId" in query) {
+        queryBuilder.where("checkId", query.checkId);
+      }
+      if ("accountId" in query) {
+        queryBuilder.where("accountId", query.accountId);
+      }
+    })
+    .whereBetween("startedAt", [query.from, query.to])
+    .groupBy(
+      "checkId",
+      "runLocation",
+      postgres.raw(
+        `date_bin('${intervalMinutes} minutes', "startedAt", timestamp '2000-01-01')`,
+      ),
+    )
+    .orderBy("startedAtBin", "asc");
 }
 
 export async function findCheckResultsByAccountId(

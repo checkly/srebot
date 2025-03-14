@@ -1,10 +1,9 @@
 #! /usr/bin/env ts-node
 
-import { generateObject, generateText } from "ai";
 import * as dataForge from "data-forge";
 import "data-forge-fs";
 
-import { findCheckResultsByAccountId } from "../db/check-results";
+import { findCheckResultsAggregated } from "../db/check-results";
 
 import { config } from "dotenv";
 import { resolve } from "path";
@@ -21,27 +20,36 @@ const interval = last24h(new Date());
 console.log("INTERVAL", interval);
 
 async function main() {
-  const checkResults = await findCheckResultsByAccountId(
-    accountId,
-    interval.from,
-    interval.to,
+  const aggregatedCheckResults = await findCheckResultsAggregated({
+    accountId: accountId,
+    checkId: "d8b692a0-b0f2-43cf-9081-65ba0a0ec973",
+    from: interval.from,
+    to: interval.to,
+  });
+
+  console.log(new dataForge.DataFrame(aggregatedCheckResults).toString());
+
+  const aggregatedCheckResultsInRegion = aggregatedCheckResults.filter(
+    (r) => r.runLocation === "us-east-1",
   );
 
-  const result = await summarizeCheckResultsToLabeledCheckStatus(checkResults);
-
-  console.log("RESULT", result.toArray().length);
-
-  const { text: summary } = await generateText(
-    summarizeMultipleChecksStatus(result.toArray()),
+  const result = await summarizeCheckResultsToLabeledCheckStatus(
+    aggregatedCheckResultsInRegion,
   );
 
-  console.log(
-    result
-      .toArray()
-      .map((r) => JSON.stringify(r))
-      .join("\n"),
-  );
-  console.log(summary);
+  console.log(result.toString());
+
+  // const { text: summary } = await generateText(
+  //   summarizeMultipleChecksStatus(result.toArray()),
+  // );
+
+  // console.log(
+  //   result
+  //     .toArray()
+  //     .map((r) => JSON.stringify(r))
+  //     .join("\n"),
+  // );
+  // console.log(summary);
 }
 
 main().then(() => {

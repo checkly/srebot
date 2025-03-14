@@ -5,6 +5,7 @@ interface AccountSummaryProps {
   failingChecks: number;
   hasIssues: boolean;
   issuesSummary: string;
+  failingChecksGoals: string;
 }
 
 export function createAccountSummaryBlock({
@@ -13,7 +14,8 @@ export function createAccountSummaryBlock({
   degradedChecks,
   failingChecks,
   hasIssues,
-  issuesSummary: hasIssuesSummary,
+  issuesSummary,
+  failingChecksGoals,
 }: AccountSummaryProps) {
   const state = hasIssues ? "❌" : "✅";
   const stateText = hasIssues
@@ -26,7 +28,7 @@ export function createAccountSummaryBlock({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*State:* ${state} ${stateText}\n*Availability:* ${hasIssuesSummary}`,
+          text: `*State:* ${state} ${stateText}\n*Blast Radius:*\n - ${issuesSummary}\n - ${failingChecksGoals}`,
         },
       },
       {

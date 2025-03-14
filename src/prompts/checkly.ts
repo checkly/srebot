@@ -15,7 +15,7 @@ import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
 import { CoreSystemMessage, CoreUserMessage } from "ai";
 import { log } from "../log";
-import { CheckResultsTimeSlice } from "../slackbot/check-result-slices";
+import { CheckTable } from "../db/check";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
@@ -142,31 +142,39 @@ enum CheckSeverity {
   RECOVERED = "RECOVERED",
 }
 
+type Somethng = {
+  checkId: string;
+  runLocation: string;
+  changePoints: number[];
+  changePointsFormatted: string[];
+};
+
 type CheckStatus = {
   checkId: string;
-  location: string;
-  severity: CheckSeverity;
-  patternStart: string;
+  runLocation: string;
+  changePoints: {
+    timestamp: number;
+    formattedTimestamp: string;
+    severity: string;
+  }[];
 };
 
 export function summarizeMultipleChecksStatus(
   checks: CheckStatus[],
 ): PromptDefinitionForText {
-  const interestingChecks = checks.filter(
-    (check) =>
-      check.severity !== CheckSeverity.PASSING &&
-      check.severity != CheckSeverity.FAILING,
-  );
-
   const prompt = `
     The following json data describes the state of multiple monitoring checks in different locations.
-    ${interestingChecks
+    ${checks
       .map(
         (check) => `
       - checkId: ${check.checkId}
-      - location: ${check.location}
-      - severity: ${check.severity}
-      - patternStart: ${new Date(check.patternStart).toLocaleString()}
+      - runLocation: ${check.runLocation}
+      - changePoints: ${check.changePoints
+        .map(
+          (cp) =>
+            `- timestamp: ${cp.timestamp} formattedTimestamp: ${cp.formattedTimestamp} severity: ${cp.severity}`,
+        )
+        .join("\n")}
     `,
       )
       .join("\n")}
@@ -175,7 +183,7 @@ export function summarizeMultipleChecksStatus(
 
     Explanation of the data:
     - checkId: The ID of the check (do not mention in the summary, rather call out the number of affected checks)
-    - location: The location of the check (this can be used in the summary to indicate the affected locations)
+    - runLocation: The location of the check (this can be used in the summary to indicate the affected locations)
     - severity: The severity of the check (do not use the enum values but rather use words describing there meaning)
     - patternStart: unix timestamp at which the severity changed from one state to another, render this in time ago format
 
@@ -433,7 +441,7 @@ type SummariseCheckInput = {
 };
 
 export const formatMultipleChecks = (
-  checks: Check[],
+  checks: Check[] | CheckTable[],
   characterLimit = 100_000,
 ): string => {
   const checkInputs: SummariseCheckInput[] = checks.map((check) => {
@@ -471,7 +479,7 @@ export const formatMultipleChecks = (
 - Locations: ${check.locations.join(", ")}
 ${
   check.request
-    ? `- Request: [${check.request.method}] ${check.request.url}\n  - Assertions: ${check.request.assertions.join(
+    ? `- Request: [${check.request.method}] ${check.request.url}\n  - Assertions: ${check.request.assertions?.join(
         ", ",
       )}`
     : ""
@@ -506,7 +514,7 @@ ${
 };
 
 export function summariseMultipleChecksGoal(
-  checks: Check[],
+  checks: Check[] | CheckTable[],
   maxTokens: number = 500,
 ): PromptDefinitionForText {
   const checksFormatted = formatMultipleChecks(checks);

@@ -80,6 +80,10 @@ export async function readCheck(id: string) {
   return check;
 }
 
+export async function readChecks(ids: string[]) {
+  return await postgres<CheckTable>("checks").whereIn("id", ids);
+}
+
 export const removeAccountChecks = async (
   checkIdsToKeep: string[],
   accountId: string,
