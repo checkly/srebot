@@ -44,6 +44,8 @@
     "class-validator": "0.14.1",
     "commander": "13.1.0",
     "csv-parse": "5.6.0",
+    "data-forge": "1.10.2",
+    "data-forge-fs": "0.0.9",
     "date-fns": "4.1.0",
     "dotenv": "16.4.5",
     "echarts": "5.6.0",
@@ -64,6 +66,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "reflect-metadata": "0.2.2",
+    "skmeans": "0.11.3",
     "typescript": "5.6.3",
     "yaml": "2.6.0",
     "zod": "3.23.8"
