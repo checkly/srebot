@@ -84,6 +84,14 @@ export class PublicApiImporter {
       this.divideIntoPeriodChunks(period.from, period.to, 60),
     );
 
+    log.info(
+      {
+        checkId,
+        chunkedPeriods: chunkedPeriods.length,
+      },
+      "Starting to sync check results for check",
+    );
+
     for (const period of chunkedPeriods) {
       await this.syncCheckResultsChunk(checkId, period.from, period.to);
       await this.inserter.trackCheckSyncStatus(
