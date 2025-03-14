@@ -11,7 +11,6 @@ import { startSyncingData } from "./data-syncing";
 import { log } from "./log";
 
 initConfig();
-console.log(process.env.OPEN_API_KEY);
 
 process
   .on("unhandledRejection", (reason, promise) => {
