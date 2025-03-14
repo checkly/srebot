@@ -206,9 +206,11 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
 
         **2. Consider the latest timestamp.**
            - If failures exist at the latest timestamp, it suggests an **ongoing issue** (**FAILING**).
+           - Mention that the issue is ongoing if there is no newer data after the most recent failure.
 
         **3. Summarize your findings.**
            - Clearly describe the affected locations and timeframes.
+           -
         `,
     } as CoreSystemMessage,
     {
@@ -234,7 +236,11 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
     failureIncidentsSummary: z
       .string()
       .describe(
-        "Brief summary of the failure incidents, with their time-frame. For each incident mention if it affected all locations, or a subset. Use only hours for times, and full locations names. If the failures are still happening, mention it. Use 2 sentences max.",
+        "Brief summary of the failure incidents, with their time-frame. " +
+          "For each incident mention if it affected all locations, or a subset. " +
+          "Use only hours for times, and full locations names. " +
+          "If there is no clear pattern (sporadic or random failures)- do not mention specific times or locations. " +
+          "If the failures are still happening, mention it. Use 2 sentences max.",
       ),
   });
 
