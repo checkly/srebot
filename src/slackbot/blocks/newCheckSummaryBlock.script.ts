@@ -5,6 +5,8 @@ import generateCheckSummaryBlock from "./newCheckSummaryBlock";
 async function main() {
   [
     generateCheckSummaryBlock({
+      checkId: "123",
+      timeLocationSummary: "",
       checkName: "My Passing Check",
       checkSummary: "This is a summary of my passing check",
       checkState: "PASSING",
@@ -13,6 +15,8 @@ async function main() {
       failureCount: 0,
     }),
     generateCheckSummaryBlock({
+      checkId: "123",
+      timeLocationSummary: "",
       checkName: "My Flaky Check",
       checkSummary: "This is a summary of my flaky check",
       checkState: "FLAKY",
@@ -25,6 +29,8 @@ async function main() {
       ],
     }),
     generateCheckSummaryBlock({
+      checkId: "123",
+      timeLocationSummary: "",
       checkName: "My Check",
       checkSummary: "This is a summary of my check",
       checkState: "FAILING",
