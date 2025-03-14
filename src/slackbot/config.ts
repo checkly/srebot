@@ -1,4 +1,4 @@
-import { log, pinoBoltLogger } from "../log";
+import { pinoBoltLogger } from "../log";
 import { Logger, LogLevel } from "@slack/bolt";
 import process from "node:process";
 
@@ -17,8 +17,7 @@ export const getSlackConfig = (): SlackConfig => ({
   appToken: process.env.SLACK_APP_TOKEN!,
   socketMode: true,
   logger: pinoBoltLogger,
-  logLevel:
-    process.env.NODE_ENV !== "production" ? LogLevel.DEBUG : LogLevel.INFO,
+  logLevel: LogLevel.INFO,
 });
 
 export const validateConfig = (): void => {

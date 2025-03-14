@@ -172,17 +172,52 @@ enum ErrorCategory {
   FAILING = "FAILING",
 }
 
-export function categorizeTestResultHeatMap(heatmap: Buffer): PromptDefinition {
+export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
   const messages = [
     {
       role: "system",
-      content:
-        "You are an SRE Engineer. You are given a heatmap which shows test results in different locations over time and you need to categorize the test into one of the following categories: PASSING, FLAKY, FAILING",
+      content: `
+        You are an AI specialized in analyzing heatmaps representing check failure ratios over time across multiple regions.
+
+        ### **Heatmap Details:**
+        - The heatmap displays the ratio of check failures per region over 30-minute intervals.
+        - **Green (0%)**: All check runs passed.
+        - **Red (100%)**: All check runs failed.
+        - **Gradient from green to red**: Represents the failure ratio within a given time frame.
+        - **Gray**: No data available (no check runs for that location/time).
+        - The X-axis represents time in UTC, with the most recent timestamp on the right.
+        - The Y-axis represents different geographic regions.
+
+        ### **Categorization Task:**
+        Your goal is to classify the check results as PASSING, FLAKY, or FAILING.
+
+        **Categories and Decision Process:**
+        1. **PASSING** → The check has minimal or no failures in the past 24 hours.
+        2. **FLAKY** → Failures appear sporadically, without a clear pattern, affecting different times and locations inconsistently.
+        3. **FAILING** → There are one or more distinct failure incidents in specific timeframes/locations, OR failures are **still occurring at the latest timestamp**.
+
+        ### **Step-by-Step Chain of Thought Analysis (CoT)**
+        To ensure a reliable classification, analyze the heatmap in the following order:
+
+        **1. Identify major failure patterns.**
+           - Are failures isolated and random? (**FLAKY**)
+           - Are failures concentrated in specific time windows? (**FAILING**)
+           - Is the heatmap mostly green? (**PASSING**)
+
+        **2. Consider the latest timestamp.**
+           - If failures exist at the latest timestamp, it suggests an **ongoing issue** (**FAILING**).
+
+        **3. Summarize your findings.**
+           - Clearly describe the affected locations and timeframes.
+        `,
     } as CoreSystemMessage,
     {
       role: "user",
       content: [
-        { type: "text", text: "Is this check passing, flaky or failing?" },
+        {
+          type: "text",
+          text: "Analyze this heatmap and classify the check as PASSING, FLAKY, or FAILING. Explain whether failures are isolated, clustered in specific timeframes, or still ongoing.",
+        },
         {
           type: "image",
           image: `data:image/jpeg;base64,${heatmap.toString("base64")}`,
@@ -195,14 +230,19 @@ export function categorizeTestResultHeatMap(heatmap: Buffer): PromptDefinition {
     category: z
       .nativeEnum(ErrorCategory)
       .describe("The category of the check results heat map"),
+
+    failureIncidentsSummary: z
+      .string()
+      .describe(
+        "Brief summary of the failure incidents, with their time-frame. For each incident mention if it affected all locations, or a subset. Use only hours for times, and full locations names. If the failures are still happening, mention it. Use 2 sentences max.",
+      ),
   });
 
-  return defineMessagesPrompt("categorizeTestResultHeatMap", messages, schema, {
-    temperature: 0.1,
+  return defineMessagesPrompt("analyseCheckFailureHeatMap", messages, schema, {
+    temperature: 0,
     maxTokens: 1000,
   });
 }
-
 export function clusterCheckResults(
   checkDetails: {
     intervalStart: string;

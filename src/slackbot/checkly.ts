@@ -1,7 +1,7 @@
 import { generateObject, generateText } from "ai";
 import { checkly } from "../checkly/client";
 import {
-  categorizeTestResultHeatMap,
+  analyseCheckFailureHeatMap,
   summarizeErrorsPrompt,
   SummarizeErrorsPromptType,
   summarizeTestGoalPrompt,
@@ -12,7 +12,6 @@ import {
   summarizeCheckResult,
 } from "../prompts/checkly-data";
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
-import { generateHeatmapPNG } from "../heatmap/createHeatmap";
 import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
 import { readCheck } from "../db/check";
@@ -22,6 +21,7 @@ import { readCheckGroup } from "../db/check-groups";
 import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
 import { analyseMultipleChecks } from "../use-cases/analyse-multiple/analyse-multiple-checks";
 import { createMultipleCheckAnalysisBlock } from "./blocks/multipleChecksAnalysisBlock";
+import { generateHeatmap } from "../heatmap/generateHeatmap";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -59,10 +59,15 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
   const { object: errorGroups } =
     await generateObject<SummarizeErrorsPromptType>(promptDef);
 
-  const heatmapImage = generateHeatmapPNG(checkResults, {
-    bucketSizeInMinutes: check.frequency * 10,
-    verticalSeries: check.locations.length,
-  });
+  const heatmapImage = generateHeatmap(
+    checkResults,
+    interval.from,
+    interval.to,
+    {
+      bucketSizeInMinutes: check.frequency * 10,
+      verticalSeries: check.locations.length,
+    },
+  );
 
   log.info(
     {
@@ -106,10 +111,19 @@ async function checkSummary(checkId: string) {
 
   const interval = last24h(new Date());
 
+  const startedAt = Date.now();
   const checkResults = await findCheckResults(
     check.id,
     interval.from,
     interval.to,
+  );
+  log.debug(
+    {
+      checkResultsLength: checkResults.length,
+      durationMs: Date.now() - startedAt,
+      checkId,
+    },
+    "Fetched check results",
   );
 
   const runLocations = checkResults.reduce((acc, cr) => {
@@ -124,12 +138,12 @@ async function checkSummary(checkId: string) {
   const failureClusters = await findErrorClustersForCheck(check.id);
   const failurePatterns = failureClusters.map((fc) => fc.error_message);
 
+  const mostRecentFailureCheckResult = failingCheckResults.sort(
+    (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+  )[0];
   const lastFailure =
     failingCheckResults.length > 0
-      ? failingCheckResults.sort(
-          (a, b) =>
-            new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
-        )[0].startedAt
+      ? mostRecentFailureCheckResult.startedAt
       : checkResults[0].startedAt;
 
   const successRate = Math.round(
@@ -137,13 +151,19 @@ async function checkSummary(checkId: string) {
       100,
   );
 
-  const heatmapImage = generateHeatmapPNG(checkResults, {
-    bucketSizeInMinutes: 30,
-    verticalSeries: runLocations.size,
-  });
-  const checkCategory = (
-    await generateObject(categorizeTestResultHeatMap(heatmapImage))
-  ).object.category;
+  const heatmapImage = generateHeatmap(
+    checkResults,
+    interval.from,
+    interval.to,
+    {
+      bucketSizeInMinutes: 30,
+      verticalSeries: runLocations.size,
+    },
+  );
+  const heatmapPromptResult = await generateObject(
+    analyseCheckFailureHeatMap(heatmapImage),
+  );
+  const checkCategory = heatmapPromptResult.object.category;
 
   log.info(
     {
@@ -155,12 +175,15 @@ async function checkSummary(checkId: string) {
     "checkSummary",
   );
   const message = generateCheckSummaryBlock({
+    checkId,
     checkName: check.name,
     checkSummary: checkSummary,
     checkState: checkCategory,
     lastFailure: new Date(lastFailure),
     successRate,
     failureCount: failingCheckResults.length,
+    lastFailureId: mostRecentFailureCheckResult?.id,
+    timeLocationSummary: heatmapPromptResult.object.failureIncidentsSummary,
     failurePatterns,
   });
 
@@ -180,14 +203,15 @@ const getIsUUID = (str: string): boolean => {
 export const checklyCommandHandler = (app: App<StringIndexed>) => {
   return async ({ ack, respond, command }) => {
     await ack();
-
     const args = command.text.split(" ");
+    log.info({ args }, "Command received");
 
     if (args.length <= 1 && !getIsUUID(args[0])) {
       const multipleCheckAnalysisResult = await analyseMultipleChecks(args[0]);
-      await respond(
-        createMultipleCheckAnalysisBlock(multipleCheckAnalysisResult),
-      );
+      await respond({
+        ...createMultipleCheckAnalysisBlock(multipleCheckAnalysisResult),
+        response_type: "in_channel",
+      });
     } else if (args.length === 1 && !!args[0] && getIsUUID(args[0])) {
       const { message, image } = await checkSummary(args[0]);
       await respond({

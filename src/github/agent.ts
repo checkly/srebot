@@ -142,7 +142,6 @@ export class GithubAgent {
           previousRelease,
           release: release.tag,
         });
-        console.log(JSON.stringify(diff, undefined, 2));
         return {
           id: release.tag,
           release_date: release.date,

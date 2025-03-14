@@ -2,8 +2,14 @@ import { pino } from "pino";
 import process from "node:process";
 import { LogLevel } from "@slack/bolt";
 
+// Allows to override log level
+const logLevel =
+  process.env.LOG_LEVEL || process.env.NODE_ENV === "production"
+    ? "info"
+    : "debug";
+
 export const log = pino({
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  level: logLevel,
   base: null,
   transport: {
     target: "pino-logfmt",
