@@ -209,7 +209,6 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
 
         **3. Summarize your findings.**
            - Clearly describe the affected locations and timeframes.
-           -
         `,
     } as CoreSystemMessage,
     {
