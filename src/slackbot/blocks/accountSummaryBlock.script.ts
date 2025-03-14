@@ -12,6 +12,7 @@ async function main() {
       failingChecks: 0,
       hasIssues: false,
       issuesSummary: "No issues detected in the last 24h.",
+      failingChecksGoals: "No failing checks detected in the last 24h.",
     }),
     // Some degraded
     createAccountSummaryBlock({
@@ -22,6 +23,7 @@ async function main() {
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
+      failingChecksGoals: "No failing checks detected in the last 24h.",
     }),
     // Some failing
     createAccountSummaryBlock({
@@ -32,6 +34,7 @@ async function main() {
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
+      failingChecksGoals: "No failing checks detected in the last 24h.",
     }),
   ];
 
@@ -40,7 +43,7 @@ async function main() {
   for (const blocks of testCases) {
     await client.chat.postMessage({
       channel: "C08E35FUB4L",
-      blocks,
+      blocks: blocks.blocks,
     });
   }
 }
