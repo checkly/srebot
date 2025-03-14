@@ -4,11 +4,11 @@ import fs from "node:fs";
 import { CheckResult } from "../checkly/models";
 import { CheckResultTable } from "../db/check-results";
 
-export const createHeatmap = (
-  data: CheckResultTable[] | CheckResult[],
-  bucketSizeInMinutes = 30, // Updated to 30-minute intervals
+export const getHeatmapData = (
+  bucketSizeInMinutes: number,
   from: Date,
   to: Date,
+  data: CheckResultTable[] | CheckResult[],
 ) => {
   // Helper to get a bucket index from a date
   const getBucketIndex = (date: Date) => {
@@ -69,6 +69,21 @@ export const createHeatmap = (
     const date = new Date(timeInMs);
     return date.toISOString().slice(0, 16).replace("T", "  "); // Format: "YYYY-MM-DD HH:mm"
   });
+  return { runLocations, heatmapData, xLabels };
+};
+
+export const getHeatmapChartConfig = (
+  data: CheckResultTable[] | CheckResult[],
+  bucketSizeInMinutes = 30, // Updated to 30-minute intervals
+  from: Date,
+  to: Date,
+) => {
+  const { runLocations, heatmapData, xLabels } = getHeatmapData(
+    bucketSizeInMinutes,
+    from,
+    to,
+    data,
+  );
 
   // ECharts heatmap configuration
   const option = {
@@ -145,7 +160,7 @@ export const createHeatmap = (
   return option;
 };
 
-export const generateHeatmapPNG = (
+export const generateHeatmap = (
   data: CheckResultTable[] | CheckResult[],
   from: Date,
   to: Date,
@@ -158,9 +173,10 @@ export const generateHeatmapPNG = (
     bucketSizeInMinutes: number;
     verticalSeries: number;
   },
-) => {
+): Buffer => {
   const width = 2000; // Image width
-  const height = 45 * verticalSeries + 200; // Image height
+  const constantHeightForLabels = 200;
+  const height = 45 * verticalSeries + constantHeightForLabels; // Image height
   const canvas = createCanvas(width, height);
   const chart = echarts.init(canvas as any, null, {
     renderer: "canvas",
@@ -168,7 +184,7 @@ export const generateHeatmapPNG = (
     height,
   });
 
-  const option = createHeatmap(data, bucketSizeInMinutes, from, to);
+  const option = getHeatmapChartConfig(data, bucketSizeInMinutes, from, to);
 
   chart.setOption(option);
 

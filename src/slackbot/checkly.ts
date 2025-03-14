@@ -12,7 +12,6 @@ import {
   summarizeCheckResult,
 } from "../prompts/checkly-data";
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
-import { generateHeatmapPNG } from "../heatmap/createHeatmap";
 import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
 import { readCheck } from "../db/check";
@@ -22,6 +21,7 @@ import { readCheckGroup } from "../db/check-groups";
 import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
 import { analyseMultipleChecks } from "../use-cases/analyse-multiple/analyse-multiple-checks";
 import { createMultipleCheckAnalysisBlock } from "./blocks/multipleChecksAnalysisBlock";
+import { generateHeatmap } from "../heatmap/generateHeatmap";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -59,7 +59,7 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
   const { object: errorGroups } =
     await generateObject<SummarizeErrorsPromptType>(promptDef);
 
-  const heatmapImage = generateHeatmapPNG(
+  const heatmapImage = generateHeatmap(
     checkResults,
     interval.from,
     interval.to,
@@ -151,7 +151,7 @@ async function checkSummary(checkId: string) {
       100,
   );
 
-  const heatmapImage = generateHeatmapPNG(
+  const heatmapImage = generateHeatmap(
     checkResults,
     interval.from,
     interval.to,
