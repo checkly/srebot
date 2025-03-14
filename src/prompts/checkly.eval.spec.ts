@@ -293,7 +293,7 @@ test('visit page and take screenshot', async ({ page }) => {
   });
 });
 
-describe.only("analyseCheckFailureHeatMap prompt", () => {
+describe("analyseCheckFailureHeatMap prompt", () => {
   it.each([
     {
       heatmap: "heatmap-001.png",
