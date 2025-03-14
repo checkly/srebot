@@ -14,7 +14,7 @@ import {
   summarizeTestStepsPrompt,
 } from "./checkly";
 import { expect } from "@jest/globals";
-import { Possible, Factuality, Battle, Summary } from "./toScoreMatcher";
+import { Battle, Factuality, Possible, Summary } from "./toScoreMatcher";
 
 dotenv.config();
 
@@ -293,72 +293,63 @@ test('visit page and take screenshot', async ({ page }) => {
   });
 });
 
-describe("Checkly Prompt Tests", () => {
-  it("should categorise a sample heatmap correctly - heatmap-001.png", async () => {
-    const buffer = readFileSync(
-      path.join(
-        __dirname,
-        "checkly.eval.spec.fixtures/heatmaps/heatmap-001.png",
-      ),
-    );
-    const config = analyseCheckFailureHeatMap(buffer);
-    const { object } = await generateObject({
-      ...config,
-    });
+describe.only("analyseCheckFailureHeatMap prompt", () => {
+  it.each([
+    {
+      heatmap: "heatmap-001.png",
+      expectedCategory: "FLAKY",
+      input:
+        "Where and when did the failures occur in the last 24 hours? The image shows a heatmap of a check running in us-east-1 and eu-west-1.",
+      expectedSummary: `Failures affect both (us-east-1, and eu-west-1) at random intervals throughout the last 24h.`,
+    },
+    {
+      heatmap: "heatmap-002.png",
+      expectedCategory: "FAILING",
+      input:
+        "Where and when did the failures occur in the last 24 hours? The input is a heatmap image of a check running in eu-west-1 and eu-central-1.",
+      expectedSummary: `Failures affected both location (eu-west-1) and (eu-central-1). There were two periods of failures, one early in the night around 3 and one in the afternoon until now (ongoing)`,
+    },
+    {
+      heatmap: "heatmap-003.png",
+      expectedCategory: "PASSING",
+      input:
+        "Where and when did the failures occur in the last 24 hours? The input is a heatmap image of a check running every 12h in (eu-west-1) and (us-east-1)",
+      expectedSummary: `No failures in both location (eu-west-1) and (us-east-1) in the last 24 hours`,
+    },
+    {
+      heatmap: "heatmap-004.png",
+      expectedCategory: "FAILING",
+      input:
+        "Where and when did the failures occur in the last 24 hours? The input is a heatmap image of a check failing all the time (eu-south-1) and (eu-central-1)",
+      expectedSummary: `Failures are happening in both location (eu-south-1) and (eu-central-1) all the time`,
+    },
+  ])(
+    "should categorize heatmap correctly - $heatmap",
+    async ({ heatmap, expectedCategory, input, expectedSummary }) => {
+      const buffer = readFileSync(
+        path.join(__dirname, `checkly.eval.spec.fixtures/heatmaps/${heatmap}`),
+      );
+      const { object } = await generateObject(
+        analyseCheckFailureHeatMap(buffer),
+      );
 
-    expect(object.category).toEqual("FLAKY");
+      expect(object.category).toEqual(expectedCategory);
 
-    const expected = `The flakiness affects both (us-east-1, and eu-west-1) regions intermittently throughout the last 24h`;
-    const input = `Where and when did the failures occur in the last 24 hours?`;
-
-    return Promise.all([
-      expect(object.failureIncidentsSummary).toScorePerfect(
-        Possible({
-          input,
-          expected: expected,
-        }),
-      ),
-      expect(object.failureIncidentsSummary).toScoreGreaterThanOrEqual(
-        Factuality({
-          input,
-          expected: expected,
-        }),
-        0.5,
-      ),
-    ]);
-  });
-
-  it("should categorise a sample heatmap correctly - heatmap-002.png", async () => {
-    const buffer = readFileSync(
-      path.join(
-        __dirname,
-        "checkly.eval.spec.fixtures/heatmaps/heatmap-002.png",
-      ),
-    );
-    const config = analyseCheckFailureHeatMap(buffer);
-    const { object } = await generateObject({
-      ...config,
-    });
-
-    expect(object.category).toEqual("FAILING");
-
-    const expected = `Failures affected both location (eu-west-1) and (eu-central-1). There were two periods of failures, one early in the night around 3 and one in the afternoon until now (ongoing)`;
-    const input = `Where and when did the failures occur in the last 24 hours? The input is a heatmap image of a check running in eu-west-1 and eu-central-1. The timestamps may be off by 30 minutes`;
-
-    return Promise.all([
-      expect(object.failureIncidentsSummary).toScorePerfect(
-        Possible({
-          input,
-          expected: expected,
-        }),
-      ),
-      expect(object.failureIncidentsSummary).toScoreGreaterThanOrEqual(
-        Factuality({
-          input,
-          expected: expected,
-        }),
-        0.2,
-      ),
-    ]);
-  });
+      return Promise.all([
+        expect(object.failureIncidentsSummary).toScorePerfect(
+          Possible({
+            input,
+            expected: expectedSummary,
+          }),
+        ),
+        expect(object.failureIncidentsSummary).toScoreGreaterThanOrEqual(
+          Factuality({
+            input,
+            expected: expectedSummary,
+          }),
+          0.5,
+        ),
+      ]);
+    },
+  );
 });

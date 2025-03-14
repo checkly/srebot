@@ -59,10 +59,15 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
   const { object: errorGroups } =
     await generateObject<SummarizeErrorsPromptType>(promptDef);
 
-  const heatmapImage = generateHeatmapPNG(checkResults, {
-    bucketSizeInMinutes: check.frequency * 10,
-    verticalSeries: check.locations.length,
-  });
+  const heatmapImage = generateHeatmapPNG(
+    checkResults,
+    interval.from,
+    interval.to,
+    {
+      bucketSizeInMinutes: check.frequency * 10,
+      verticalSeries: check.locations.length,
+    },
+  );
 
   log.info(
     {
@@ -106,10 +111,19 @@ async function checkSummary(checkId: string) {
 
   const interval = last24h(new Date());
 
+  const startedAt = Date.now();
   const checkResults = await findCheckResults(
     check.id,
     interval.from,
     interval.to,
+  );
+  log.debug(
+    {
+      checkResultsLength: checkResults.length,
+      durationMs: Date.now() - startedAt,
+      checkId,
+    },
+    "Fetched check results",
   );
 
   const runLocations = checkResults.reduce((acc, cr) => {
@@ -137,10 +151,15 @@ async function checkSummary(checkId: string) {
       100,
   );
 
-  const heatmapImage = generateHeatmapPNG(checkResults, {
-    bucketSizeInMinutes: 30,
-    verticalSeries: runLocations.size,
-  });
+  const heatmapImage = generateHeatmapPNG(
+    checkResults,
+    interval.from,
+    interval.to,
+    {
+      bucketSizeInMinutes: 30,
+      verticalSeries: runLocations.size,
+    },
+  );
   const heatmapPromptResult = await generateObject(
     analyseCheckFailureHeatMap(heatmapImage),
   );
