@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`accountSummaryBlock renders degraded account state 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "text": "*State:* ❌ Account Degraded has issues.
+*Blast Radius:*
+ - New degrading or failing checks detected in the last 24h.
+ - No failing checks detected in the last 24h.",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "text": {
+        "text": ":white_check_mark: *PASSING*: 45 :warning: *DEGRADED*: 5 :x: *FAILING*: 0",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+  ],
+}
+`;
+
+exports[`accountSummaryBlock renders failing account state 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "text": "*State:* ❌ Account Failing has issues.
+*Blast Radius:*
+ - New degrading or failing checks detected in the last 24h.
+ - No failing checks detected in the last 24h.",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "text": {
+        "text": ":white_check_mark: *PASSING*: 40 :warning: *DEGRADED*: 2 :x: *FAILING*: 8",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+  ],
+}
+`;
+
+exports[`accountSummaryBlock renders healthy account state 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "text": "*State:* ✅ Account Healthy appears stable.
+*Blast Radius:*
+ - No issues detected in the last 24h.
+ - No failing checks detected in the last 24h.",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "text": {
+        "text": ":white_check_mark: *PASSING*: 50 :warning: *DEGRADED*: 0 :x: *FAILING*: 0",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+  ],
+}
+`;

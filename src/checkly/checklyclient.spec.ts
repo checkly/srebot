@@ -61,6 +61,12 @@ describe("ChecklyService", () => {
     expect(result).toBeDefined();
   });
 
+  it.skip("can retrieve account", async () => {
+    const result = await client.getAccount(process.env.CHECKLY_ACCOUNT_ID!);
+
+    expect(result).toBeDefined();
+  });
+
   it("can retrieve dashboards", async () => {
     const result = await client.getDashboards();
 

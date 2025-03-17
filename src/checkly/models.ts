@@ -288,3 +288,28 @@ export class CheckSyncStatus {
   to: Date;
   syncedAt: Date;
 }
+
+export class Account {
+  id: string;
+  name: string;
+  runtimeId: string;
+  settings: {
+    tracing: boolean;
+    allowBadges: boolean;
+    useChecklyOtelProvider: boolean;
+    showBrowserTemplatesOnPageLoad: boolean;
+  };
+  alertSettings: {
+    reminders: {
+      amount: number;
+      interval: number;
+    };
+    escalationType: string;
+    runBasedEscalation: {
+      failedRunThreshold: number;
+    };
+    timeBasedEscalation: {
+      minutesFailingThreshold: number;
+    };
+  };
+}

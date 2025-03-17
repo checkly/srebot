@@ -15,6 +15,7 @@ import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
 import { CoreSystemMessage, CoreUserMessage } from "ai";
 import { log } from "../log";
+import { CheckTable } from "../db/check";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
@@ -132,6 +133,72 @@ export function summarizeErrorsPrompt(input: {
   });
 }
 
+enum CheckSeverity {
+  PASSING = "PASSING",
+  DEGRADED = "DEGRADED",
+  FAILING = "FAILING",
+  NEW_FAILING = "NEW_FAILING",
+  NEW_DEGRADED = "NEW_DEGRADED",
+  RECOVERED = "RECOVERED",
+}
+
+type CheckStatus = {
+  checkId: string;
+  runLocation: string;
+  changePoints: {
+    timestamp: number;
+    formattedTimestamp: string;
+    severity: string;
+  }[];
+};
+
+export function summarizeMultipleChecksStatus(
+  checks: CheckStatus[],
+  currentDate: Date = new Date(),
+): PromptDefinitionForText {
+  const prompt = `
+    The following json data describes the state of multiple monitoring checks in different locations.
+    ${checks
+      .map(
+        (check) => `
+      - checkId: ${check.checkId}
+      - runLocation: ${check.runLocation}
+      - changePoints: ${check.changePoints
+        .map(
+          (cp) =>
+            `- timestamp: ${cp.timestamp} formattedTimestamp: ${cp.formattedTimestamp} severity: ${cp.severity}`,
+        )
+        .join("\n")}
+    `,
+      )
+      .join("\n")}
+
+    Current time: ${currentDate.toLocaleString()}
+
+    Explanation of the data:
+    - checkId: The ID of the check (do not mention in the summary, rather call out the number of affected checks)
+    - runLocation: The location of the check (this can be used in the summary to indicate the affected locations)
+    - severity: The severity of the check (do not use the enum values but rather use words describing there meaning)
+    - patternStart: unix timestamp at which the severity changed from one state to another, render this in time ago format
+
+    Be an SRE Engineer which answers the question what the state of the current checks is. Use max 3 sentences with max 50 words.
+
+    Constitution:
+    - Always prioritize accuracy and relevance in the summary
+    - Be concise but comprehensive in your explanations
+    - Prioritize ${CheckSeverity.NEW_FAILING} > ${CheckSeverity.NEW_DEGRADED} > ${CheckSeverity.RECOVERED}
+    - do not include any call for actions, just describe the current state
+  `;
+
+  return {
+    prompt,
+    ...promptConfig("summarizeMultipleChecksStatus", {
+      temperature: 0.1,
+      maxTokens: 1000,
+    }),
+  };
+}
+
 export function summarizeTestGoalPrompt(
   testName: string,
   scriptName: string,
@@ -166,7 +233,7 @@ export function summarizeTestGoalPrompt(
   };
 }
 
-enum ErrorCategory {
+export enum SimpleErrorCategory {
   PASSING = "PASSING",
   FLAKY = "FLAKY",
   FAILING = "FAILING",
@@ -230,7 +297,7 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
 
   const schema = z.object({
     category: z
-      .nativeEnum(ErrorCategory)
+      .nativeEnum(SimpleErrorCategory)
       .describe("The category of the check results heat map"),
 
     failureIncidentsSummary: z
@@ -374,7 +441,7 @@ type SummariseCheckInput = {
 };
 
 export const formatMultipleChecks = (
-  checks: Check[],
+  checks: Check[] | CheckTable[],
   characterLimit = 100_000,
 ): string => {
   const checkInputs: SummariseCheckInput[] = checks.map((check) => {
@@ -412,7 +479,7 @@ export const formatMultipleChecks = (
 - Locations: ${check.locations.join(", ")}
 ${
   check.request
-    ? `- Request: [${check.request.method}] ${check.request.url}\n  - Assertions: ${check.request.assertions.join(
+    ? `- Request: [${check.request.method}] ${check.request.url}\n  - Assertions: ${check.request.assertions?.join(
         ", ",
       )}`
     : ""
@@ -447,7 +514,7 @@ ${
 };
 
 export function summariseMultipleChecksGoal(
-  checks: Check[],
+  checks: Check[] | CheckTable[],
   maxTokens: number = 500,
 ): PromptDefinitionForText {
   const checksFormatted = formatMultipleChecks(checks);

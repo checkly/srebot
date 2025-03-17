@@ -4,6 +4,7 @@ import type { RequestInfo, RequestInit } from "node-fetch";
 import fetch from "node-fetch";
 import process from "node:process";
 import {
+  Account,
   Check,
   CheckGroup,
   CheckResult,
@@ -256,6 +257,11 @@ export class ChecklyClient {
   runCheck(checkId: string) {
     const url = `${this.checklyApiUrl}triggers/checks/${checkId}`;
     return this.makeRequest(url, Object, { method: "POST" }) as Promise<Object>;
+  }
+
+  getAccount(accountId: string) {
+    const url = `${this.checklyApiUrl}accounts/${accountId}`;
+    return this.makeRequest(url, Account) as Promise<Account>;
   }
 
   private async fetch(
