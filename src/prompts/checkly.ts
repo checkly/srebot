@@ -142,13 +142,6 @@ enum CheckSeverity {
   RECOVERED = "RECOVERED",
 }
 
-type Somethng = {
-  checkId: string;
-  runLocation: string;
-  changePoints: number[];
-  changePointsFormatted: string[];
-};
-
 type CheckStatus = {
   checkId: string;
   runLocation: string;
