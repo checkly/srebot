@@ -9,7 +9,7 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import { last24h } from "./checkly-data";
 import { summarizeMultipleChecksStatus } from "./checkly";
-import { summarizeCheckResultsToLabeledCheckStatus } from "../slackbot/checkly";
+import { summarizeCheckResultsToLabeledCheckStatus } from "../slackbot/check-results-labeled";
 // Load environment variables from .env file
 config({ path: resolve(__dirname, "../../.env") });
 
