@@ -7,6 +7,7 @@ import {
 } from "date-fns";
 import { CheckResult } from "../checkly/models";
 import { CheckResultTable } from "../db/check-results";
+import { log } from "../log";
 
 export interface CheckResultsTimeSlice {
   checkId: string;
@@ -65,8 +66,6 @@ export function aggregateCheckResults(
     }
     return acc;
   }, new Map<string, { checkId: string; location: string }>());
-
-  console.log("CHECK RESULT KEYS", checkResultKeys.size);
 
   const slices = createTimeSlices(
     Array.from(checkResultKeys.values()),

@@ -161,6 +161,7 @@ type CheckStatus = {
 
 export function summarizeMultipleChecksStatus(
   checks: CheckStatus[],
+  currentDate: Date = new Date(),
 ): PromptDefinitionForText {
   const prompt = `
     The following json data describes the state of multiple monitoring checks in different locations.
@@ -179,7 +180,7 @@ export function summarizeMultipleChecksStatus(
       )
       .join("\n")}
 
-    Current time: ${new Date().toLocaleString()}
+    Current time: ${currentDate.toLocaleString()}
 
     Explanation of the data:
     - checkId: The ID of the check (do not mention in the summary, rather call out the number of affected checks)
@@ -199,8 +200,8 @@ export function summarizeMultipleChecksStatus(
   return {
     prompt,
     ...promptConfig("summarizeMultipleChecksStatus", {
-      temperature: 1,
-      maxTokens: 100,
+      temperature: 0.1,
+      maxTokens: 1000,
     }),
   };
 }
