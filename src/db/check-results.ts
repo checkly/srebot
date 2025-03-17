@@ -41,7 +41,6 @@ export async function findCheckResults(
 export type CheckResultAggregate = {
   checkId: string;
   runLocation: string;
-  resultType: string;
   count: number;
   passingCount: number;
   errorCount: number;
@@ -64,7 +63,6 @@ export async function findCheckResultsAggregated(
     .select(
       "checkId",
       "runLocation",
-      "resultType",
       postgres.raw('count(*)::integer as "count"'),
       postgres.raw(
         'count(*) filter (where "hasErrors" = false and "hasFailures" = false and "isDegraded" = false)::integer as "passingCount"',
