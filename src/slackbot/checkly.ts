@@ -221,8 +221,12 @@ async function accountSummary(accountId: string) {
     to: interval.to,
   });
 
+  const aggregatedCheckResultsWithFailures = aggregatedCheckResults.filter(
+    (cr) => (cr.errorCount > 0 || cr.degradedCount > 0) && cr.passingCount > 0,
+  );
+
   const labeledCheckResults = await summarizeCheckResultsToLabeledCheckStatus(
-    aggregatedCheckResults,
+    aggregatedCheckResultsWithFailures,
   );
 
   const checkResultsWithCheckpoints = labeledCheckResults
@@ -352,7 +356,7 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     if (args.length == 1 && args[0].trim() === "") {
       const accountId = process.env.CHECKLY_ACCOUNT_ID!;
       const { message } = await accountSummary(accountId);
-      await respond({response_type: "in_channel", ...message});
+      await respond({ response_type: "in_channel", ...message });
     } else if (args.length == 1 && !getIsUUID(args[0])) {
       const multipleCheckAnalysisResult = await analyseMultipleChecks(args[0]);
       await respond({
