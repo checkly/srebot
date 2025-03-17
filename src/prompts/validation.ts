@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const validString = z.string().min(1);
+export const validStringAllowEmpty = z.string().min(0);
 export const validStringList = z.array(validString).min(1);
 export const validObject = z
   .object({})

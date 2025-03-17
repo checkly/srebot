@@ -1,5 +1,5 @@
 import { slackFormatInstructions } from "./slack";
-import { validString } from "./validation";
+import { validString, validStringAllowEmpty } from "./validation";
 
 export function generateSREAssistantPrompt(
   username: string,
@@ -8,7 +8,7 @@ export function generateSREAssistantPrompt(
 ): string {
   validString.parse(username);
   validString.parse(date);
-  validString.parse(alertSummary);
+  validStringAllowEmpty.parse(alertSummary);
 
   return `You are an AI-powered SRE Bot designed to assist in real-time incident management. Your primary goal is to reduce Mean Time To Resolution (MTTR) by automatically aggregating and analyzing contextual data, providing actionable insights, and guiding first responders effectively.
 
@@ -31,5 +31,5 @@ Date: ${date}
 OUTPUT FORMAT:
 ${slackFormatInstructions}
 
-${alertSummary.trim().length > 0 ? `ALERT SUMMARY:\n${alertSummary}` : ""}`;
+${alertSummary.trim().length > 0 ? `SUMMARY:\n${alertSummary}` : ""}`;
 }
