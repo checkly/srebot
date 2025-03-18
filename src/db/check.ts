@@ -46,6 +46,7 @@ export async function insertChecks(checks: Check[]) {
   const serializedChecks = checks.map((check) => ({
     id: check.id,
     accountId: checkly.accountId,
+    groupId: check.groupId,
     checkType: check.checkType,
     name: check.name,
     activated: check.activated,
