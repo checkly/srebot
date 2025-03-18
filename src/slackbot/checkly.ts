@@ -248,7 +248,7 @@ async function accountSummary(accountId: string) {
     summarizeMultipleChecksStatus(checkResultsWithCheckpoints),
   );
 
-  const failingCheckIds = ["64ed5e29-e8c6-4054-8c9c-4f43fad9d118"]; //checkResultsWithCheckpoints.map((cr) => cr.checkId);
+  const failingCheckIds = checkResultsWithCheckpoints.map((cr) => cr.checkId);
   const targetChecks = await readChecks(failingCheckIds);
 
   const { text: goals } = await generateText(
