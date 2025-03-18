@@ -27,12 +27,12 @@ export interface CheckResultTable {
 }
 
 export async function findCheckResults(
-  checkId: string,
+  checkIds: string | string[],
   from: Date,
   to: Date,
 ): Promise<CheckResultTable[]> {
   return postgres<CheckResultTable>("check_results")
-    .where("checkId", checkId)
+    .whereIn("checkId", Array.isArray(checkIds) ? checkIds : [checkIds])
     .where("startedAt", ">=", from.toISOString())
     .where("startedAt", "<=", to.toISOString())
     .orderBy("startedAt", "asc");

@@ -16,7 +16,7 @@ import {
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
-import { readCheck, readChecks } from "../db/check";
+import { readCheck, readChecks, readChecksWithGroupNames } from "../db/check";
 import { findErrorClustersForCheck } from "../db/error-cluster";
 import {
   CheckResultAggregate,
@@ -33,6 +33,8 @@ import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
 import { aggregateCheckResults } from "./check-result-slices";
 import { CheckResultsTimeSlice } from "./check-result-slices";
 import { summarizeCheckResultsToLabeledCheckStatus } from "./check-results-labeled";
+import { renderFailingChecksBlock } from "./blocks/failingChecksBlock";
+import * as dataForge from "data-forge";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -42,7 +44,7 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
     check.locations = checkGroup.locations;
   }
 
-  const checkAppUrl = checkly.getCheckUrl(check.id);
+  const checkAppUrl = checkly.getCheckAppUrl(check.id);
   const checkResult = await checkly.getCheckResult(check.id, checkResultId);
   const checkResultAppUrl = checkly.getCheckResultAppUrl(
     check.id,
@@ -233,15 +235,31 @@ async function accountSummary(accountId: string) {
     .toArray()
     .filter((cr) => cr.changePoints.length > 0);
 
+  log.info(
+    {
+      checkResultsWithCheckpointsLength: JSON.stringify(
+        checkResultsWithCheckpoints,
+      ),
+    },
+    "checkResultsWithCheckpoints",
+  );
+
   const { text: summary } = await generateText(
     summarizeMultipleChecksStatus(checkResultsWithCheckpoints),
   );
 
-  const failingChecks = checkResultsWithCheckpoints.map((cr) => cr.checkId);
-  const targetChecks = await readChecks(failingChecks);
+  const failingCheckIds = ["64ed5e29-e8c6-4054-8c9c-4f43fad9d118"]; //checkResultsWithCheckpoints.map((cr) => cr.checkId);
+  const targetChecks = await readChecks(failingCheckIds);
 
   const { text: goals } = await generateText(
     summariseMultipleChecksGoal(targetChecks, 30),
+  );
+
+  log.info(
+    {
+      failingCheckIds,
+    },
+    "failingCheckIds",
   );
 
   const message = createAccountSummaryBlock({
@@ -252,19 +270,10 @@ async function accountSummary(accountId: string) {
     hasIssues: checkResultsWithCheckpoints.length > 0,
     issuesSummary: summary,
     failingChecksGoals: goals,
+    failingCheckIds,
   });
 
   return { message };
-}
-
-function toTimeBucket(startedAt: Date, bucketSizeInMinutes: number) {
-  const startedAtDate = new Date(startedAt);
-  const minutes = startedAtDate.getMinutes();
-  const sliceMinute =
-    Math.floor(minutes / bucketSizeInMinutes) * bucketSizeInMinutes;
-  const sliceDate = new Date(startedAtDate);
-  sliceDate.setMinutes(sliceMinute, 0, 0); // Set to start of 30-min bucket
-  return sliceDate;
 }
 
 async function checkSummaryData(
@@ -347,6 +356,69 @@ const getIsUUID = (str: string): boolean => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     str,
   );
+};
+
+export const showFailingChecksActionHandler = () => {
+  return async ({ ack, respond, body }) => {
+    await ack();
+    log.info({ body: JSON.stringify(body) }, "showFailingChecksActionHandler");
+    const interval = last24h(new Date());
+    const checkIds = (body.actions[0].value as string).split(",");
+    const groupNamesForCheckIds = (
+      await readChecksWithGroupNames(checkIds)
+    ).reduce(
+      (acc, check) => {
+        acc[check.id] = check.groupName;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+    console.log(groupNamesForCheckIds);
+
+    const checkResults = await findCheckResults(
+      checkIds,
+      interval.from,
+      interval.to,
+    );
+
+    const checkResultsDF = new dataForge.DataFrame(checkResults);
+
+    const failedChecks = checkResultsDF
+      .groupBy((cr) => cr.checkId)
+      .map((group) => ({
+        checkId: group.first().checkId,
+        checkState: (group.first().hasFailures || group.first().hasErrors
+          ? "FAILED"
+          : group.first().isDegraded
+            ? "DEGRADED"
+            : "PASSED") as "FAILED" | "DEGRADED" | "PASSED",
+        name: group.first().name,
+        failures: {
+          total: group
+            .deflate((cr) => (cr.hasFailures || cr.hasErrors ? 1 : 0))
+            .sum(),
+          timeframe: "24h",
+        },
+        group: groupNamesForCheckIds[group.first().checkId],
+        lastFailure: (() => {
+          const lastFailure = group
+            .where((cr) => cr.hasFailures || cr.hasErrors || cr.isDegraded)
+            .orderBy((cr) => cr.startedAt)
+            .last();
+          return lastFailure
+            ? {
+                checkResultId: lastFailure.id,
+                timestamp: lastFailure.startedAt,
+              }
+            : null;
+        })(),
+      }))
+      .toArray();
+
+    const message = renderFailingChecksBlock(failedChecks);
+    await respond({ response_type: "in_channel", ...message });
+  };
 };
 
 export const checklyCommandHandler = (app: App<StringIndexed>) => {
