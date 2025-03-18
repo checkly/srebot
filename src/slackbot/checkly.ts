@@ -374,8 +374,8 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
         await app.client.files.uploadV2({
           channel_id: command.channel_id,
           file: image,
-          filename: "CheckResultHeatmap.png",
-          title: "Check Results Heatmap",
+          filename: "CheckResultsPerLocation.png",
+          title: "Check Results per Location",
         });
       }
 
@@ -391,8 +391,8 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
         await app.client.files.uploadV2({
           channel_id: command.channel_id,
           file: image,
-          filename: "CheckResultHeatmap.png",
-          title: "Check Results Heatmap",
+          filename: "CheckResultsPerLocation.png",
+          title: "Check Results per Location",
         });
       }
 
