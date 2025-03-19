@@ -192,9 +192,14 @@ async function accountSummary(accountId: string) {
   const interval = last24h(new Date());
 
   const statuses = await checkly.getStatuses();
+  const activatedChecks = await checkly.getActivatedChecks();
 
   const counts = statuses.reduce(
     (acc, cr) => {
+      const check = activatedChecks.find((c) => c.id === cr.checkId);
+      if (!check) {
+        return acc;
+      }
       if (!cr.hasErrors && !cr.hasFailures && !cr.isDegraded) {
         acc.passing++;
       }
