@@ -1,5 +1,5 @@
 import { ChecklyClient } from "../checkly/checklyclient";
-import { CheckResult } from "../checkly/models";
+import { CheckResult, ErrorMessage } from "../checkly/models";
 
 export function last1h(date: Date = new Date()) {
   return {
@@ -62,31 +62,29 @@ export function getErrorMessageFromCheckResult(
     return getErrorMessageFromApiError(checkResult);
   }
   if (checkResult.multiStepCheckResult) {
-    return getErrorMessageFromMultiStepError(checkResult);
+    return getErrorMessageFromResult(checkResult.multiStepCheckResult);
   }
   if (checkResult.browserCheckResult) {
-    return getErrorMessageFromBrowserError(checkResult);
+    return getErrorMessageFromResult(checkResult.browserCheckResult);
   }
 
   throw new Error("Unsupported Check Result Type");
 }
-export function getErrorMessageFromMultiStepError(
-  checkResult: CheckResult,
-): string {
-  return (
-    checkResult.multiStepCheckResult?.errors?.find((e) => !!e.message)
-      ?.message || "No Error provided"
-  );
-}
-export function getErrorMessageFromBrowserError(
-  checkResult: CheckResult,
-): string {
-  return (
-    checkResult.browserCheckResult?.errors?.find((e) => !!e.message)?.message ||
-    "No Error provided"
-  );
-}
 
+export function getErrorMessageFromResult(result: {
+  errors: ErrorMessage[];
+}): string {
+  return (
+    result.errors
+      .map((e) => {
+        if (typeof e === "string") {
+          return e;
+        }
+        return e.message;
+      })
+      .find((e) => !!e) || "No Error provided"
+  );
+}
 export function getErrorMessageFromApiError(checkResult: CheckResult): string {
   const assertionErrors =
     checkResult.apiCheckResult?.assertions
