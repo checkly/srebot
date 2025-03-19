@@ -84,7 +84,7 @@ export function renderFailingChecksBlock(checks: Check[]) {
           {
             type: "mrkdwn",
             text: check.lastFailure
-              ? `<!date^${Math.floor(new Date(check.lastFailure.timestamp).getTime() / 1000)}^{ago}|${check.lastFailure.timestamp}> <${checkResultUrl(check.checkId, check.lastFailure.checkResultId)}|Link>`
+              ? `<!date^${Math.floor(new Date(check.lastFailure.timestamp).getTime() / 1000)}^{ago}|${new Date(check.lastFailure.timestamp).toISOString()}> <${checkResultUrl(check.checkId, check.lastFailure.checkResultId)}|Link>`
               : "N/A",
           },
         ],
