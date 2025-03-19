@@ -50,7 +50,7 @@ exports[`failingChecksBlock renders all failing checks 1`] = `
           "type": "mrkdwn",
         },
         {
-          "text": "<!date^1742374341^{ago}|Wed Mar 19 2025 09:52:21 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/123/check-sessions/results/123|Link>",
+          "text": "<!date^1672531200^{ago}|Sun Jan 01 2023 01:00:00 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/123/check-sessions/results/123|Link>",
           "type": "mrkdwn",
         },
       ],
@@ -71,7 +71,7 @@ exports[`failingChecksBlock renders all failing checks 1`] = `
           "type": "mrkdwn",
         },
         {
-          "text": "<!date^1742374341^{ago}|Wed Mar 19 2025 09:52:21 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/125/check-sessions/results/125|Link>",
+          "text": "<!date^1672531200^{ago}|Sun Jan 01 2023 01:00:00 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/125/check-sessions/results/125|Link>",
           "type": "mrkdwn",
         },
       ],
@@ -212,7 +212,7 @@ exports[`failingChecksBlock renders checks with mixed states 1`] = `
           "type": "mrkdwn",
         },
         {
-          "text": "<!date^1742374341^{ago}|Wed Mar 19 2025 09:52:21 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/123/check-sessions/results/123|Link>",
+          "text": "<!date^1672531200^{ago}|Sun Jan 01 2023 01:00:00 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/123/check-sessions/results/123|Link>",
           "type": "mrkdwn",
         },
       ],
@@ -254,7 +254,7 @@ exports[`failingChecksBlock renders checks with mixed states 1`] = `
           "type": "mrkdwn",
         },
         {
-          "text": "<!date^1742374341^{ago}|Wed Mar 19 2025 09:52:21 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/125/check-sessions/results/125|Link>",
+          "text": "<!date^1672531200^{ago}|Sun Jan 01 2023 01:00:00 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/125/check-sessions/results/125|Link>",
           "type": "mrkdwn",
         },
       ],

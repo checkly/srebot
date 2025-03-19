@@ -1,7 +1,7 @@
 import { Check, renderFailingChecksBlock } from "./failingChecksBlock";
 
 describe("failingChecksBlock", () => {
-  const now = new Date();
+  const now = new Date("2023-01-01T00:00:00Z");
 
   it("renders checks with mixed states", () => {
     const checks = [
