@@ -85,13 +85,17 @@ export async function readChecks(ids: string[]) {
   return await postgres<CheckTable>("checks").whereIn("id", ids);
 }
 
-export async function readChecksWithGroupNames(ids: string[]) {
-  const checks = await postgres<CheckTable>("checks")
+type CheckWithGroupName = CheckTable & { groupName: string };
+
+export async function readChecksWithGroupNames(
+  ids: string[],
+): Promise<CheckWithGroupName[]> {
+  const checks = await postgres<CheckWithGroupName>("checks")
     .whereIn("checks.id", ids)
     .leftJoin("check_groups", "checks.groupId", "check_groups.id")
     .select("checks.*", "check_groups.name as groupName");
 
-  return checks as (CheckTable & { groupName: string })[];
+  return checks;
 }
 
 export const removeAccountChecks = async (

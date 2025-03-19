@@ -25,9 +25,8 @@ import type { ChatPostMessageResponse } from "@slack/web-api/dist/types/response
 import {
   CHECKLY_COMMAND_NAME as CHECKLY_COMMAND_NAME,
   checklyCommandHandler,
-  showFailingChecksActionHandler,
 } from "./checkly";
-
+import { showFailingChecksActionHandler } from "./failingChecksActionHandler";
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
   const config = getSlackConfig();
