@@ -48,15 +48,17 @@ async function sendFailingChecksMessage() {
 
   const client = new WebClient(process.env.SLACK_AUTH_TOKEN);
 
-  checksListSamples.forEach(async (checks) => {
-    const message = renderFailingChecksBlock(checks);
+  await Promise.all(
+    checksListSamples.map(async (checks) => {
+      const message = renderFailingChecksBlock(checks);
 
-    await client.chat.postMessage({
-      channel: channelId,
-      text: "Failing Checks Summary",
-      blocks: message.blocks,
-    });
-  });
+      await client.chat.postMessage({
+        channel: channelId,
+        text: "Failing Checks Summary",
+        blocks: message.blocks,
+      });
+    }),
+  );
 }
 
 sendFailingChecksMessage().catch(console.error);
