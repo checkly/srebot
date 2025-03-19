@@ -20,6 +20,21 @@ exports[`accountSummaryBlock renders degraded account state 1`] = `
       },
       "type": "section",
     },
+    {
+      "elements": [
+        {
+          "action_id": "show_failing_checks",
+          "text": {
+            "emoji": true,
+            "text": "List Failing Checks",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "value": "123,124",
+        },
+      ],
+      "type": "actions",
+    },
   ],
 }
 `;
@@ -43,6 +58,21 @@ exports[`accountSummaryBlock renders failing account state 1`] = `
         "type": "mrkdwn",
       },
       "type": "section",
+    },
+    {
+      "elements": [
+        {
+          "action_id": "show_failing_checks",
+          "text": {
+            "emoji": true,
+            "text": "List Failing Checks",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "value": "123,124,125",
+        },
+      ],
+      "type": "actions",
     },
   ],
 }

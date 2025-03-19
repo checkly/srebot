@@ -1,0 +1,286 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`failingChecksBlock renders all failing checks 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "emoji": true,
+        "text": "Failing Checks",
+        "type": "plain_text",
+      },
+      "type": "header",
+    },
+    {
+      "type": "divider",
+    },
+    {
+      "fields": [
+        {
+          "text": "*Check Name*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Failure rate*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Group*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Last failed*",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "<https://app.checklyhq.com/checks/123|❌ Check 1>",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "1 failure (last 24h)",
+          "type": "mrkdwn",
+        },
+        {
+          "text": " ",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "<!date^1742374341^{ago}|Wed Mar 19 2025 09:52:21 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/123/check-sessions/results/123|Link>",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "<https://app.checklyhq.com/checks/125|⚠️ Check 3>",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "2 failures (last 24h)",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "Group 3",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "<!date^1742374341^{ago}|Wed Mar 19 2025 09:52:21 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/125/check-sessions/results/125|Link>",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+  ],
+}
+`;
+
+exports[`failingChecksBlock renders all passing checks 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "emoji": true,
+        "text": "Failing Checks",
+        "type": "plain_text",
+      },
+      "type": "header",
+    },
+    {
+      "type": "divider",
+    },
+    {
+      "fields": [
+        {
+          "text": "*Check Name*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Failure rate*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Group*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Last failed*",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "<https://app.checklyhq.com/checks/124|✅ Check 2>",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "0 failures (last 24h)",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "Group 2",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "N/A",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "<https://app.checklyhq.com/checks/126|✅ Check 4>",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "0 failures (last 24h)",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "Group 4",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "N/A",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+  ],
+}
+`;
+
+exports[`failingChecksBlock renders checks with mixed states 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "emoji": true,
+        "text": "Failing Checks",
+        "type": "plain_text",
+      },
+      "type": "header",
+    },
+    {
+      "type": "divider",
+    },
+    {
+      "fields": [
+        {
+          "text": "*Check Name*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Failure rate*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Group*",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*Last failed*",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "<https://app.checklyhq.com/checks/123|❌ Check 1>",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "1 failure (last 24h)",
+          "type": "mrkdwn",
+        },
+        {
+          "text": " ",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "<!date^1742374341^{ago}|Wed Mar 19 2025 09:52:21 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/123/check-sessions/results/123|Link>",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "<https://app.checklyhq.com/checks/124|✅ Check 2>",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "0 failures (last 24h)",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "Group 2",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "N/A",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "<https://app.checklyhq.com/checks/125|⚠️ Check 3>",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "2 failures (last 24h)",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "Group 3",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "<!date^1742374341^{ago}|Wed Mar 19 2025 09:52:21 GMT+0100 (Central European Standard Time)> <https://app.checklyhq.com/checks/125/check-sessions/results/125|Link>",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "<https://app.checklyhq.com/checks/126|✅ Check 4>",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "0 failures (last 24h)",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "Group 4",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "N/A",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+  ],
+}
+`;
