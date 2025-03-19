@@ -1,10 +1,9 @@
 import { describe, expect, test } from "@jest/globals";
 import {
   getErrorMessageFromApiError,
-  getErrorMessageFromBrowserError,
-  getErrorMessageFromMultiStepError,
+  getErrorMessageFromResult,
 } from "./checkly-data";
-import { CheckResult } from "../checkly/models";
+import { CheckResult, ErrorMessage } from "../checkly/models";
 
 describe("checkly error messages", () => {
   test("should extract assertion error message", () => {
@@ -91,28 +90,54 @@ describe("checkly error messages", () => {
     expect(error).toEqual(sslError.apiCheckResult!.requestError);
   });
 
+  test("should extract plain string browser error message", () => {
+    const result = {
+      id: "a2283ec0-b938-4cc2-b91c-3e731fd64421",
+      browserCheckResult: {
+        errors: ["error in browser script"] as ErrorMessage[],
+      },
+    };
+
+    const error = getErrorMessageFromResult(result.browserCheckResult);
+
+    expect(error).toEqual("error in browser script");
+  });
+
   test("should extract browser error message", () => {
     const result = {
       id: "a2283ec0-b938-4cc2-b91c-3e731fd64421",
       browserCheckResult: {
-        errors: [{ message: "error in browser script" }],
+        errors: [{ message: "error in browser script" }] as ErrorMessage[],
       },
-    } as unknown as CheckResult;
+    };
 
-    const error = getErrorMessageFromBrowserError(result);
+    const error = getErrorMessageFromResult(result.browserCheckResult);
 
     expect(error).toEqual("error in browser script");
+  });
+
+  test("should extract plain string multi-step error message", () => {
+    const result = {
+      id: "a2283ec0-b938-4cc2-b91c-3e731fd64421",
+      multiStepCheckResult: {
+        errors: ["error in multi-step script"] as ErrorMessage[],
+      },
+    };
+
+    const error = getErrorMessageFromResult(result.multiStepCheckResult);
+
+    expect(error).toEqual("error in multi-step script");
   });
 
   test("should extract multi-step error message", () => {
     const result = {
       id: "a2283ec0-b938-4cc2-b91c-3e731fd64421",
       multiStepCheckResult: {
-        errors: [{ message: "error in multi-step script" }],
+        errors: [{ message: "error in multi-step script" }] as ErrorMessage[],
       },
-    } as unknown as CheckResult;
+    };
 
-    const error = getErrorMessageFromMultiStepError(result);
+    const error = getErrorMessageFromResult(result.multiStepCheckResult);
 
     expect(error).toEqual("error in multi-step script");
   });

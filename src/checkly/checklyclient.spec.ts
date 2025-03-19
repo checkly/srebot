@@ -33,6 +33,15 @@ describe("ChecklyService", () => {
     expect(result).toBeDefined();
   });
 
+  it.skip("can retrieve a single check result by checkId and checkResultId", async () => {
+    const result = await client.getCheckResult(
+      "2ac98a20-64d3-4bbf-a4d4-547e258be94b",
+      "3b08a848-7c31-42b5-a0da-8514bdba6107",
+    );
+    console.log(JSON.stringify(result, null, 2));
+    expect(result).toBeDefined();
+  });
+
   it("should be defined", async () => {
     const checks = await client.getChecks();
     const check = checks.find((c) => c.checkType == "BROWSER");

@@ -1,7 +1,9 @@
-export type ErrorMessage = {
-  message: string;
-  stack: string;
-};
+export type ErrorMessage =
+  | {
+      message: string;
+      stack: string;
+    }
+  | string;
 export type LogEntry = {
   time: number;
   msg: string;
