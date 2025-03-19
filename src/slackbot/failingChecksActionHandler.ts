@@ -1,7 +1,7 @@
 import { readChecksWithGroupNames } from "../db/check";
 import { findCheckResults } from "../db/check-results";
 import { last24h } from "../prompts/checkly-data";
-import dataForge from "data-forge";
+import * as dataForge from "data-forge";
 import { renderFailingChecksBlock } from "./blocks/failingChecksBlock";
 
 export const showFailingChecksActionHandler = () => {
