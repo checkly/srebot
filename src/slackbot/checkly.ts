@@ -16,7 +16,7 @@ import {
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
-import { readCheck, readChecks } from "../db/check";
+import { readCheck, readChecks, readChecksWithGroupNames } from "../db/check";
 import { findErrorClustersForCheck } from "../db/error-cluster";
 import {
   CheckResultAggregate,
@@ -33,6 +33,8 @@ import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
 import { aggregateCheckResults } from "./check-result-slices";
 import { CheckResultsTimeSlice } from "./check-result-slices";
 import { summarizeCheckResultsToLabeledCheckStatus } from "./check-results-labeled";
+import { renderFailingChecksBlock } from "./blocks/failingChecksBlock";
+import * as dataForge from "data-forge";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -42,7 +44,7 @@ async function checkResultSummary(checkId: string, checkResultId: string) {
     check.locations = checkGroup.locations;
   }
 
-  const checkAppUrl = checkly.getCheckUrl(check.id);
+  const checkAppUrl = checkly.getCheckAppUrl(check.id);
   const checkResult = await checkly.getCheckResult(check.id, checkResultId);
   const checkResultAppUrl = checkly.getCheckResultAppUrl(
     check.id,
@@ -190,9 +192,14 @@ async function accountSummary(accountId: string) {
   const interval = last24h(new Date());
 
   const statuses = await checkly.getStatuses();
+  const activatedChecks = await checkly.getActivatedChecks();
 
   const counts = statuses.reduce(
     (acc, cr) => {
+      const check = activatedChecks.find((c) => c.id === cr.checkId);
+      if (!check) {
+        return acc;
+      }
       if (!cr.hasErrors && !cr.hasFailures && !cr.isDegraded) {
         acc.passing++;
       }
@@ -233,16 +240,24 @@ async function accountSummary(accountId: string) {
     .toArray()
     .filter((cr) => cr.changePoints.length > 0);
 
-  const { text: summary } = await generateText(
-    summarizeMultipleChecksStatus(checkResultsWithCheckpoints),
-  );
+  const { text: summary } =
+    checkResultsWithCheckpoints.length > 0
+      ? await generateText(
+          summarizeMultipleChecksStatus(checkResultsWithCheckpoints),
+        )
+      : {
+          text: "We haven't detected any impactful changes in check reliability within the last 24 hours.",
+        };
 
-  const failingChecks = checkResultsWithCheckpoints.map((cr) => cr.checkId);
-  const targetChecks = await readChecks(failingChecks);
+  const failingCheckIds = checkResultsWithCheckpoints.map((cr) => cr.checkId);
+  const targetChecks = await readChecks(failingCheckIds);
 
-  const { text: goals } = await generateText(
-    summariseMultipleChecksGoal(targetChecks, 30),
-  );
+  const { text: goals } =
+    failingCheckIds.length > 0
+      ? await generateText(summariseMultipleChecksGoal(targetChecks, 30))
+      : {
+          text: "No change in check reliability, thus no impact on your customers.",
+        };
 
   const message = createAccountSummaryBlock({
     accountName: account.name,
@@ -252,19 +267,10 @@ async function accountSummary(accountId: string) {
     hasIssues: checkResultsWithCheckpoints.length > 0,
     issuesSummary: summary,
     failingChecksGoals: goals,
+    failingCheckIds,
   });
 
   return { message };
-}
-
-function toTimeBucket(startedAt: Date, bucketSizeInMinutes: number) {
-  const startedAtDate = new Date(startedAt);
-  const minutes = startedAtDate.getMinutes();
-  const sliceMinute =
-    Math.floor(minutes / bucketSizeInMinutes) * bucketSizeInMinutes;
-  const sliceDate = new Date(startedAtDate);
-  sliceDate.setMinutes(sliceMinute, 0, 0); // Set to start of 30-min bucket
-  return sliceDate;
 }
 
 async function checkSummaryData(

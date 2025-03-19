@@ -75,7 +75,7 @@ export class ChecklyClient {
     return this.makeRequest(url, Check) as Promise<Check>;
   }
 
-  getCheckUrl(checkId: string): string {
+  getCheckAppUrl(checkId: string): string {
     return `${this.checklyAppUrl}checks/${checkId}`;
   }
 
@@ -224,7 +224,7 @@ export class ChecklyClient {
   }
 
   getCheckResultAppUrl(checkId: string, checkResultId: string): string {
-    return `${this.checklyAppUrl}checks/${checkId}/check-session/results/${checkResultId}`;
+    return `${this.checklyAppUrl}checks/${checkId}/check-sessions/results/${checkResultId}`;
   }
 
   getDashboards() {

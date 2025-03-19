@@ -6,6 +6,7 @@ interface AccountSummaryProps {
   hasIssues: boolean;
   issuesSummary: string;
   failingChecksGoals: string;
+  failingCheckIds: string[];
 }
 
 export function createAccountSummaryBlock({
@@ -16,6 +17,7 @@ export function createAccountSummaryBlock({
   hasIssues,
   issuesSummary,
   failingChecksGoals,
+  failingCheckIds,
 }: AccountSummaryProps) {
   const state = hasIssues ? "❌" : "✅";
   const stateText = hasIssues
@@ -38,6 +40,25 @@ export function createAccountSummaryBlock({
           text: `:white_check_mark: *PASSING*: ${passingChecks} :warning: *DEGRADED*: ${degradedChecks} :x: *FAILING*: ${failingChecks}`,
         },
       },
+      ...(failingCheckIds.length > 0
+        ? [
+            {
+              type: "actions",
+              elements: [
+                {
+                  type: "button",
+                  text: {
+                    type: "plain_text",
+                    emoji: true,
+                    text: "List Failing Checks",
+                  },
+                  action_id: "show_failing_checks",
+                  value: failingCheckIds.join(","),
+                },
+              ],
+            },
+          ]
+        : []),
     ],
   };
 }

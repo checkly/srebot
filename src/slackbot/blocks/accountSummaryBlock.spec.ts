@@ -10,6 +10,7 @@ describe("accountSummaryBlock", () => {
       hasIssues: false,
       issuesSummary: "No issues detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingCheckIds: [],
     });
 
     expect(blocks).toMatchSnapshot();
@@ -25,6 +26,7 @@ describe("accountSummaryBlock", () => {
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingCheckIds: ["123", "124"],
     });
 
     expect(blocks).toMatchSnapshot();
@@ -40,6 +42,7 @@ describe("accountSummaryBlock", () => {
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingCheckIds: ["123", "124", "125"],
     });
 
     expect(blocks).toMatchSnapshot();
