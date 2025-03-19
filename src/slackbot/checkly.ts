@@ -235,15 +235,6 @@ async function accountSummary(accountId: string) {
     .toArray()
     .filter((cr) => cr.changePoints.length > 0);
 
-  log.info(
-    {
-      checkResultsWithCheckpointsLength: JSON.stringify(
-        checkResultsWithCheckpoints,
-      ),
-    },
-    "checkResultsWithCheckpoints",
-  );
-
   const { text: summary } = await generateText(
     summarizeMultipleChecksStatus(checkResultsWithCheckpoints),
   );
