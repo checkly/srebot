@@ -240,23 +240,24 @@ async function accountSummary(accountId: string) {
     .toArray()
     .filter((cr) => cr.changePoints.length > 0);
 
-  const { text: summary } = await generateText(
-    summarizeMultipleChecksStatus(checkResultsWithCheckpoints),
-  );
+  const { text: summary } =
+    checkResultsWithCheckpoints.length > 0
+      ? await generateText(
+          summarizeMultipleChecksStatus(checkResultsWithCheckpoints),
+        )
+      : {
+          text: "We haven't detected any impactful changes in check reliability within the last 24 hours.",
+        };
 
   const failingCheckIds = checkResultsWithCheckpoints.map((cr) => cr.checkId);
   const targetChecks = await readChecks(failingCheckIds);
 
-  const { text: goals } = await generateText(
-    summariseMultipleChecksGoal(targetChecks, 30),
-  );
-
-  log.info(
-    {
-      failingCheckIds,
-    },
-    "failingCheckIds",
-  );
+  const { text: goals } =
+    failingCheckIds.length > 0
+      ? await generateText(summariseMultipleChecksGoal(targetChecks, 30))
+      : {
+          text: "No change in check reliability, thus no impact on your customers.",
+        };
 
   const message = createAccountSummaryBlock({
     accountName: account.name,
