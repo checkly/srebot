@@ -2,10 +2,8 @@ import { generateObject, generateText } from "ai";
 import { checkly } from "../checkly/client";
 import {
   analyseCheckFailureHeatMap,
-  summariseMultipleChecksGoal,
   summarizeErrorsPrompt,
   SummarizeErrorsPromptType,
-  summarizeMultipleChecksStatus,
   summarizeTestGoalPrompt,
 } from "../prompts/checkly";
 import {
@@ -16,25 +14,17 @@ import {
 import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
-import { readCheck, readChecks, readChecksWithGroupNames } from "../db/check";
+import { readCheck } from "../db/check";
 import { findErrorClustersForCheck } from "../db/error-cluster";
-import {
-  CheckResultAggregate,
-  CheckResultTable,
-  findCheckResults,
-  findCheckResultsAggregated,
-} from "../db/check-results";
+import { CheckResultTable, findCheckResults } from "../db/check-results";
 import { readCheckGroup } from "../db/check-groups";
 import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
 import { analyseMultipleChecks } from "../use-cases/analyse-multiple/analyse-multiple-checks";
 import { createMultipleCheckAnalysisBlock } from "./blocks/multipleChecksAnalysisBlock";
 import { generateHeatmap } from "../heatmap/generateHeatmap";
-import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
 import { aggregateCheckResults } from "./check-result-slices";
 import { CheckResultsTimeSlice } from "./check-result-slices";
-import { summarizeCheckResultsToLabeledCheckStatus } from "./check-results-labeled";
-import { renderFailingChecksBlock } from "./blocks/failingChecksBlock";
-import * as dataForge from "data-forge";
+import { accountSummary } from "./accountSummaryCommandHandler";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -186,93 +176,6 @@ async function checkSummary(checkId: string) {
   return { message, image: heatmapImage };
 }
 
-async function accountSummary(accountId: string) {
-  const account = await checkly.getAccount(accountId);
-
-  const interval = last24h(new Date());
-
-  const statuses = await checkly.getStatuses();
-  const activatedChecks = await checkly.getActivatedChecks();
-
-  const counts = statuses.reduce(
-    (acc, cr) => {
-      const check = activatedChecks.find((c) => c.id === cr.checkId);
-      if (!check) {
-        return acc;
-      }
-      if (!cr.hasErrors && !cr.hasFailures && !cr.isDegraded) {
-        acc.passing++;
-      }
-      if (cr.isDegraded) {
-        acc.degraded++;
-      }
-      if (cr.hasErrors || cr.hasFailures) {
-        acc.failing++;
-      }
-      return acc;
-    },
-    { passing: 0, degraded: 0, failing: 0 },
-  );
-
-  log.info(
-    {
-      accountId,
-      ...counts,
-    },
-    "accountSummary",
-  );
-
-  const aggregatedCheckResults = await findCheckResultsAggregated({
-    accountId: accountId,
-    from: interval.from,
-    to: interval.to,
-  });
-
-  const aggregatedCheckResultsWithFailures = aggregatedCheckResults.filter(
-    (cr) => (cr.errorCount > 0 || cr.degradedCount > 0) && cr.passingCount > 0,
-  );
-
-  const labeledCheckResults = await summarizeCheckResultsToLabeledCheckStatus(
-    aggregatedCheckResultsWithFailures,
-  );
-
-  const checkResultsWithCheckpoints = labeledCheckResults
-    .toArray()
-    .filter((cr) => cr.changePoints.length > 0);
-
-  const { text: summary } =
-    checkResultsWithCheckpoints.length > 0
-      ? await generateText(
-          summarizeMultipleChecksStatus(checkResultsWithCheckpoints),
-        )
-      : {
-          text: "We haven't detected any impactful changes in check reliability within the last 24 hours.",
-        };
-
-  const failingCheckIds = checkResultsWithCheckpoints.map((cr) => cr.checkId);
-  const targetChecks = await readChecks(failingCheckIds);
-
-  const { text: goals } =
-    failingCheckIds.length > 0
-      ? await generateText(summariseMultipleChecksGoal(targetChecks, 30))
-      : {
-          text: "No change in check reliability, thus no impact on your customers.",
-        };
-
-  const message = createAccountSummaryBlock({
-    accountName: account.name,
-    passingChecks: counts.passing,
-    degradedChecks: counts.degraded,
-    failingChecks: counts.failing,
-    hasIssues: checkResultsWithCheckpoints.length > 0,
-    issuesSummary: summary,
-    failingChecksGoals: goals,
-    failingCheckIds,
-  });
-
-  return { message };
-}
-
 async function checkSummaryData(
   checkId: string,
   interval: { from: Date; to: Date },
@@ -360,9 +263,35 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     await ack();
     const args = command.text.split(" ");
     if (args.length == 1 && args[0].trim() === "") {
+      await respond({
+        response_type: "ephemeral",
+        text: "Fetching account summary... ⏳",
+      });
+
       const accountId = process.env.CHECKLY_ACCOUNT_ID!;
-      const { message } = await accountSummary(accountId);
-      await respond({ response_type: "in_channel", ...message });
+      try {
+        const { message } = await accountSummary(accountId);
+        await respond({
+          response_type: "in_channel",
+          ...message,
+        });
+      } catch (err) {
+        // Ensure we have a proper Error object
+        const error = err instanceof Error ? err : new Error(String(err));
+
+        log.error(
+          {
+            err: error,
+            accountId,
+          },
+          "Error fetching account summary",
+        );
+
+        await respond({
+          replace_original: true,
+          text: `:x: Error fetching account summary: ${error.message}`,
+        });
+      }
     } else if (args.length == 1 && !getIsUUID(args[0])) {
       const multipleCheckAnalysisResult = await analyseMultipleChecks(args[0]);
       await respond({

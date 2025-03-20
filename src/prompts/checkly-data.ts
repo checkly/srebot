@@ -35,7 +35,7 @@ export async function fetchCheckResults(
   },
 ) {
   return await checkly.getCheckResultsByCheckId(checkId, {
-    resultType: "ALL",
+    resultType: "FINAL",
     from: from ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     to: to ?? new Date(),
     limit: 100,
