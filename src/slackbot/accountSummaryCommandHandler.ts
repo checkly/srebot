@@ -15,7 +15,15 @@ export async function accountSummary(accountId: string) {
   const interval = last24h(new Date());
   const account = await checkly.getAccount(accountId);
 
-  const accountSummary = await getAccountSummary(accountId);
+  const accountSummary = await getAccountSummary();
+  if (!accountSummary.checks) {
+    return {
+      message: {
+        text: "No checks found for account",
+        blocks: [],
+      },
+    };
+  }
 
   const checkResultsWithCheckpoints = await getChangePoints(
     accountId,
@@ -114,7 +122,7 @@ async function getChangePoints(
   return checkResultsWithCheckpoints;
 }
 
-async function getAccountSummary(accountId: string) {
+async function getAccountSummary() {
   const statuses = await checkly.getStatuses();
   const activatedChecks = await checkly.getActivatedChecks();
 
