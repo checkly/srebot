@@ -15,7 +15,7 @@ import { createCheckResultBlock } from "./blocks/checkResultBlock";
 import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
 import { readCheck } from "../db/check";
-import { findErrorClustersForCheck } from "../db/error-cluster";
+import { findErrorClustersForChecks } from "../db/error-cluster";
 import { CheckResultTable, findCheckResults } from "../db/check-results";
 import { readCheckGroup } from "../db/check-groups";
 import generateCheckSummaryBlock from "./blocks/newCheckSummaryBlock";
@@ -131,7 +131,7 @@ async function checkSummary(checkId: string) {
     (result) => result.hasFailures || result.hasErrors,
   );
 
-  const failureClusters = await findErrorClustersForCheck(check.id);
+  const failureClusters = await findErrorClustersForChecks(check.id);
   const failurePatterns = failureClusters.map((fc) => fc.error_message);
 
   const mostRecentFailureCheckResult = failingCheckResults.sort(
