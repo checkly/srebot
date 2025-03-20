@@ -27,11 +27,54 @@ export function createAccountSummaryBlock({
   return {
     blocks: [
       {
-        type: "section",
+        type: "header",
         text: {
-          type: "mrkdwn",
-          text: `*State:* ${state} ${stateText}\n*Blast Radius:*\n - ${issuesSummary}\n - ${failingChecksGoals}`,
+          type: "plain_text",
+          text: `${state} ${stateText}`,
+          emoji: true,
         },
+      },
+      {
+        type: "rich_text",
+        elements: [
+          {
+            type: "rich_text_section",
+            elements: [
+              {
+                type: "text",
+                text: "Blast Radius:\n",
+                style: {
+                  bold: true,
+                },
+              },
+            ],
+          },
+          {
+            type: "rich_text_list",
+            style: "bullet",
+            indent: 0,
+            elements: [
+              {
+                type: "rich_text_section",
+                elements: [
+                  {
+                    type: "text",
+                    text: `${issuesSummary}`,
+                  },
+                ],
+              },
+              {
+                type: "rich_text_section",
+                elements: [
+                  {
+                    type: "text",
+                    text: `${failingChecksGoals}`,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       {
         type: "section",
