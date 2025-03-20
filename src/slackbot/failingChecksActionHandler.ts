@@ -60,6 +60,10 @@ export const showFailingChecksActionHandler = () => {
       .toArray();
 
     const message = renderFailingChecksBlock(failedChecks);
-    await respond({ response_type: "in_channel", ...message });
+    await respond({
+      response_type: "in_channel",
+      ...message,
+      replace_original: false,
+    });
   };
 };

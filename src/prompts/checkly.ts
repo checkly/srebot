@@ -181,7 +181,7 @@ export function summarizeMultipleChecksStatus(
     - severity: The severity of the check (do not use the enum values but rather use words describing there meaning)
     - patternStart: unix timestamp at which the severity changed from one state to another, render this in time ago format
 
-    Be an SRE Engineer which answers the question what the state of the current checks is. Use max 3 sentences with max 50 words.
+    Be an SRE Engineer which answers the question what the state of the current checks is. Use max 2 sentences with max 30 words.
 
     Constitution:
     - Always prioritize accuracy and relevance in the summary

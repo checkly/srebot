@@ -10,10 +10,11 @@ const logLevel =
 
 export const log = pino({
   level: logLevel,
-  base: null,
   transport: {
     target: "pino-logfmt",
     options: {
+      flattenNestedObjects: true,
+      convertToSnakeCase: true,
       includeLevelLabel: true,
       formatTime: true,
     },

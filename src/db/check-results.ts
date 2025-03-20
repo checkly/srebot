@@ -86,6 +86,7 @@ export async function findCheckResultsAggregated(
       }
     })
     .whereBetween("startedAt", [query.from, query.to])
+    .andWhere("resultType", "FINAL")
     .groupBy(
       "checkId",
       "runLocation",
