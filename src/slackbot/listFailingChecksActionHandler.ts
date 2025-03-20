@@ -4,7 +4,7 @@ import { last24h } from "../prompts/checkly-data";
 import * as dataForge from "data-forge";
 import { renderFailingChecksBlock } from "./blocks/failingChecksBlock";
 
-export const showFailingChecksActionHandler = () => {
+export const listFailingChecksActionHandler = () => {
   return async ({ ack, respond, body }) => {
     await ack();
     const interval = last24h(new Date());

@@ -26,7 +26,7 @@ import {
   CHECKLY_COMMAND_NAME as CHECKLY_COMMAND_NAME,
   checklyCommandHandler,
 } from "./checkly";
-import { showFailingChecksActionHandler } from "./failingChecksActionHandler";
+import { listFailingChecksActionHandler } from "./listFailingChecksActionHandler";
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
   const config = getSlackConfig();
@@ -48,7 +48,7 @@ let setupAgent = () => {
 const githubAgent = setupAgent();
 
 app.command(CHECKLY_COMMAND_NAME, checklyCommandHandler(app));
-app.action("show_failing_checks", showFailingChecksActionHandler());
+app.action("show_failing_checks", listFailingChecksActionHandler());
 
 app.command("/srebot-releases", async ({ command, ack, respond }) => {
   await ack();
