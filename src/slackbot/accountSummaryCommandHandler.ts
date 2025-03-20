@@ -7,7 +7,7 @@ import {
   summariseMultipleChecksGoal,
   summarizeMultipleChecksStatus,
 } from "../prompts/checkly";
-import { readChecks } from "../db/check";
+import { CheckTable, readChecks } from "../db/check";
 import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
 import { log } from "../log";
 
@@ -47,7 +47,7 @@ export async function accountSummary(accountId: string) {
 }
 
 async function summarizeChecksGoal(
-  checkWithChangePoints: import("/Users/aluedeke/Development/source/checkly/srebot/src/db/check").CheckTable[],
+  checkWithChangePoints: CheckTable[],
 ): Promise<string> {
   if (checkWithChangePoints.length === 0) {
     return "No change in check reliability, thus no impact on your customers.";
