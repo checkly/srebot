@@ -1,3 +1,6 @@
+import { LIST_ERROR_PATTERNS_ACTION_ID } from "./errorPatternBlock";
+import { LIST_FAILING_CHECKS_ACTION_ID } from "./failingChecksBlock";
+
 interface AccountSummaryProps {
   accountName: string;
   passingChecks: number;
@@ -7,7 +10,7 @@ interface AccountSummaryProps {
   issuesSummary: string;
   failingChecksGoals: string;
   failingCheckIds: string[];
-  errorPatterns: { description: string; count: number }[];
+  errorPatterns: { id: string; description: string; count: number }[];
 }
 
 export function createAccountSummaryBlock({
@@ -132,8 +135,18 @@ export function createAccountSummaryBlock({
                     emoji: true,
                     text: "List Failing Checks",
                   },
-                  action_id: "show_failing_checks",
+                  action_id: LIST_FAILING_CHECKS_ACTION_ID,
                   value: failingCheckIds.join(","),
+                },
+                {
+                  type: "button",
+                  text: {
+                    type: "plain_text",
+                    emoji: true,
+                    text: "List Error Patterns",
+                  },
+                  action_id: LIST_ERROR_PATTERNS_ACTION_ID,
+                  value: errorPatterns.map((ep) => ep.id).join(","),
                 },
               ],
             },

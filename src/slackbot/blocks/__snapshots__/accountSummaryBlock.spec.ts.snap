@@ -107,10 +107,20 @@ exports[`accountSummaryBlock renders degraded account state 1`] = `
     {
       "elements": [
         {
-          "action_id": "show_failing_checks",
+          "action_id": "list_failing_checks",
           "text": {
             "emoji": true,
             "text": "List Failing Checks",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "value": "123,124",
+        },
+        {
+          "action_id": "list_error_patterns",
+          "text": {
+            "emoji": true,
+            "text": "List Error Patterns",
             "type": "plain_text",
           },
           "type": "button",
@@ -221,7 +231,7 @@ exports[`accountSummaryBlock renders failing account state 1`] = `
     {
       "elements": [
         {
-          "action_id": "show_failing_checks",
+          "action_id": "list_failing_checks",
           "text": {
             "emoji": true,
             "text": "List Failing Checks",
@@ -229,6 +239,16 @@ exports[`accountSummaryBlock renders failing account state 1`] = `
           },
           "type": "button",
           "value": "123,124,125",
+        },
+        {
+          "action_id": "list_error_patterns",
+          "text": {
+            "emoji": true,
+            "text": "List Error Patterns",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "value": "123",
         },
       ],
       "type": "actions",

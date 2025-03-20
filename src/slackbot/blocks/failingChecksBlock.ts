@@ -1,5 +1,7 @@
 import { checkly } from "../../checkly/client";
 
+export const LIST_FAILING_CHECKS_ACTION_ID = "list_failing_checks";
+
 export type Check = {
   checkId: string;
   checkState: "FAILED" | "DEGRADED" | "PASSED";

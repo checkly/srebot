@@ -27,6 +27,9 @@ import {
   checklyCommandHandler,
 } from "./checkly";
 import { listFailingChecksActionHandler } from "./listFailingChecksActionHandler";
+import { listErrorPatternActionHandler } from "./listErrorPatternActionHandler";
+import { LIST_ERROR_PATTERNS_ACTION_ID } from "./blocks/errorPatternBlock";
+import { LIST_FAILING_CHECKS_ACTION_ID } from "./blocks/failingChecksBlock";
 // Initialize Slack app with validated configuration
 const initializeSlackApp = () => {
   const config = getSlackConfig();
@@ -48,7 +51,8 @@ let setupAgent = () => {
 const githubAgent = setupAgent();
 
 app.command(CHECKLY_COMMAND_NAME, checklyCommandHandler(app));
-app.action("show_failing_checks", listFailingChecksActionHandler());
+app.action(LIST_FAILING_CHECKS_ACTION_ID, listFailingChecksActionHandler());
+app.action(LIST_ERROR_PATTERNS_ACTION_ID, listErrorPatternActionHandler());
 
 app.command("/srebot-releases", async ({ command, ack, respond }) => {
   await ack();

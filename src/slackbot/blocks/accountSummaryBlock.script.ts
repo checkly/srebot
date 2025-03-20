@@ -29,14 +29,17 @@ async function main() {
       failingCheckIds: [],
       errorPatterns: [
         {
+          id: "123",
           description: "Error Pattern #1",
           count: 10,
         },
         {
+          id: "124",
           description: "Error Pattern #2",
           count: 99,
         },
         {
+          id: "125",
           description: "Error Pattern #3",
           count: 10,
         },
@@ -55,6 +58,7 @@ async function main() {
       failingCheckIds: ["123", "124", "125"],
       errorPatterns: [
         {
+          id: "123",
           description: "Error Pattern #1",
           count: 10,
         },
@@ -66,7 +70,7 @@ async function main() {
 
   for (const blocks of testCases) {
     await client.chat.postMessage({
-      channel: "C08E35FUB4L",
+      channel: process.env.SLACK_BOT_CHANNEL_ID!,
       blocks: blocks.blocks,
     });
   }

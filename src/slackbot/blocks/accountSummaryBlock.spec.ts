@@ -30,10 +30,12 @@ describe("accountSummaryBlock", () => {
       failingCheckIds: ["123", "124"],
       errorPatterns: [
         {
+          id: "123",
           description: "Error Pattern #1",
           count: 100,
         },
         {
+          id: "124",
           description: "Error Pattern #2",
           count: 100,
         },
@@ -56,6 +58,7 @@ describe("accountSummaryBlock", () => {
       failingCheckIds: ["123", "124", "125"],
       errorPatterns: [
         {
+          id: "123",
           description: "Error Pattern #1",
           count: 10,
         },
