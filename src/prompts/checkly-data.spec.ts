@@ -103,6 +103,19 @@ describe("checkly error messages", () => {
     expect(error).toEqual("error in browser script");
   });
 
+  test("should extract error after empty string", () => {
+    const result = {
+      id: "a2283ec0-b938-4cc2-b91c-3e731fd64421",
+      browserCheckResult: {
+        errors: ["", "error in browser script"] as ErrorMessage[],
+      },
+    };
+
+    const error = getErrorMessageFromResult(result.browserCheckResult);
+
+    expect(error).toEqual("error in browser script");
+  });
+
   test("should extract browser error message", () => {
     const result = {
       id: "a2283ec0-b938-4cc2-b91c-3e731fd64421",
