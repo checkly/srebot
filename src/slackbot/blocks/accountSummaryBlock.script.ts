@@ -14,6 +14,7 @@ async function main() {
       issuesSummary: "No issues detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
       failingCheckIds: [],
+      errorPatterns: [],
     }),
     // Some degraded
     createAccountSummaryBlock({
@@ -26,6 +27,20 @@ async function main() {
         "New degrading or failing checks detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
       failingCheckIds: [],
+      errorPatterns: [
+        {
+          description: "Error Pattern #1",
+          count: 10,
+        },
+        {
+          description: "Error Pattern #2",
+          count: 99,
+        },
+        {
+          description: "Error Pattern #3",
+          count: 10,
+        },
+      ],
     }),
     // Some failing
     createAccountSummaryBlock({
@@ -38,6 +53,12 @@ async function main() {
         "New degrading or failing checks detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
       failingCheckIds: ["123", "124", "125"],
+      errorPatterns: [
+        {
+          description: "Error Pattern #1",
+          count: 10,
+        },
+      ],
     }),
   ];
 

@@ -7,6 +7,7 @@ interface AccountSummaryProps {
   issuesSummary: string;
   failingChecksGoals: string;
   failingCheckIds: string[];
+  errorPatterns: { description: string; count: number }[];
 }
 
 export function createAccountSummaryBlock({
@@ -18,6 +19,7 @@ export function createAccountSummaryBlock({
   issuesSummary,
   failingChecksGoals,
   failingCheckIds,
+  errorPatterns,
 }: AccountSummaryProps) {
   const state = hasIssues ? "❌" : "✅";
   const stateText = hasIssues
@@ -27,12 +29,90 @@ export function createAccountSummaryBlock({
   return {
     blocks: [
       {
-        type: "section",
+        type: "header",
         text: {
-          type: "mrkdwn",
-          text: `*State:* ${state} ${stateText}\n*Blast Radius:*\n - ${issuesSummary}\n - ${failingChecksGoals}`,
+          type: "plain_text",
+          text: `${state} ${stateText}`,
+          emoji: true,
         },
       },
+      {
+        type: "rich_text",
+        elements: [
+          {
+            type: "rich_text_section",
+            elements: [
+              {
+                type: "text",
+                text: "Blast Radius:\n",
+                style: {
+                  bold: true,
+                },
+              },
+            ],
+          },
+          {
+            type: "rich_text_list",
+            style: "bullet",
+            indent: 0,
+            elements: [
+              {
+                type: "rich_text_section",
+                elements: [
+                  {
+                    type: "text",
+                    text: `${issuesSummary}`,
+                  },
+                ],
+              },
+              {
+                type: "rich_text_section",
+                elements: [
+                  {
+                    type: "text",
+                    text: `${failingChecksGoals}`,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      ...(errorPatterns.length > 0
+        ? [
+            {
+              type: "rich_text",
+              elements: [
+                {
+                  type: "rich_text_section",
+                  elements: [
+                    {
+                      type: "text",
+                      text: "Top 3 Error Patterns:\n",
+                      style: {
+                        bold: true,
+                      },
+                    },
+                  ],
+                },
+                {
+                  type: "rich_text_list",
+                  style: "bullet",
+                  indent: 0,
+                  elements: errorPatterns.slice(0, 3).map((errorPattern) => ({
+                    type: "rich_text_section",
+                    elements: [
+                      {
+                        type: "text",
+                        text: `${errorPattern.description} (${errorPattern.count} times)`,
+                      },
+                    ],
+                  })),
+                },
+              ],
+            },
+          ]
+        : []),
       {
         type: "section",
         text: {

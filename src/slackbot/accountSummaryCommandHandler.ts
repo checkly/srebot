@@ -9,16 +9,25 @@ import {
 } from "../prompts/checkly";
 import { CheckTable, readChecks } from "../db/check";
 import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
-import { log } from "../log";
+import { findErrorClustersForChecks } from "../db/error-cluster";
 
 export async function accountSummary(accountId: string) {
+  const interval = last24h(new Date());
   const account = await checkly.getAccount(accountId);
 
-  const accountSummary = await getAccountSummary(accountId);
+  const accountSummary = await getAccountSummary();
+  if (!accountSummary.checks) {
+    return {
+      message: {
+        text: "No checks found for account",
+        blocks: [],
+      },
+    };
+  }
 
   const checkResultsWithCheckpoints = await getChangePoints(
     accountId,
-    last24h(new Date()),
+    interval,
   );
 
   const changePointsSummary = await summarizeChangePoints(
@@ -32,6 +41,11 @@ export async function accountSummary(accountId: string) {
 
   const failingChecksGoals = await summarizeChecksGoal(checksWithChangePoints);
 
+  const errorPatterns = await findErrorClustersForChecks(
+    accountSummary.checks.map((c) => c.id),
+    interval,
+  );
+
   const message = createAccountSummaryBlock({
     accountName: account.name,
     passingChecks: accountSummary.passing,
@@ -41,6 +55,10 @@ export async function accountSummary(accountId: string) {
     issuesSummary: changePointsSummary,
     failingChecksGoals,
     failingCheckIds: checkIdsWithChangePoints,
+    errorPatterns: errorPatterns.map((ec) => ({
+      description: ec.error_message.split("\n")[0],
+      count: ec.count,
+    })),
   });
 
   return { message };
@@ -104,7 +122,7 @@ async function getChangePoints(
   return checkResultsWithCheckpoints;
 }
 
-async function getAccountSummary(accountId: string) {
+async function getAccountSummary() {
   const statuses = await checkly.getStatuses();
   const activatedChecks = await checkly.getActivatedChecks();
 
@@ -128,12 +146,5 @@ async function getAccountSummary(accountId: string) {
     { passing: 0, degraded: 0, failing: 0 },
   );
 
-  log.info(
-    {
-      accountId,
-      ...counts,
-    },
-    "accountSummary",
-  );
-  return counts;
+  return { ...counts, checks: activatedChecks };
 }

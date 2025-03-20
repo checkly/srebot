@@ -5,13 +5,97 @@ exports[`accountSummaryBlock renders degraded account state 1`] = `
   "blocks": [
     {
       "text": {
-        "text": "*State:* ❌ Account Degraded has issues.
-*Blast Radius:*
- - New degrading or failing checks detected in the last 24h.
- - No failing checks detected in the last 24h.",
-        "type": "mrkdwn",
+        "emoji": true,
+        "text": "❌ Account Degraded has issues.",
+        "type": "plain_text",
       },
-      "type": "section",
+      "type": "header",
+    },
+    {
+      "elements": [
+        {
+          "elements": [
+            {
+              "style": {
+                "bold": true,
+              },
+              "text": "Blast Radius:
+",
+              "type": "text",
+            },
+          ],
+          "type": "rich_text_section",
+        },
+        {
+          "elements": [
+            {
+              "elements": [
+                {
+                  "text": "New degrading or failing checks detected in the last 24h.",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+            {
+              "elements": [
+                {
+                  "text": "No failing checks detected in the last 24h.",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+          ],
+          "indent": 0,
+          "style": "bullet",
+          "type": "rich_text_list",
+        },
+      ],
+      "type": "rich_text",
+    },
+    {
+      "elements": [
+        {
+          "elements": [
+            {
+              "style": {
+                "bold": true,
+              },
+              "text": "Top 3 Error Patterns:
+",
+              "type": "text",
+            },
+          ],
+          "type": "rich_text_section",
+        },
+        {
+          "elements": [
+            {
+              "elements": [
+                {
+                  "text": "Error Pattern #1 (100 times)",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+            {
+              "elements": [
+                {
+                  "text": "Error Pattern #2 (100 times)",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+          ],
+          "indent": 0,
+          "style": "bullet",
+          "type": "rich_text_list",
+        },
+      ],
+      "type": "rich_text",
     },
     {
       "text": {
@@ -44,13 +128,88 @@ exports[`accountSummaryBlock renders failing account state 1`] = `
   "blocks": [
     {
       "text": {
-        "text": "*State:* ❌ Account Failing has issues.
-*Blast Radius:*
- - New degrading or failing checks detected in the last 24h.
- - No failing checks detected in the last 24h.",
-        "type": "mrkdwn",
+        "emoji": true,
+        "text": "❌ Account Failing has issues.",
+        "type": "plain_text",
       },
-      "type": "section",
+      "type": "header",
+    },
+    {
+      "elements": [
+        {
+          "elements": [
+            {
+              "style": {
+                "bold": true,
+              },
+              "text": "Blast Radius:
+",
+              "type": "text",
+            },
+          ],
+          "type": "rich_text_section",
+        },
+        {
+          "elements": [
+            {
+              "elements": [
+                {
+                  "text": "New degrading or failing checks detected in the last 24h.",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+            {
+              "elements": [
+                {
+                  "text": "No failing checks detected in the last 24h.",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+          ],
+          "indent": 0,
+          "style": "bullet",
+          "type": "rich_text_list",
+        },
+      ],
+      "type": "rich_text",
+    },
+    {
+      "elements": [
+        {
+          "elements": [
+            {
+              "style": {
+                "bold": true,
+              },
+              "text": "Top 3 Error Patterns:
+",
+              "type": "text",
+            },
+          ],
+          "type": "rich_text_section",
+        },
+        {
+          "elements": [
+            {
+              "elements": [
+                {
+                  "text": "Error Pattern #1 (10 times)",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+          ],
+          "indent": 0,
+          "style": "bullet",
+          "type": "rich_text_list",
+        },
+      ],
+      "type": "rich_text",
     },
     {
       "text": {
@@ -83,13 +242,54 @@ exports[`accountSummaryBlock renders healthy account state 1`] = `
   "blocks": [
     {
       "text": {
-        "text": "*State:* ✅ Account Healthy appears stable.
-*Blast Radius:*
- - No issues detected in the last 24h.
- - No failing checks detected in the last 24h.",
-        "type": "mrkdwn",
+        "emoji": true,
+        "text": "✅ Account Healthy appears stable.",
+        "type": "plain_text",
       },
-      "type": "section",
+      "type": "header",
+    },
+    {
+      "elements": [
+        {
+          "elements": [
+            {
+              "style": {
+                "bold": true,
+              },
+              "text": "Blast Radius:
+",
+              "type": "text",
+            },
+          ],
+          "type": "rich_text_section",
+        },
+        {
+          "elements": [
+            {
+              "elements": [
+                {
+                  "text": "No issues detected in the last 24h.",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+            {
+              "elements": [
+                {
+                  "text": "No failing checks detected in the last 24h.",
+                  "type": "text",
+                },
+              ],
+              "type": "rich_text_section",
+            },
+          ],
+          "indent": 0,
+          "style": "bullet",
+          "type": "rich_text_list",
+        },
+      ],
+      "type": "rich_text",
     },
     {
       "text": {

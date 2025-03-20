@@ -11,6 +11,7 @@ describe("accountSummaryBlock", () => {
       issuesSummary: "No issues detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
       failingCheckIds: [],
+      errorPatterns: [],
     });
 
     expect(blocks).toMatchSnapshot();
@@ -27,6 +28,16 @@ describe("accountSummaryBlock", () => {
         "New degrading or failing checks detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
       failingCheckIds: ["123", "124"],
+      errorPatterns: [
+        {
+          description: "Error Pattern #1",
+          count: 100,
+        },
+        {
+          description: "Error Pattern #2",
+          count: 100,
+        },
+      ],
     });
 
     expect(blocks).toMatchSnapshot();
@@ -43,6 +54,12 @@ describe("accountSummaryBlock", () => {
         "New degrading or failing checks detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
       failingCheckIds: ["123", "124", "125"],
+      errorPatterns: [
+        {
+          description: "Error Pattern #1",
+          count: 10,
+        },
+      ],
     });
 
     expect(blocks).toMatchSnapshot();
