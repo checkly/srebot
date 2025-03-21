@@ -45,7 +45,7 @@ export const getHeatmapData = (
 
   // Generate all time buckets within the range
   const bucketIndices: number[] = [];
-  for (let i = fromBucket; i < toBucket; i++) {
+  for (let i = fromBucket + 1; i <= toBucket; i++) {
     bucketIndices.push(i);
   }
 
