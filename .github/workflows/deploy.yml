@@ -36,3 +36,6 @@ jobs:
         run: |
           render login --output json
           render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm
+          render deploys create ${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID }} --output json --confirm
+          render deploys create ${{ secrets.RENDER_SERVICE_ID_DEV }} --output json --confirm
+          render deploys create ${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID_DEV }} --output json --confirm
