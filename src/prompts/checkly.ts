@@ -301,15 +301,13 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
         'You must choose exactly one of ["PASSING", "FLAKY", "FAILING"]. If you see no failures at any time, pick PASSING. If failures occur but are resolved by the last timestamp, pick FLAKY. If any region still fails at the final timestamp or has continuous failures, pick FAILING',
       ),
 
-    failureIncidentsSummary: z
-      .string()
-      .describe(
-        "Brief summary of the failure incidents, with their time-frame. " +
-          "For each incident mention if it affected all locations, or a subset. " +
-          "Use only hours for times, and full locations names. " +
-          "If there is no clear pattern (sporadic or random failures)- do not mention specific times or locations. " +
-          "If the failures are still happening, mention it. Use 2 sentences max.",
-      ),
+    failureIncidentsSummary: z.string().describe(
+      `Brief summary of the failure incidents, with their time-frame.
+         For each incident mention if it affected all locations, or a subset.
+         Use only hours for times, and full locations names.
+         If there is no clear pattern (sporadic or random failures)- do not mention specific times or locations.
+         If the failures are still happening, mention it. Use 2 sentences max.`,
+    ),
   });
 
   return defineMessagesPrompt("analyseCheckFailureHeatMap", messages, schema, {

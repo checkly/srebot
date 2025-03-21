@@ -40,7 +40,6 @@ interface HistoryRecord {
   promptConfig: GeneratePromptConfigArgs;
   overallScore: number;
   feedbackList: string[];
-  bestFeedback: string;
 }
 
 // Generate a prompt configuration for a given heatmap image buffer and configuration args.
@@ -69,6 +68,7 @@ const generatePromptConfig = (
     category: z.nativeEnum(ErrorCategory).describe(args.categoryDescription),
     failureIncidentsSummary: z
       .string()
+      .min(1)
       .describe(args.failureIncidentsSummaryDescription),
   });
 
@@ -115,7 +115,7 @@ const testCases: TestCase[] = [
     ),
     expectedCategory: ErrorCategory.PASSING,
     input:
-      "Where and when did the failures occur in the last 24 hours? The input is a heatmap image of a check running every 12h in (eu-west-1) and (us-east-1)",
+      "Where and when did the failures occur in the last 24 hours? The input is a heatmap image of a check running every 12h in (eu-west-1) and (us-east-1). The long periods of gray indicate no check runs",
     expectedSummary:
       "No failures in both location (eu-west-1) and (us-east-1) in the last 24 hours.",
   },
@@ -171,6 +171,7 @@ Expected Category: ${testCase.expectedCategory}
 Actual Category: ${response.object.category}
 Expected Summary: ${testCase.expectedSummary}
 Actual Summary: ${response.object.failureIncidentsSummary}
+Score: ${factualityResult.score}
 Factuality Rationale: ${cleanedRationale}`;
 
   return {
@@ -198,15 +199,19 @@ const scorePrompt = async (
     let lowestScore = Infinity;
     let feedbackForTestCase = "";
 
-    for (let i = 0; i < innerIterations; i++) {
-      const result = await scoreTestCase(testCase, config);
+    const results = await Promise.all(
+      Array.from({ length: innerIterations }, (_, i) =>
+        scoreTestCase(testCase, config),
+      ),
+    );
+
+    results.forEach((result, i) => {
       if (!result.categoryMatches) {
         lowestScore = 0;
         feedbackForTestCase = result.feedback;
         console.log(
           `msg="Category mismatch" test_case=${index + 1} iteration=${i + 1} score=0`,
         );
-        break;
       }
       if (result.factuality < lowestScore) {
         lowestScore = result.factuality;
@@ -215,7 +220,7 @@ const scorePrompt = async (
       console.log(
         `msg="Iteration score" test_case=${index + 1} iteration=${i + 1} score=${result.factuality.toFixed(3)}`,
       );
-    }
+    });
 
     totalScore += lowestScore;
     feedbackList.push(feedbackForTestCase);
@@ -284,19 +289,33 @@ Please generate a new prompt configuration with improved chances of achieving a 
   const schema = z.object({
     systemPrompt: z
       .string()
-      .describe("The system prompt for the configuration"),
-    userPrompt: z.string().describe("The user prompt for the configuration"),
+      .min(1)
+      .describe(
+        "The system prompt for the configuration. User prompt is always required",
+      ),
+    userPrompt: z
+      .string()
+      .describe(
+        "The user prompt for the configuration. User prompt is always required.",
+      )
+      .min(1),
     categoryDescription: z
       .string()
-      .describe("Description used for the expected output for category"),
+      .describe(
+        "Description used for the expected output for category. Category output is always required.",
+      )
+      .min(1),
     failureIncidentsSummaryDescription: z
       .string()
-      .describe("Description used for the failure summary output"),
+      .describe(
+        "Description used for the failure summary output. Summary output is always required.",
+      )
+      .min(1),
     temperature: z.number().describe("The temperature for the prompt"),
     maxTokens: z.number().describe("The max tokens for the prompt"),
   });
 
-  const o1Model = openai("o1");
+  const o1Model = openai("gpt-4o");
   const promptForO1 = { messages, model: o1Model, schema };
   const object = await generateObject(promptForO1);
   return object.object;
@@ -306,28 +325,16 @@ Please generate a new prompt configuration with improved chances of achieving a 
 // Only the best prompt (with its literal feedback) is passed for refinement.
 const runFlywheel = async (maxIterations = 10): Promise<void> => {
   let currentConfig: GeneratePromptConfigArgs = {
-    systemPrompt: `You are an AI that analyzes 24-hour heatmap visualizations of check failures in multiple regions. Your task is to classify the check status as PASSING, FLAKY, or FAILING and to provide a concise, factual summary of any failures. Please follow these guidelines to avoid mistakes seen in past analyses:
-1. Categories:
-   - PASSING: No failures (0% or fully green) in all regions for the entire 24-hour period.
-   - FLAKY: Failures appear in one or more regions, but they clear to 0% (green) before the 24-hour period ends.
-   - FAILING: Failures in one or more regions form extended blocks or remain above 0% at the final timestamp.
-2. Observing Failures:
-   - Indicate only what you can discern from the heatmap. If any region shows non-zero failure percentage, it has failures.
-   - If a region is continuously above 0% and never recovers, it is FAILING.
-   - If a region’s failures disappear before the end, it is considered resolved.
-3. Timing and Descriptions:
-   - When the heatmap clearly shows times for failures, approximate start and end times based on the x-axis labeling.
-   - If the exact timing is ambiguous, state that failures occur intermittently or randomly.
-   - Do not assert failures are random if distinct blocks are visible.
-   - If a region is fully green throughout, do not claim failures.
-4. Summaries:
-   - Provide a succinct, factual summary listing affected regions and approximate failure intervals.
-   - If no failures are visible, state that the check is passing.`,
-    userPrompt: `Examine the 24-hour heatmap for multiple regions and determine if the check is PASSING, FLAKY, or FAILING. Then, provide a concise summary specifying which regions encountered failures, the approximate timing of those failures, and whether they recovered.`,
-    categoryDescription: `Must be exactly one of ["PASSING", "FLAKY", "FAILING"]. Choose PASSING if there is no sign of failure (0%) in any region; FLAKY if failures appear intermittently and resolve; FAILING if failures persist or form extended blocks.`,
-    failureIncidentsSummaryDescription: `List regions that fail, stating when failures begin and end (if clear). If timing is ambiguous or random-like, reflect that without inventing details. If a region is failing at the end, note it is ongoing. If no failures exist in any region, say the check is passing.`,
-    temperature: 0.2,
-    maxTokens: 350,
+    systemPrompt:
+      "You are an AI specialized in analyzing heatmaps representing check failure ratios over time across multiple regions.\n\n        ### **Heatmap Details:**\n        - The heatmap displays the ratio of check failures per region over 30-minute intervals.\n        - 24-hour heatmaps displaying check-failure percentages (from 0% to 100%) over time for one or more regions.\n        - Gray zones on the heatmap represent periods with no check runs, which is entirely expected and should not be treated as failures.\n        - A legend on the right shows a color scale from green (0%) at the bottom to red (100%) at the top, indicating the failure percentage\n        - The X-axis represents time in UTC, with the most recent timestamp on the right.\n        - The Y-axis represents different geographic regions.\n\n        ### **Categorization Task:**\n        Your goal is to classify the check results as PASSING, FLAKY, or FAILING.\n\n        **Categories and Decision Process:**\n        1. **PASSING** → The check has minimal or no failures in the past 24 hours.\n        2. **FLAKY** → Failures appear sporadically, without a clear pattern, affecting different times and locations inconsistently.\n        3. **FAILING** → There are one or more distinct failure incidents in specific timeframes/locations, OR failures are **still occurring at the latest timestamp**.\n\n        ### **Step-by-Step Chain of Thought Analysis (CoT)**\n        To ensure a reliable classification, analyze the heatmap in the following order:\n\n        **1. Identify major failure patterns.**\n           - Are failures isolated and random? (**FLAKY**)\n           - Are failures concentrated in specific time windows? (**FAILING**)\n           - Is the heatmap mostly green? (**PASSING**)\n\n        **2. Consider the latest timestamp.**\n           - If failures exist at the latest timestamp, it suggests an **ongoing issue** (**FAILING**).\n           - Mention that the issue is ongoing if there is no newer data after the most recent failure.\n\n        **3. Summarize your findings.**\n           - Clearly describe the affected locations and timeframes.\n           - Focus solely on visible data: which regions failed, roughly when, and whether they recovered",
+    userPrompt:
+      "Analyze this heatmap and classify the check as PASSING, FLAKY, or FAILING. Explain whether failures are isolated, clustered in specific timeframes, or still ongoing.",
+    categoryDescription:
+      'You must choose exactly one of ["PASSING", "FLAKY", "FAILING"]. If you see no failures at any time, pick PASSING. If failures occur but are resolved by the last timestamp, pick FLAKY. If any region still fails at the final timestamp or has continuous failures, pick FAILING',
+    failureIncidentsSummaryDescription:
+      "Brief summary of the failure incidents, with their time-frame.\n         For each incident mention if it affected all locations, or a subset.  \n         Use only hours for times, and full locations names.\n         If there is no clear pattern (sporadic or random failures)- do not mention specific times or locations.\n         If the failures are still happening, mention it. Use 2 sentences max.",
+    temperature: 0,
+    maxTokens: 1000,
   };
 
   let bestRecord: HistoryRecord | null = null;
@@ -337,7 +344,7 @@ const runFlywheel = async (maxIterations = 10): Promise<void> => {
 
   do {
     console.log(`iteration=${iteration + 1} msg="Starting iteration"`);
-    scoreResult = await scorePrompt(currentConfig, 5);
+    scoreResult = await scorePrompt(currentConfig, 10);
     console.log(
       `iteration=${iteration + 1} overall_score=${scoreResult.overallScore.toFixed(3)} msg="Iteration overall score"`,
     );
@@ -347,7 +354,6 @@ const runFlywheel = async (maxIterations = 10): Promise<void> => {
       promptConfig: currentConfig,
       overallScore: scoreResult.overallScore,
       feedbackList: scoreResult.feedbackList,
-      bestFeedback: scoreResult.feedbackList[0],
     };
 
     if (!bestRecord || newRecord.overallScore > bestRecord.overallScore) {
