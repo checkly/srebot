@@ -5,6 +5,7 @@
     "next:start": "next start",
     "build": "npx tsc",
     "start": "npx tsc && node dist/index.js",
+    "start:data-syncer": "npx tsc && node dist/data-syncer.main.js",
     "bot:start": "nodemon --watch \"src/**\" --ext \"ts,json\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node ./src/slackbot/index.ts\"",
     "dev": "nodemon src/index.ts",
     "lint": "prettier --check .",

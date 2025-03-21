@@ -14,8 +14,8 @@ import {
   CheckResultsTimeSlice,
 } from "../check-result-slices";
 import { generateHeatmap } from "../../heatmap/generateHeatmap";
-import { checkly } from "../../checkly/client";
 import { getExtraAccountSetupContext } from "../checkly-integration-utils";
+import { readCheck } from "../../db/check";
 
 async function checkSummaryData(
   checkId: string,
@@ -91,8 +91,7 @@ async function checkSummaryData(
 
 export async function checkSummary(checkId: string) {
   const start = Date.now();
-  // TODO replace it with data fetched from DB
-  const check = await checkly.getCheck(checkId, { includeDependencies: true });
+  const check = await readCheck(checkId);
   if (check.groupId) {
     const checkGroup = await readCheckGroup(BigInt(check.groupId));
     check.locations = checkGroup.locations;
