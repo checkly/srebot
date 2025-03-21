@@ -52,9 +52,37 @@ export async function findMatchingErrorCluster(
   return clusters[0]?.distance <= 0.05 ? clusters[0] : null;
 }
 
-type ErrorClusterWithCount = ErrorClusterTable & {
+export type ErrorClusterWithCount = ErrorClusterTable & {
   count: number;
 };
+
+export async function findErrorClusters(
+  errorIds: string | string[],
+  interval?: { from: Date; to: Date },
+): Promise<ErrorClusterWithCount[]> {
+  return postgres<ErrorClusterWithCount>("error_cluster")
+    .select("error_cluster.*")
+    .count("error_cluster_membership.check_id as count")
+    .whereIn(
+      "error_cluster.id",
+      Array.isArray(errorIds) ? errorIds : [errorIds],
+    )
+    .modify((queryBuilder) => {
+      if (interval) {
+        queryBuilder.andWhereBetween("error_cluster_membership.date", [
+          interval.from,
+          interval.to,
+        ]);
+      }
+    })
+    .join(
+      "error_cluster_membership",
+      "error_cluster.id",
+      "error_cluster_membership.error_id",
+    )
+    .orderBy("count", "desc")
+    .groupBy("error_cluster.id");
+}
 
 export async function findErrorClustersForChecks(
   checkIds: string | string[],

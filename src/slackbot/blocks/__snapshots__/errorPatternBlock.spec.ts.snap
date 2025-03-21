@@ -1,0 +1,114 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`errorPatternBlock renders empty error patterns 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "emoji": true,
+        "text": "Error Pattern - Top 20",
+        "type": "plain_text",
+      },
+      "type": "header",
+    },
+    {
+      "type": "divider",
+    },
+    {
+      "text": {
+        "text": "No error Pattern found",
+        "type": "plain_text",
+      },
+      "type": "section",
+    },
+  ],
+}
+`;
+
+exports[`errorPatternBlock renders multiple error patterns 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "emoji": true,
+        "text": "Error Pattern - Top 20",
+        "type": "plain_text",
+      },
+      "type": "header",
+    },
+    {
+      "type": "divider",
+    },
+    {
+      "text": {
+        "text": "*(Count) Summary*
+*Pattern Details*",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "text": {
+        "text": "*(10) Error Pattern #1*
+\`\`\`Error Pattern #1
+Details of error pattern #1\`\`\`",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "type": "divider",
+    },
+    {
+      "text": {
+        "text": "*(20) Error Pattern #2*
+\`\`\`Error Pattern #2
+Details of error pattern #2\`\`\`",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "type": "divider",
+    },
+  ],
+}
+`;
+
+exports[`errorPatternBlock renders single error pattern 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "emoji": true,
+        "text": "Error Pattern - Top 20",
+        "type": "plain_text",
+      },
+      "type": "header",
+    },
+    {
+      "type": "divider",
+    },
+    {
+      "text": {
+        "text": "*(Count) Summary*
+*Pattern Details*",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "text": {
+        "text": "*(10) Error Pattern #1*
+\`\`\`Error Pattern #1
+Details of error pattern #1\`\`\`",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "type": "divider",
+    },
+  ],
+}
+`;

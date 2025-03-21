@@ -56,6 +56,7 @@ export async function accountSummary(accountId: string) {
     failingChecksGoals,
     failingCheckIds: checkIdsWithChangePoints,
     errorPatterns: errorPatterns.map((ec) => ({
+      id: ec.id,
       description: ec.error_message.split("\n")[0],
       count: ec.count,
     })),
