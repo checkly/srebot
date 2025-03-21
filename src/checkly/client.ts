@@ -1,4 +1,6 @@
+import { initConfig } from "../lib/init-config";
 import { ChecklyClient } from "./checklyclient";
-import "dotenv/config";
+
+initConfig();
 
 export const checkly: ChecklyClient = new ChecklyClient();
