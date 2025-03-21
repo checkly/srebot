@@ -42,7 +42,7 @@ export interface CheckTable {
   fetchedAt: Date | null;
 }
 
-export async function insertChecks(checks: Check[]) {
+export async function insertChecks(checks: (Check & { fetchedAt: Date })[]) {
   const serializedChecks = checks.map((check) => ({
     id: check.id,
     accountId: checkly.accountId,
@@ -68,6 +68,11 @@ export async function insertChecks(checks: Check[]) {
     tearDownSnippetId: check.tearDownSnippetId,
     localSetupScript: check.localSetupScript,
     localTearDownScript: check.localTearDownScript,
+    fetchedAt: check.fetchedAt,
+    frequency: check.frequency,
+    frequencyOffset: check.frequencyOffset,
+    created_at: check.created_at,
+    updated_at: check.updated_at,
   }));
 
   await postgres("checks").insert(serializedChecks).onConflict("id").merge();
@@ -81,8 +86,14 @@ export async function readCheck(id: string) {
   return check;
 }
 
-export async function readChecks(ids: string[]) {
-  return await postgres<CheckTable>("checks").whereIn("id", ids);
+export async function readChecks(ids: string[]): Promise<CheckTable[]> {
+  return postgres<CheckTable>("checks").whereIn("id", ids);
+}
+
+export async function readChecksByAccountId(
+  accountId: string,
+): Promise<CheckTable[]> {
+  return postgres<CheckTable>("checks").where({ accountId });
 }
 
 type CheckWithGroupName = CheckTable & { groupName: string };
