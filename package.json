@@ -4,10 +4,10 @@
     "next:build": "next build",
     "next:start": "next start",
     "build": "npx tsc",
-    "start": "npx tsc && node dist/index.js",
-    "start:data-syncer": "npx tsc && node dist/data-syncer.main.js",
+    "start": "node --max-old-space-size=512 dist/api.main.js",
+    "start:data-syncer": "node --max-old-space-size=512 dist/data-syncer.main.js",
     "bot:start": "nodemon --watch \"src/**\" --ext \"ts,json\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node ./src/slackbot/index.ts\"",
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon src/api.main.ts",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write --ignore-unknown .",
     "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
@@ -93,5 +93,5 @@
   "name": "srebot",
   "version": "1.0.0",
   "description": "bajo construcción",
-  "main": "index.js"
+  "main": "api.main.js"
 }

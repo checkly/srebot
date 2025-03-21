@@ -7,7 +7,6 @@ import githubWebhookRouter from "./routes/githubwebhook";
 import { app as slackApp } from "./slackbot/app";
 import { SreAssistant } from "./sre-assistant/SreAssistant";
 import { startLangfuseTelemetrySDK } from "./langfuse";
-import { startSyncingData } from "./data-syncing";
 import { log } from "./log";
 
 initConfig();
@@ -73,18 +72,9 @@ slackApp.error(async (error) => {
   console.error(error);
 });
 
-(async () => {
+const main = async () => {
   await slackApp.start();
   log.info("Slack Bolt app is running!");
+};
 
-  // Allow disabling sync with an environment variable
-  const shouldEnableSync = process.env.DISABLE_DATA_SYNC !== "true";
-
-  if (shouldEnableSync) {
-    startSyncingData().catch((err) => {
-      console.error("Data syncing failed:", err);
-    });
-  } else {
-    log.info("Data syncing is disabled with DISABLE_DATA_SYNC env-var flag");
-  }
-})();
+main();
