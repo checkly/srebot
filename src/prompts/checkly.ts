@@ -2,7 +2,7 @@ import { stringify } from "yaml";
 import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
-import { validObjectList, validObject } from "./validation";
+import { validObject, validObjectList } from "./validation";
 import {
   defineMessagesPrompt,
   definePrompt,
@@ -200,20 +200,13 @@ export function summarizeMultipleChecksStatus(
 }
 
 export function summarizeTestGoalPrompt(
-  testName: string,
-  scriptName: string,
-  scriptPath: string,
-  dependencies: { script: string; scriptPath: string }[],
+  check: Check | CheckTable,
+  extraContext: string | null = null,
 ): PromptDefinitionForText {
-  const prompt = `
-      The following details describe a test which is used to monitor an application.
+  let prompt = `The following details describe a test which is used to monitor an application.
 
-      Test name: ${testName}
-      Script name: ${scriptName}
-      Script: ${scriptPath}
-
-      Dependent scripts of the main script:
-      ${dependencies.map((d) => `- ${d.scriptPath}\n  ${d.script}`).join("\n")}
+      CHECK DATA:
+      ${formatMultipleChecks([check] as Check[] | CheckTable[])}
 
       Summarize what the test is validating in a single sentence with max 10 words.
 
@@ -224,10 +217,18 @@ export function summarizeTestGoalPrompt(
       - Do not refer to technical details of the test, use the domain language from the application under test.
     `;
 
+  if (extraContext) {
+    prompt += `
+
+    ADDITIONAL CONTEXT EXPLAINING CHECKLY ACCOUNT SETUP:
+    ${extraContext}
+    `;
+  }
+
   return {
     prompt,
-    ...promptConfig("checklySummarizeFeatureCoverage", {
-      temperature: 1,
+    ...promptConfig("summarizeTestGoalPrompt", {
+      temperature: 0,
       maxTokens: 500,
     }),
   };
@@ -315,6 +316,7 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
     maxTokens: 1000,
   });
 }
+
 export function clusterCheckResults(
   checkDetails: {
     intervalStart: string;
@@ -444,7 +446,14 @@ export const formatMultipleChecks = (
   characterLimit = 100_000,
 ): string => {
   const checkInputs: SummariseCheckInput[] = checks.map((check) => {
-    const dependencies = [...(check.dependencies ?? [])];
+    const dependencies: { content: string; path: string }[] = [];
+
+    if (check.script) {
+      dependencies.push({
+        content: check.script,
+        path: check.scriptPath,
+      });
+    }
 
     if (check.localSetupScript) {
       dependencies.push({
@@ -458,6 +467,8 @@ export const formatMultipleChecks = (
         content: check.localTearDownScript,
       });
     }
+
+    dependencies.push(...check.dependencies);
 
     return {
       name: check.name,
@@ -483,11 +494,14 @@ ${
       )}`
     : ""
 }
-- Dependencies: ${
-    check.dependencies.length
-      ? check.dependencies.map((d) => `${d.path}\n  ${d.content}`).join(", ")
-      : "None"
-  }
+- Dependencies:
+${
+  check.dependencies.length
+    ? check.dependencies
+        .map((d) => `\`\`\`\n#${d.path}\n  ${d.content}\`\`\``)
+        .join("\n")
+    : "None"
+}
 `;
 
   // Keep appending until we reach the character limit
@@ -514,12 +528,15 @@ ${
 
 export function summariseMultipleChecksGoal(
   checks: Check[] | CheckTable[],
-  maxTokens: number = 500,
+  options: { maxTokens: number; extraContext?: string | null } = {
+    maxTokens: 500,
+    extraContext: null,
+  },
 ): PromptDefinitionForText {
   const checksFormatted = formatMultipleChecks(checks);
+  const maxTokens = options.maxTokens;
 
-  return {
-    prompt: `
+  let prompt = `
 ### **Task**
 Analyze the following monitoring checks and provide a **high-level summary** of their **common goal**.
 
@@ -537,8 +554,17 @@ ${checksFormatted}
 ### **Expected Output**
 Provide a **brief summary** explaining the **common purpose** of these checks, focusing on the user impact rather than implementation details.
 Answer in no more than: ${maxTokens} tokens.
-    `,
-    ...promptConfig("checklySummarizeMultipleChecksGoal", {
+    `;
+
+  if (options.extraContext) {
+    prompt += `
+    ADDITIONAL CONTEXT EXPLAINING CHECKLY ACCOUNT SETUP:
+    ${options.extraContext}
+    `;
+  }
+  return {
+    prompt: prompt,
+    ...promptConfig("summariseMultipleChecksGoal", {
       temperature: 1,
       maxTokens: maxTokens,
     }),

@@ -10,6 +10,7 @@ import {
 import { CheckTable, readChecks } from "../db/check";
 import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
 import { findErrorClustersForChecks } from "../db/error-cluster";
+import { getExtraAccountSetupContext } from "./checkly-integration-utils";
 
 export async function accountSummary(accountId: string) {
   const interval = last24h(new Date());
@@ -72,8 +73,14 @@ async function summarizeChecksGoal(
     return "No change in check reliability, thus no impact on your customers.";
   }
 
+  const extraContext = await getExtraAccountSetupContext();
   return (
-    await generateText(summariseMultipleChecksGoal(checkWithChangePoints, 30))
+    await generateText(
+      summariseMultipleChecksGoal(checkWithChangePoints, {
+        maxTokens: 30,
+        extraContext,
+      }),
+    )
   ).text;
 }
 
