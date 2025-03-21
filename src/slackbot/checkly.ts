@@ -1,10 +1,8 @@
-import { generateObject, generateText } from "ai";
+import { generateObject } from "ai";
 import { checkly } from "../checkly/client";
 import {
-  analyseCheckFailureHeatMap,
   summarizeErrorsPrompt,
   SummarizeErrorsPromptType,
-  summarizeTestGoalPrompt,
 } from "../prompts/checkly";
 import {
   fetchCheckResults,
@@ -141,7 +139,13 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
         response_type: "in_channel",
       });
     } else if (args.length === 1 && !!args[0] && getIsUUID(args[0])) {
-      const { message, image } = await checkSummary(args[0]);
+      const checkId = args[0];
+      await respond({
+        response_type: "ephemeral",
+        text: `Analysing check \`${checkId}\`... ⏳`,
+      });
+      const { message, image } = await checkSummary(checkId);
+
       await respond({
         response_type: "in_channel",
         ...message,
