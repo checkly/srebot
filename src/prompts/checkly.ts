@@ -2,7 +2,7 @@ import { stringify } from "yaml";
 import { CheckContext, ContextKey } from "../aggregator/ContextAggregator";
 import { Check } from "../checkly/models";
 import { mapCheckToContextValue } from "../checkly/utils";
-import { validObjectList, validObject } from "./validation";
+import { validObject, validObjectList } from "./validation";
 import {
   defineMessagesPrompt,
   definePrompt,
@@ -200,20 +200,13 @@ export function summarizeMultipleChecksStatus(
 }
 
 export function summarizeTestGoalPrompt(
-  testName: string,
-  scriptName: string,
-  scriptPath: string,
-  dependencies: { script: string; scriptPath: string }[],
+  check: Check | CheckTable,
+  extraContext: string | null = null,
 ): PromptDefinitionForText {
-  const prompt = `
-      The following details describe a test which is used to monitor an application.
+  let prompt = `The following details describe a test which is used to monitor an application.
 
-      Test name: ${testName}
-      Script name: ${scriptName}
-      Script: ${scriptPath}
-
-      Dependent scripts of the main script:
-      ${dependencies.map((d) => `- ${d.scriptPath}\n  ${d.script}`).join("\n")}
+      CHECK DATA:
+      ${formatMultipleChecks([check] as Check[] | CheckTable[])}
 
       Summarize what the test is validating in a single sentence with max 10 words.
 
@@ -224,10 +217,18 @@ export function summarizeTestGoalPrompt(
       - Do not refer to technical details of the test, use the domain language from the application under test.
     `;
 
+  if (extraContext) {
+    prompt += `
+
+    ADDITIONAL CONTEXT EXPLAINING CHECKLY ACCOUNT SETUP:
+    ${extraContext}
+    `;
+  }
+
   return {
     prompt,
-    ...promptConfig("checklySummarizeFeatureCoverage", {
-      temperature: 1,
+    ...promptConfig("summarizeTestGoalPrompt", {
+      temperature: 0,
       maxTokens: 500,
     }),
   };
@@ -315,6 +316,7 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
     maxTokens: 1000,
   });
 }
+
 export function clusterCheckResults(
   checkDetails: {
     intervalStart: string;
