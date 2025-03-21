@@ -248,10 +248,9 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
 
         ### **Heatmap Details:**
         - The heatmap displays the ratio of check failures per region over 30-minute intervals.
-        - **Green (0%)**: All check runs passed.
-        - **Red (100%)**: All check runs failed.
-        - **Gradient from green to red**: Represents the failure ratio within a given time frame.
-        - **Gray**: No data available (no check runs for that location/time).
+        - 24-hour heatmaps displaying check-failure percentages (from 0% to 100%) over time for one or more regions.
+        - Gray zones on the heatmap represent periods with no check runs, which is entirely expected and should not be treated as failures.
+        - A legend on the right shows a color scale from green (0%) at the bottom to red (100%) at the top, indicating the failure percentage
         - The X-axis represents time in UTC, with the most recent timestamp on the right.
         - The Y-axis represents different geographic regions.
 
@@ -277,7 +276,7 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
 
         **3. Summarize your findings.**
            - Clearly describe the affected locations and timeframes.
-           -
+           - Focus solely on visible data: which regions failed, roughly when, and whether they recovered
         `,
     } as CoreSystemMessage,
     {
@@ -298,7 +297,9 @@ export function analyseCheckFailureHeatMap(heatmap: Buffer): PromptDefinition {
   const schema = z.object({
     category: z
       .nativeEnum(SimpleErrorCategory)
-      .describe("The category of the check results heat map"),
+      .describe(
+        'You must choose exactly one of ["PASSING", "FLAKY", "FAILING"]. If you see no failures at any time, pick PASSING. If failures occur but are resolved by the last timestamp, pick FLAKY. If any region still fails at the final timestamp or has continuous failures, pick FAILING',
+      ),
 
     failureIncidentsSummary: z
       .string()
