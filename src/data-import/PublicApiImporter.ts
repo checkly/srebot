@@ -1,7 +1,12 @@
 import { checkly } from "../checkly/client";
-import { CheckResult } from "../checkly/models";
+import { Check, CheckResult } from "../checkly/models";
 import { log } from "../log";
-import { insertChecks, removeAccountChecks } from "../db/check";
+import {
+  CheckTable,
+  insertChecks,
+  readChecksByAccountId,
+  removeAccountChecks,
+} from "../db/check";
 import {
   insertCheckGroups,
   removeAccountCheckGroups,
@@ -22,9 +27,11 @@ const SAFETY_MARGIN_MINUTES = 2;
 
 export class PublicApiImporter {
   private inserter: CheckResultsInserter;
+  private readonly accountId: string;
 
   constructor(props: { inserter?: CheckResultsInserter } = {}) {
     this.inserter = props.inserter || new CheckResultsInserter();
+    this.accountId = checkly.accountId;
   }
 
   async syncCheckResults(minutesToSyncBack: number) {
@@ -32,12 +39,20 @@ export class PublicApiImporter {
 
     const checkIds = await this.getCheckIdsToSync();
     log.info(
-      { checks_count: checkIds.length },
+      { checks_count: checkIds.length, account_id: checkly.accountId },
       "Starting to sync check results",
     );
 
     for (const checkId of checkIds) {
-      await this.syncResultsForCheck(checkId, minutesToSyncBack);
+      try {
+        await this.syncResultsForCheck(checkId, minutesToSyncBack);
+      } catch (err) {
+        console.error(
+          "Failed to sync check result for checkId: ",
+          checkId,
+          err,
+        );
+      }
     }
     log.info(
       {
@@ -84,16 +99,13 @@ export class PublicApiImporter {
       this.divideIntoPeriodChunks(period.from, period.to, 60),
     );
 
-    log.info(
-      {
-        checkId,
-        chunkedPeriods: chunkedPeriods.length,
-      },
-      "Starting to sync check results for check",
-    );
-
+    let total = 0;
     for (const period of chunkedPeriods) {
-      await this.syncCheckResultsChunk(checkId, period.from, period.to);
+      total += await this.syncCheckResultsChunk(
+        checkId,
+        period.from,
+        period.to,
+      );
       await this.inserter.trackCheckSyncStatus(
         checkId,
         checkly.accountId,
@@ -106,6 +118,7 @@ export class PublicApiImporter {
       {
         duration_ms: Date.now() - startedAt,
         checkId,
+        total,
       },
       "Check results for check synced",
     );
@@ -192,13 +205,21 @@ export class PublicApiImporter {
 
   async syncChecks() {
     const startedAt = Date.now();
-    const allChecks = await checkly.getChecks();
+    const [allChecks, checksForAccount] = await Promise.all([
+      checkly.getChecks(),
+      readChecksByAccountId(this.accountId),
+    ]);
+    const checkIds = allChecks.map((check) => check.id);
+    const existingChecksById = keyBy(checksForAccount, "id");
 
-    await insertChecks(allChecks);
+    const checksForInsert = await this.prepareChecksForInsert(
+      allChecks,
+      existingChecksById,
+    );
+
+    await insertChecks(checksForInsert);
 
     // Remove checks that no longer exist
-    const checkIds = allChecks.map((check) => check.id);
-
     await removeAccountChecks(checkIds, checkly.accountId);
 
     log.info(
@@ -229,7 +250,11 @@ export class PublicApiImporter {
     );
   }
 
-  private async syncCheckResultsChunk(checkId: string, from: Date, to: Date) {
+  private async syncCheckResultsChunk(
+    checkId: string,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
     const allCheckResults = await checkly.getCheckResultsByCheckId(checkId, {
       resultType: "ALL",
       from,
@@ -238,7 +263,7 @@ export class PublicApiImporter {
     });
     const allCheckResultsFromOldest = allCheckResults.reverse();
     if (allCheckResultsFromOldest.length === 0) {
-      return;
+      return 0;
     }
 
     const chunkedCheckResults = chunk(allCheckResultsFromOldest, 100);
@@ -250,10 +275,46 @@ export class PublicApiImporter {
 
       await this.inserter.insertCheckResults(enrichedResults);
       insertedCount += enrichedResults.length;
-      log.debug(
-        { insertedCount, checkId, periodTotal: chunkedCheckResults.length },
-        "Inserted check results",
-      );
     }
+
+    return insertedCount;
+  }
+
+  private async prepareChecksForInsert(
+    checksFromApi: Check[],
+    checksFromDbById: Record<string, CheckTable>,
+  ): Promise<
+    (Check & {
+      fetchedAt: Date;
+    })[]
+  > {
+    const checkIdsToEnrich = checksFromApi
+      .filter((check) => {
+        const dbCheck = checksFromDbById[check.id];
+        if (!dbCheck) {
+          return true;
+        }
+        if (dbCheck.fetchedAt === null) {
+          return true;
+        }
+        return isBefore(dbCheck.fetchedAt, check.updated_at);
+      })
+      .map((check) => check.id);
+
+    log.debug(
+      { size: checkIdsToEnrich.length },
+      "Enriching checks with dependencies",
+    );
+
+    const checksWithDependencies = await Promise.all(
+      checkIdsToEnrich.map((id) =>
+        checkly.getCheck(id, { includeDependencies: true }),
+      ),
+    );
+
+    return checksWithDependencies.map((check) => ({
+      ...check,
+      fetchedAt: new Date(),
+    }));
   }
 }
