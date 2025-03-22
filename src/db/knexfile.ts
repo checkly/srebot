@@ -9,7 +9,7 @@ if (!dbUrlEnv && process.env.NODE_ENV !== "test") {
 }
 
 const config = {
-  test: {}, // No DB in test
+  test: { client: "pg" }, // No DB in test
   local: {
     client: "pg",
     connection: dbUrlEnv,
