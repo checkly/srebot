@@ -142,7 +142,7 @@ const DATABASE_ID = process.env.NOTION_DATABASE_ID as string;
 
 export const fetchDocumentsFromKnowledgeBase = async (
   databaseId = DATABASE_ID,
-) => {
+): Promise<NotionPage[]> => {
   if (!process.env.NOTION_API_KEY) {
     return [];
   }
