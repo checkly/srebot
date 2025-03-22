@@ -1,4 +1,4 @@
-import { fetchDocumentsFromKnowledgeBase } from "../notion/notion";
+import { findLearningsBySource, LearningSource } from "../db/learnings";
 
 export type KnowledgeDocument = {
   content: string;
@@ -8,7 +8,14 @@ export type KnowledgeDocument = {
 };
 
 export const getAllDocuments = async (): Promise<KnowledgeDocument[]> => {
-  return fetchDocumentsFromKnowledgeBase();
+  const learningsInDb = await findLearningsBySource(LearningSource.NOTION);
+
+  return learningsInDb.map((learning) => ({
+    content: learning.content,
+    slug: learning.id,
+    summary: "", // TODO we should replace this with a vector search
+    title: learning.sourceId,
+  }));
 };
 
 export const getDocumentBySlug = async (
