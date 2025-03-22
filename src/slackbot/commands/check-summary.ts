@@ -1,6 +1,7 @@
 import { readCheckGroup } from "../../db/check-groups";
 import {
   analyseCheckFailureHeatMap,
+  SimpleErrorCategory,
   summarizeTestGoalPrompt,
 } from "../../prompts/checkly";
 import { generateObject, generateText } from "ai";
@@ -15,16 +16,25 @@ import {
 } from "../check-result-slices";
 import { generateHeatmap } from "../../heatmap/generateHeatmap";
 import { getExtraAccountSetupContext } from "../checkly-integration-utils";
-import { readCheck } from "../../db/check";
+import { CheckTable, readCheck } from "../../db/check";
 
 async function checkSummaryData(
   checkId: string,
   interval: { from: Date; to: Date },
 ) {
+  const start = Date.now();
   const checkResults = await findCheckResults(
     checkId,
     interval.from,
     interval.to,
+  );
+  log.debug(
+    {
+      checkId,
+      durationMs: Date.now() - start,
+      fetchedCount: checkResults.length,
+    },
+    "Fetched check results",
   );
 
   if (checkResults.length === 0) {
@@ -32,8 +42,6 @@ async function checkSummaryData(
       checkId,
       checkResults: [] as CheckResultTable[],
       runLocations: new Set<string>(),
-      checkCategory: "PASSING",
-      heatmapImage: Buffer.from([]),
       lastRun: null,
       lastFailure: null,
       status: "passing",
@@ -72,15 +80,10 @@ async function checkSummaryData(
     },
   );
 
-  const checkCategory = (
-    await generateObject(analyseCheckFailureHeatMap(heatmapImage))
-  ).object.category;
-
   return {
     checkId,
     checkResults,
     runLocations,
-    checkCategory,
     heatmapImage,
     lastRun,
     lastFailure,
@@ -88,6 +91,35 @@ async function checkSummaryData(
     timeSlices,
   };
 }
+
+const summarizeCheckGoal = async (check: CheckTable): Promise<string> => {
+  const extraAccountSetupContext = await getExtraAccountSetupContext();
+  const prompt = summarizeTestGoalPrompt(check, extraAccountSetupContext);
+  const { text: checkSummary } = await generateText(prompt);
+
+  return checkSummary;
+};
+
+const analyseHeatmap = async (
+  heatmapImage?: Buffer,
+): Promise<{
+  category: SimpleErrorCategory;
+  failureIncidentsSummary: string;
+}> => {
+  if (!heatmapImage) {
+    return {
+      category: SimpleErrorCategory.FAILING, // Fall back to failing state
+      failureIncidentsSummary:
+        "No data available for failure incidents analysis",
+    };
+  }
+  const result = await generateObject(analyseCheckFailureHeatMap(heatmapImage));
+
+  return {
+    category: result.object.category,
+    failureIncidentsSummary: result.object.failureIncidentsSummary,
+  };
+};
 
 export async function checkSummary(checkId: string) {
   const start = Date.now();
@@ -97,32 +129,23 @@ export async function checkSummary(checkId: string) {
     check.locations = checkGroup.locations;
   }
 
-  const extraAccountSetupContext = await getExtraAccountSetupContext();
-
-  const prompt = summarizeTestGoalPrompt(check, extraAccountSetupContext);
-  const { text: checkSummary } = await generateText(prompt);
-
   const interval = last24h(new Date());
 
-  const { checkResults, checkCategory, heatmapImage } = await checkSummaryData(
-    check.id,
-    interval,
-  );
-  log.debug(
-    {
-      checkResultsLength: checkResults.length,
-      durationMs: Date.now() - start,
-      checkId,
-    },
-    "Fetched check results",
-  );
+  const [{ checkResults, heatmapImage }, checkSummary, failureClusters] =
+    await Promise.all([
+      checkSummaryData(check.id, interval),
+      summarizeCheckGoal(check),
+      findErrorClustersForChecks(check.id, interval),
+    ]);
 
   const failingCheckResults = checkResults.filter(
     (result) => result.hasFailures || result.hasErrors,
   );
-
-  const failureClusters = await findErrorClustersForChecks(check.id);
-  const failurePatterns = failureClusters.map((fc) => fc.error_message);
+  const errorPatterns = failureClusters.map((ec) => ({
+    id: ec.id,
+    description: ec.error_message.split("\n")[0],
+    count: ec.count,
+  }));
 
   const mostRecentFailureCheckResult = failingCheckResults.sort(
     (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
@@ -130,23 +153,27 @@ export async function checkSummary(checkId: string) {
   const lastFailure =
     failingCheckResults.length > 0
       ? mostRecentFailureCheckResult.startedAt
-      : checkResults[0].startedAt;
+      : checkResults[0]?.startedAt;
 
-  const successRate = Math.round(
-    ((checkResults.length - failingCheckResults.length) / checkResults.length) *
-      100,
-  );
-
-  const heatmapPromptResult = await generateObject(
-    analyseCheckFailureHeatMap(heatmapImage),
-  );
+  const successRate =
+    checkResults.length > 0
+      ? Math.round(
+          ((checkResults.length - failingCheckResults.length) /
+            checkResults.length) *
+            100,
+        )
+      : 0;
+  const heatmapAnalysisStartedAt = Date.now();
+  const { failureIncidentsSummary, category } =
+    await analyseHeatmap(heatmapImage);
 
   log.info(
     {
       checkId,
       checkResultCount: checkResults.length,
       failingCheckResultCount: failingCheckResults.length,
-      duration: Date.now() - start,
+      durationMs: Date.now() - start,
+      heatmapAnalysisDurationMs: Date.now() - heatmapAnalysisStartedAt,
     },
     "checkSummary",
   );
@@ -154,13 +181,13 @@ export async function checkSummary(checkId: string) {
     checkId,
     checkName: check.name,
     checkSummary: checkSummary,
-    checkState: checkCategory,
-    lastFailure: new Date(lastFailure),
+    checkState: category,
+    lastFailure,
     successRate,
     failureCount: failingCheckResults.length,
     lastFailureId: mostRecentFailureCheckResult?.id,
-    timeLocationSummary: heatmapPromptResult.object.failureIncidentsSummary,
-    failurePatterns,
+    timeLocationSummary: failureIncidentsSummary,
+    errorPatterns,
   });
 
   return { message, image: heatmapImage };
