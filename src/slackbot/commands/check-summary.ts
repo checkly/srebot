@@ -153,7 +153,7 @@ export async function checkSummary(checkId: string) {
   const lastFailure =
     failingCheckResults.length > 0
       ? mostRecentFailureCheckResult.startedAt
-      : checkResults[0]?.startedAt;
+      : undefined;
 
   const successRate =
     checkResults.length > 0
