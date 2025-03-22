@@ -140,23 +140,40 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
       });
     } else if (args.length === 1 && !!args[0] && getIsUUID(args[0])) {
       const checkId = args[0];
-      await respond({
-        response_type: "ephemeral",
-        text: `Analysing check \`${checkId}\`... ⏳`,
-      });
-      const { message, image } = await checkSummary(checkId);
+      try {
+        await respond({
+          response_type: "ephemeral",
+          text: `Analysing check \`${checkId}\`... ⏳`,
+        });
 
-      await respond({
-        response_type: "in_channel",
-        ...message,
-      });
+        const { message, image } = await checkSummary(checkId);
 
-      if (image) {
-        await app.client.files.uploadV2({
-          channel_id: command.channel_id,
-          file: image,
-          filename: "CheckResultsPerLocation.png",
-          title: "Check Results per Location",
+        await respond({
+          response_type: "in_channel",
+          ...message,
+        });
+
+        if (image) {
+          await app.client.files.uploadV2({
+            channel_id: command.channel_id,
+            file: image,
+            filename: "CheckResultsPerLocation.png",
+            title: "Check Results per Location",
+          });
+        }
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        log.error(
+          {
+            err: error,
+            checkId,
+          },
+          "Error preparing check summary",
+        );
+
+        await respond({
+          replace_original: true,
+          text: `:x: Error analysing check summary: ${error.message}`,
         });
       }
 

@@ -5,6 +5,7 @@ import generateCheckSummaryBlock from "./newCheckSummaryBlock";
 async function main() {
   [
     generateCheckSummaryBlock({
+      errorPatterns: [],
       checkId: "123",
       timeLocationSummary: "",
       checkName: "My Passing Check",
@@ -23,9 +24,13 @@ async function main() {
       lastFailure: new Date(),
       successRate: 0,
       failureCount: 10,
-      failurePatterns: [
-        "This is a failure pattern",
-        "This is another failure pattern",
+      errorPatterns: [
+        { description: "This is a failure pattern", count: 5553, id: "123" },
+        {
+          description: "This is another failure pattern",
+          count: 123,
+          id: "511",
+        },
       ],
     }),
     generateCheckSummaryBlock({
@@ -37,9 +42,13 @@ async function main() {
       lastFailure: new Date(),
       successRate: 0,
       failureCount: 10,
-      failurePatterns: [
-        "This is a failure pattern",
-        "This is another failure pattern",
+      errorPatterns: [
+        { description: "This is a failure pattern", count: 11, id: "123" },
+        {
+          description: "This is another failure pattern",
+          count: 12,
+          id: "511",
+        },
       ],
     }),
   ].forEach(async (block) => {
