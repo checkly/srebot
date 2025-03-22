@@ -4,11 +4,12 @@ import { log } from "../log";
 initConfig();
 
 const dbUrlEnv = process.env.DATABASE_URL;
-if (!dbUrlEnv) {
+if (!dbUrlEnv && process.env.NODE_ENV !== "test") {
   throw new Error("DATABASE_URL is not set in environment variables.");
 }
 
 const config = {
+  test: {}, // No DB in test
   local: {
     client: "pg",
     connection: dbUrlEnv,
