@@ -123,31 +123,39 @@ export function createAccountSummaryBlock({
           text: `:white_check_mark: *PASSING*: ${passingChecks} :warning: *DEGRADED*: ${degradedChecks} :x: *FAILING*: ${failingChecks}`,
         },
       },
-      ...(failingCheckIds.length > 0
+      ...(failingCheckIds.length > 0 || errorPatterns.length > 0
         ? [
             {
               type: "actions",
               elements: [
-                {
-                  type: "button",
-                  text: {
-                    type: "plain_text",
-                    emoji: true,
-                    text: "List Failing Checks",
-                  },
-                  action_id: LIST_FAILING_CHECKS_ACTION_ID,
-                  value: failingCheckIds.join(","),
-                },
-                {
-                  type: "button",
-                  text: {
-                    type: "plain_text",
-                    emoji: true,
-                    text: "List Error Patterns",
-                  },
-                  action_id: LIST_ERROR_PATTERNS_ACTION_ID,
-                  value: errorPatterns.map((ep) => ep.id).join(","),
-                },
+                ...(failingCheckIds.length > 0
+                  ? [
+                      {
+                        type: "button",
+                        text: {
+                          type: "plain_text",
+                          emoji: true,
+                          text: "List Failing Checks",
+                        },
+                        action_id: LIST_FAILING_CHECKS_ACTION_ID,
+                        value: failingCheckIds.join(","),
+                      },
+                    ]
+                  : []),
+                ...(errorPatterns.length > 0
+                  ? [
+                      {
+                        type: "button",
+                        text: {
+                          type: "plain_text",
+                          emoji: true,
+                          text: "List Error Patterns",
+                        },
+                        action_id: LIST_ERROR_PATTERNS_ACTION_ID,
+                        value: errorPatterns.map((ep) => ep.id).join(","),
+                      },
+                    ]
+                  : []),
               ],
             },
           ]

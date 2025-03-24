@@ -45,6 +45,19 @@ async function main() {
         },
       ],
     }),
+    // Failing checks without error patterns
+    createAccountSummaryBlock({
+      accountName: "FailingNoErrors",
+      passingChecks: 42,
+      degradedChecks: 3,
+      failingChecks: 5,
+      hasIssues: true,
+      issuesSummary:
+        "New degrading or failing checks detected in the last 24h.",
+      failingChecksGoals: "Some checks have failed in the last 24h.",
+      failingCheckIds: ["126", "127", "128", "129", "130"],
+      errorPatterns: [],
+    }),
     // Some failing
     createAccountSummaryBlock({
       accountName: "Failing",
