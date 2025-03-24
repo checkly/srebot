@@ -158,6 +158,6 @@ describe("checkly error messages", () => {
   test("should safely fallback when errors are missing", () => {
     const error = getErrorMessageFromResult({});
 
-    expect(error).toEqual("No Error provided");
+    expect(error).toEqual("Scheduling error");
   });
 });
