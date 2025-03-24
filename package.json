@@ -32,7 +32,6 @@
     "@opentelemetry/sdk-node": "0.57.1",
     "@prisma/client": "5.22.0",
     "@slack/bolt": "4.1.0",
-    "@vercel/otel": "1.10.1",
     "ai": "4.1.61",
     "autoevals": "0.0.119",
     "axios": "1.7.9",
