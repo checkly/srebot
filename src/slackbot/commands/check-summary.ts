@@ -177,6 +177,7 @@ export async function checkSummary(checkId: string) {
     },
     "checkSummary",
   );
+
   const message = generateCheckSummaryBlock({
     checkId,
     checkName: check.name,
