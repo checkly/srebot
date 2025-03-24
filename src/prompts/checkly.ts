@@ -746,6 +746,7 @@ Answer the following:
 - Ignore periods with zero activity if no meaningful insight can be drawn.
 - Include the total counts (degradations & retries) explicitly.
 - Keep the analysis concise, maximum **1 sentence per field**.
+- Use only hours for times, and full locations names.
 
 ### **Expected Output:**
 Respond with a JSON object containing exactly two fields:
