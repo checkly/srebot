@@ -154,4 +154,10 @@ describe("checkly error messages", () => {
 
     expect(error).toEqual("error in multi-step script");
   });
+
+  test("should safely fallback when errors are missing", () => {
+    const error = getErrorMessageFromResult({});
+
+    expect(error).toEqual("Scheduling error");
+  });
 });
