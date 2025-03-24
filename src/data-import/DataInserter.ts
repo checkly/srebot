@@ -56,12 +56,15 @@ export class CheckResultsInserter {
   }
 
   private async generateClustering(checkResults: CheckResult[]) {
-    let errorMessages: string[] = [];
-    try {
-      errorMessages = checkResults.map(getErrorMessageFromCheckResult);
-    } catch (err) {
-      console.log(err);
-    }
+    const errorMessages: string[] = checkResults.map((result) => {
+      try {
+        return getErrorMessageFromCheckResult(result);
+      } catch (err) {
+        throw new Error(
+          `Failed to get error message from check result: ${result.id} Message: ${err.message}`,
+        );
+      }
+    });
     await this.generateMissingEmbeddings(errorMessages);
 
     for (let i = 0; i < checkResults.length; i++) {

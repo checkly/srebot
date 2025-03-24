@@ -72,19 +72,21 @@ export function getErrorMessageFromCheckResult(
 }
 
 export function getErrorMessageFromResult(result: {
-  errors: ErrorMessage[];
+  errors?: ErrorMessage[];
 }): string {
-  return (
-    result.errors
-      .map((e) => {
-        if (typeof e === "string") {
-          return e;
-        }
-        return e.message;
-      })
-      .find((e) => !!e) || "No Error provided"
-  );
+  const errorFromMessages = result.errors
+    ?.map((e) => {
+      if (typeof e === "string") {
+        return e;
+      }
+      return e.message;
+    })
+    .find((e) => !!e);
+
+  // TODO public API is not yet returning scheduling errors. We can deal with this later
+  return errorFromMessages || "Scheduling error"; // Fallback to scheduling issues
 }
+
 export function getErrorMessageFromApiError(checkResult: CheckResult): string {
   const assertionErrors =
     checkResult.apiCheckResult?.assertions

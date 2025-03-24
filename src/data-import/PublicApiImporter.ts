@@ -63,7 +63,7 @@ export class PublicApiImporter {
     );
   }
 
-  private getCheckIdsToSync = async () => {
+  private async getCheckIdsToSync(): Promise<string[]> {
     const allChecks = await checkly.getChecks();
     const groups = await checkly.getCheckGroups();
     const groupsById = keyBy(groups, "id");
@@ -83,7 +83,7 @@ export class PublicApiImporter {
         return c.activated;
       })
       .map((c) => c.id);
-  };
+  }
 
   private async syncResultsForCheck(
     checkId: string,
