@@ -1,12 +1,10 @@
 {
   "scripts": {
-    "next:dev": "next dev",
-    "next:build": "next build",
-    "next:start": "next start",
     "build": "npx tsc",
     "start": "node --max-old-space-size=512 dist/api.main.js",
     "start:data-syncer": "node --max-old-space-size=512 dist/data-syncer.main.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/api.main.ts",
+    "start:watch": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/api.main.ts",
+    "start:data-syncer:watch": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/data-syncer.main.ts",
     "lint": "prettier --check .",
     "lint:fix": "prettier --write --ignore-unknown .",
     "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
@@ -19,7 +17,6 @@
     "db:migrate:latest": "knex migrate:latest --knexfile=src/db/knexfile.ts",
     "db:migrate:rollback": "knex migrate:rollback --knexfile=src/db/knexfile.ts",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "smee": "npx smee-client",
     "prepare": "husky"
   },
@@ -57,7 +54,6 @@
     "llamaindex": "0.8.5",
     "lodash": "4.17.21",
     "moment": "2.30.1",
-    "next": "15.0.3",
     "octokit": "3.2.1",
     "pg": "8.13.3",
     "pgvector": "0.2.0",
