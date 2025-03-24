@@ -44,7 +44,7 @@ export async function accountSummary(accountId: string) {
 
   const errorPatterns = await findErrorClustersForChecks(
     accountSummary.checks.map((c) => c.id),
-    interval,
+    { interval },
   );
 
   const message = createAccountSummaryBlock({

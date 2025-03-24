@@ -86,7 +86,10 @@ export async function findErrorClusters(
 
 export async function findErrorClustersForChecks(
   checkIds: string | string[],
-  interval?: { from: Date; to: Date },
+  options: {
+    interval?: { from: Date; to: Date };
+    resultType?: "ATTEMPT" | "FINAL";
+  } = {},
 ): Promise<ErrorClusterWithCount[]> {
   return postgres<ErrorClusterWithCount>("error_cluster")
     .select("error_cluster.*")
@@ -101,11 +104,19 @@ export async function findErrorClustersForChecks(
       Array.isArray(checkIds) ? checkIds : [checkIds],
     )
     .modify((queryBuilder) => {
-      if (interval) {
+      if (options.interval) {
         queryBuilder.andWhereBetween("error_cluster_membership.date", [
-          interval.from,
-          interval.to,
+          options.interval.from,
+          options.interval.to,
         ]);
+      }
+      if (options.resultType) {
+        queryBuilder.join(
+          "check_results",
+          "check_results.id",
+          "error_cluster_membership.result_check_id",
+        );
+        queryBuilder.andWhere("check_results.resultType", options.resultType);
       }
     })
     .groupBy("error_cluster.id");

@@ -64,7 +64,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Summary:* ${stats.timeLocationSummary}`,
+          text: `*Failures Summary:* ${stats.timeLocationSummary}`,
         },
       },
       ...(stats.errorPatterns && stats.errorPatterns.length > 0
