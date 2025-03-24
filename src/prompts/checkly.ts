@@ -13,7 +13,7 @@ import {
 } from "./common";
 import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
-import { CoreSystemMessage, CoreUserMessage } from "ai";
+import { CoreMessage, CoreSystemMessage, CoreUserMessage } from "ai";
 import { log } from "../log";
 import { CheckTable } from "../db/check";
 
@@ -686,4 +686,111 @@ function findChecklyContext(
   key: ContextKey,
 ): CheckContext | undefined {
   return allRows.find((c) => c.key === key);
+}
+
+export type DegradationAndRetriesTimeline = {
+  period: Date;
+  data: {
+    region: string;
+    degraded: number;
+    retries: number;
+    failures: number;
+  }[];
+}[];
+
+export function analyseDegradationAndRetriesTimeline(
+  timelineData: DegradationAndRetriesTimeline,
+  totalRetries: number,
+  totalDegradations: number,
+): PromptDefinition {
+  const messages: CoreMessage[] = [
+    {
+      role: "system",
+      content: `
+You are an expert AI in analyzing time-series operational data for distributed systems.
+
+### **Input Data Details:**
+You will receive:
+1. **timelineData** → a JSON array where each object represents a time period and contains:
+   - **period**: The timestamp of the observation (UTC).
+   - **data**: Array of per-region metrics for that period.
+     - **region**: Name of the region (e.g., "us-east-1", "eu-west-1").
+     - **degraded**: Count of degraded events observed in the period.
+     - **retries**: Number of retries attempted.
+     - **failures**: Number of hard failures recorded.
+
+2. **totalDegradations** → The sum of all degradations across all periods and regions.
+
+3. **totalRetries** → The sum of all retries across all periods and regions.
+
+### **Your Analysis Task:**
+Your goal is to analyze patterns leading up to **failures**, focusing specifically on **degradations** and **retries**.
+
+Answer the following:
+1. **Degradations Analysis:**
+   - Do degradations appear consistently before failure events?
+   - Are degradations increasing before failures, suggesting potential leading indicators?
+   - Are degradations isolated to specific regions?
+   - Always include the **totalDegradations** count in your answer.
+
+2. **Retries Analysis:**
+   - Do retries pile up significantly before failures?
+   - Are there retry spikes before failure incidents, or are retries minimal?
+   - Any notable retry differences between regions?
+   - Always include the **totalRetries** count in your answer.
+
+### **Important Instructions:**
+- Always mention specific regions and time ranges if clear patterns are visible.
+- Highlight whether the latest period(s) show ongoing degradation or retry anomalies.
+- Focus strictly on **visible trends** from the data provided.
+- Ignore periods with zero activity if no meaningful insight can be drawn.
+- Include the total counts (degradations & retries) explicitly.
+- Keep the analysis concise, maximum **1 sentence per field**.
+- Use only hours for times, and full locations names.
+
+### **Expected Output:**
+Respond with a JSON object containing exactly two fields:
+1. **degradationsAnalysis**: Summary of degradation behavior, including totalDegradations (max 1 sentence).
+2. **retriesAnalysis**: Summary of retry behavior, including totalRetries (max 1 sentence).
+`,
+    },
+    {
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: `Here is the timeline data, along with total degradation and retry counts.
+Analyze whether degradations or retries show patterns leading up to failures.
+Total degradations: ${totalDegradations}, Total retries: ${totalRetries}`,
+        },
+        {
+          type: "text",
+          text: JSON.stringify(timelineData, null, 2),
+        },
+      ],
+    },
+  ];
+
+  const schema = z.object({
+    degradationsAnalysis: z
+      .string()
+      .describe(
+        "Short summary (max 1 sentence) analyzing degradation patterns leading to failures, explicitly mentioning totalDegradations.",
+      ),
+    retriesAnalysis: z
+      .string()
+      .describe(
+        "Short summary (max 1 sentence) analyzing retry patterns leading to failures, explicitly mentioning totalRetries.",
+      ),
+  });
+
+  return defineMessagesPrompt(
+    "analyseDegradationAndRetriesTimeline",
+    messages,
+    schema,
+    {
+      temperature: 0,
+      maxTokens: 1000,
+    },
+  );
 }

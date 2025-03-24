@@ -17,6 +17,7 @@ import {
 import { generateHeatmap } from "../../heatmap/generateHeatmap";
 import { getExtraAccountSetupContext } from "../checkly-integration-utils";
 import { CheckTable, readCheck } from "../../db/check";
+import { analyseRetriesAndDegradations } from "../analysis/analyseRetriesAndDegradations";
 
 async function checkSummaryData(
   checkId: string,
@@ -171,10 +172,13 @@ export async function checkSummary(checkId: string) {
         )
       : 0;
   const heatmapAnalysisStartedAt = Date.now();
-  const { failureIncidentsSummary, category } =
-    await analyseHeatmap(heatmapImage);
-
-  // TODO analyse degradations and retries in a separate prompt
+  const [
+    { failureIncidentsSummary, category },
+    { retriesAnalysis, degradationsAnalysis },
+  ] = await Promise.all([
+    analyseHeatmap(heatmapImage),
+    analyseRetriesAndDegradations(checkResults, interval),
+  ]);
 
   log.info(
     {
@@ -197,6 +201,8 @@ export async function checkSummary(checkId: string) {
     lastFailureId: mostRecentFailureCheckResult?.id,
     timeLocationSummary: failureIncidentsSummary,
     errorPatterns,
+    retriesAnalysis,
+    degradationsAnalysis,
   });
 
   return { message, image: heatmapImage };

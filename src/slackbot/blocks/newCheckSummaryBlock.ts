@@ -9,6 +9,8 @@ interface CheckStats {
   errorPatterns: { id: string; description: string; count: number }[];
   lastFailureId?: string;
   timeLocationSummary: string;
+  retriesAnalysis?: string;
+  degradationsAnalysis?: string;
 }
 
 const CHECKLY_APP_BASE_URL = "https://app.checklyhq.com/checks/";
@@ -42,6 +44,40 @@ function generateCheckSummaryBlock(stats: CheckStats) {
       ? `*Last failure:* <!date^${Math.floor(stats.lastFailure.getTime() / 1000)}^{ago}|${stats.lastFailure.toLocaleString()}> <${lastFailureLink}|view>`
       : `*Last failure:* _No failures in the last 24 hours_`;
 
+  const failureSummaryElements = [
+    {
+      type: "rich_text_section",
+      elements: [
+        {
+          type: "text",
+          text: `${stats.timeLocationSummary}`,
+        },
+      ],
+    },
+  ];
+  if (stats.degradationsAnalysis) {
+    failureSummaryElements.push({
+      type: "rich_text_section",
+      elements: [
+        {
+          type: "text",
+          text: `${stats.degradationsAnalysis}`,
+        },
+      ],
+    });
+  }
+  if (stats.retriesAnalysis) {
+    failureSummaryElements.push({
+      type: "rich_text_section",
+      elements: [
+        {
+          type: "text",
+          text: `${stats.retriesAnalysis}`,
+        },
+      ],
+    });
+  }
+
   return {
     blocks: [
       {
@@ -64,9 +100,22 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Failures Summary:* ${stats.timeLocationSummary}`,
+          text: `*Failures Summary:*`,
         },
       },
+      {
+        type: "rich_text",
+        elements: [
+          {
+            type: "rich_text_list",
+            style: "bullet",
+            indent: 0,
+            border: 0,
+            elements: failureSummaryElements,
+          },
+        ],
+      },
+
       ...(stats.errorPatterns && stats.errorPatterns.length > 0
         ? [
             {
