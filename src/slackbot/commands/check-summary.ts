@@ -70,8 +70,12 @@ async function checkSummaryData(
     return acc;
   }, new Set<string>());
 
+  // Use only FINAL results for heatmap generation
+  const checkResultsForHeatmap = checkResults.filter(
+    (result) => result.resultType === "FINAL",
+  );
   const heatmapImage = generateHeatmap(
-    checkResults,
+    checkResultsForHeatmap,
     interval.from,
     interval.to,
     {
@@ -135,17 +139,20 @@ export async function checkSummary(checkId: string) {
     await Promise.all([
       checkSummaryData(check.id, interval),
       summarizeCheckGoal(check),
-      findErrorClustersForChecks(check.id, interval),
+      findErrorClustersForChecks(check.id, { interval, resultType: "FINAL" }),
     ]);
 
   const failingCheckResults = checkResults.filter(
-    (result) => result.hasFailures || result.hasErrors,
+    (result) =>
+      (result.hasFailures || result.hasErrors) && result.resultType === "FINAL",
   );
-  const errorPatterns = failureClusters.map((ec) => ({
-    id: ec.id,
-    description: ec.error_message.split("\n")[0],
-    count: ec.count,
-  }));
+  const errorPatterns = failureClusters
+    .map((ec) => ({
+      id: ec.id,
+      description: ec.error_message.split("\n")[0],
+      count: ec.count,
+    }))
+    .sort((a, b) => b.count - a.count); // Sort from by count descending
 
   const mostRecentFailureCheckResult = failingCheckResults.sort(
     (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
@@ -166,6 +173,8 @@ export async function checkSummary(checkId: string) {
   const heatmapAnalysisStartedAt = Date.now();
   const { failureIncidentsSummary, category } =
     await analyseHeatmap(heatmapImage);
+
+  // TODO analyse degradations and retries in a separate prompt
 
   log.info(
     {
