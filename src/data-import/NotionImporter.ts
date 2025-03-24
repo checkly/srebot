@@ -1,7 +1,7 @@
 import { fetchDocumentsFromKnowledgeBase, NotionPage } from "../notion/notion";
 import {
-  deleteLearningsBySource,
-  findLearningsBySource,
+  deleteLearnings,
+  findAllLearnings,
   LearningSource,
   LearningsTable,
   upsertLearnings,
@@ -26,11 +26,14 @@ export class NotionImporter {
     const startedAt = Date.now();
 
     const [currentDbLearnings, apiDocuments] = await Promise.all([
-      findLearningsBySource(LearningSource.NOTION),
+      findAllLearnings({ source: LearningSource.NOTION }),
       fetchDocumentsFromKnowledgeBase(),
     ]);
 
-    const apiDocumentsWithoutDuplicates = uniqBy(apiDocuments, "slug");
+    const apiDocumentsWithoutDuplicates: NotionPage[] = uniqBy(
+      apiDocuments,
+      "slug",
+    );
     if (apiDocumentsWithoutDuplicates.length !== apiDocuments.length) {
       // TODO handle this better
       log.warn(
@@ -47,42 +50,52 @@ export class NotionImporter {
       "id",
     );
 
-    const documentsWithChangedContent = apiDocumentsWithoutDuplicates.filter(
-      (notionApiDocument) => {
-        const dbDocument = dbLearningsById[notionApiDocument.slug];
-        if (!dbDocument) {
-          return true;
-        }
-        if (dbDocument.content !== notionApiDocument.content) {
-          return true;
-        }
-        return dbDocument.sourceId !== notionApiDocument.title;
-      },
+    const documentsWithChanges = this.findDocumentsWithChanges(
+      apiDocumentsWithoutDuplicates,
+      dbLearningsById,
     );
 
-    if (documentsWithChangedContent.length > 0) {
-      const documentsForUpsert = await this.prepareDocumentsForInsert(
-        documentsWithChangedContent,
-      );
+    if (documentsWithChanges.length > 0) {
+      const documentsForUpsert =
+        await this.prepareDocumentsForInsert(documentsWithChanges);
       await upsertLearnings(documentsForUpsert);
     }
 
-    const idsOfDocumentsToKeep = apiDocumentsWithoutDuplicates.map(
-      (document) => document.slug,
+    await this.removeMissingDocuments(
+      apiDocumentsWithoutDuplicates,
+      currentDbLearnings,
     );
-    await deleteLearningsBySource(LearningSource.NOTION, idsOfDocumentsToKeep);
 
     log.info(
       {
         durationMs: Date.now() - startedAt,
-        newDocuments: documentsWithChangedContent.length,
+        newDocuments: documentsWithChanges.length,
         totalDocuments: apiDocumentsWithoutDuplicates.length,
       },
       "Imported Notion documents successfully",
     );
   }
 
-  private async prepareDocumentsForInsert(documentsToInsert: NotionPage[]) {
+  private findDocumentsWithChanges(
+    apiDocumentsWithoutDuplicates: NotionPage[],
+    dbLearningsById: Record<string, LearningsTable>,
+  ): NotionPage[] {
+    return apiDocumentsWithoutDuplicates.filter((notionApiDocument) => {
+      const dbDocument = dbLearningsById[notionApiDocument.slug];
+      if (!dbDocument) {
+        return true;
+      }
+      // TODO we can improve this later by comparing hashes or direct queries in the DB
+      if (dbDocument.content !== notionApiDocument.content) {
+        return true;
+      }
+      return dbDocument.sourceId !== notionApiDocument.title;
+    });
+  }
+
+  private async prepareDocumentsForInsert(
+    documentsToInsert: NotionPage[],
+  ): Promise<LearningsTable[]> {
     // TODO we might need to chunk this
     const contentsToEmbed = documentsToInsert.map(
       (document) => document.content,
@@ -96,20 +109,37 @@ export class NotionImporter {
     const documentIds = documentsToInsert.map((document) => document.slug);
     const embeddingByDocumentId = zipObject(documentIds, embeddings);
 
-    const documentsForUpsert: LearningsTable[] = documentsToInsert.map(
-      (document) => {
-        return {
-          id: document.slug,
-          source: LearningSource.NOTION,
-          sourceId: document.title,
-          content: document.content,
-          fetchedAt: new Date(),
-          embedding: embeddingByDocumentId[document.slug],
-          embedding_model: this.embeddingModel,
-        };
-      },
+    return documentsToInsert.map((document) => {
+      return {
+        id: document.slug,
+        source: LearningSource.NOTION,
+        sourceId: document.title,
+        content: document.content,
+        fetchedAt: new Date(),
+        embedding: embeddingByDocumentId[document.slug],
+        embedding_model: this.embeddingModel,
+      };
+    });
+  }
+
+  private async removeMissingDocuments(
+    apiDocumentsWithoutDuplicates: NotionPage[],
+    currentDbLearnings: LearningsTable[],
+  ) {
+    const apiDocumentsIds: Set<string> = new Set(
+      apiDocumentsWithoutDuplicates.map((document) => document.slug),
     );
 
-    return documentsForUpsert;
+    const documentIdsToRemove = currentDbLearnings
+      .map((document) => document.id)
+      .filter((id) => !apiDocumentsIds.has(id));
+
+    if (documentIdsToRemove.length > 0) {
+      await deleteLearnings(documentIdsToRemove);
+      log.info(
+        { deletedCount: documentIdsToRemove.length },
+        "Removed missing documents from the database",
+      );
+    }
   }
 }

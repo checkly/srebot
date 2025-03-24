@@ -69,7 +69,7 @@ export const startSyncingData = async () => {
 
   const checksAndGroups = syncChecksAndGroups(importer, 60_000);
   const checkResults = syncCheckResults(importer, 60_000);
-  const syncNotion = syncNotionData(notionImporter, 10 * 60_000); // 10 minutes. this can be configured later
+  const syncNotion = syncNotionData(notionImporter, 5 * 60_000); // 5 minutes. this can be configured later
 
   const signalsToHandle = ["SIGINT", "SIGTERM"];
 

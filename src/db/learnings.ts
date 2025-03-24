@@ -29,18 +29,20 @@ export async function upsertLearnings(
     .merge();
 }
 
-export async function findLearningsBySource(
-  source: LearningSource,
-): Promise<LearningsTable[]> {
-  return postgres<LearningsTable>("learnings").where({ source });
+export async function findAllLearnings(options?: {
+  source: LearningSource;
+}): Promise<LearningsTable[]> {
+  const queryBuilder = postgres<LearningsTable>("learnings").select("*");
+
+  if (options?.source) {
+    queryBuilder.where("source", options.source);
+  }
+
+  return queryBuilder;
 }
 
-export async function deleteLearningsBySource(
-  source: LearningSource,
-  idsToKeep: string[] = [],
+export async function deleteLearnings(
+  idsToRemove: string[],
 ): Promise<LearningsTable[]> {
-  return postgres<LearningsTable>("learnings")
-    .whereNotIn("id", idsToKeep)
-    .where({ source })
-    .del();
+  return postgres<LearningsTable>("learnings").whereIn("id", idsToRemove).del();
 }

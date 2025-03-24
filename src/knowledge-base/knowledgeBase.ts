@@ -1,4 +1,4 @@
-import { findLearningsBySource, LearningSource } from "../db/learnings";
+import { findAllLearnings } from "../db/learnings";
 
 export type KnowledgeDocument = {
   content: string;
@@ -8,7 +8,7 @@ export type KnowledgeDocument = {
 };
 
 export const getAllDocuments = async (): Promise<KnowledgeDocument[]> => {
-  const learningsInDb = await findLearningsBySource(LearningSource.NOTION);
+  const learningsInDb = await findAllLearnings();
 
   return learningsInDb.map((learning) => ({
     content: learning.content,
