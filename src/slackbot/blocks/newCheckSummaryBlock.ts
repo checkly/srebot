@@ -3,10 +3,10 @@ interface CheckStats {
   checkId: string;
   checkSummary: string;
   checkState: "PASSING" | "FLAKY" | "FAILING";
-  lastFailure: Date;
+  lastFailure?: Date;
   failureCount: number;
   successRate: number;
-  failurePatterns?: string[];
+  errorPatterns: { id: string; description: string; count: number }[];
   lastFailureId?: string;
   timeLocationSummary: string;
 }
@@ -37,6 +37,11 @@ function generateCheckSummaryBlock(stats: CheckStats) {
 
   const lastFailureLink = `${checkUrl}/results/${stats.lastFailureId}`;
 
+  const lastFailureSection =
+    stats.lastFailure && lastFailureLink
+      ? `*Last failure:* <!date^${Math.floor(stats.lastFailure.getTime() / 1000)}^{ago}|${stats.lastFailure.toLocaleString()}> <${lastFailureLink}|view>`
+      : `*Last failure:* _No failures in the last 24 hours_`;
+
   return {
     blocks: [
       {
@@ -51,7 +56,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Last failure:* <!date^${Math.floor(stats.lastFailure.getTime() / 1000)}^{ago}|${stats.lastFailure.toLocaleString()}> <${lastFailureLink}|view>
+          text: `${lastFailureSection}
 *Success Rate:* ${stats.successRate}% in the last 24 hours`,
         },
       },
@@ -62,7 +67,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
           text: `*Summary:* ${stats.timeLocationSummary}`,
         },
       },
-      ...(stats.failurePatterns && stats.failurePatterns.length > 0
+      ...(stats.errorPatterns && stats.errorPatterns.length > 0
         ? [
             {
               type: "section",
@@ -79,12 +84,12 @@ function generateCheckSummaryBlock(stats: CheckStats) {
                   style: "bullet",
                   indent: 0,
                   border: 0,
-                  elements: stats.failurePatterns.map((pattern) => ({
+                  elements: stats.errorPatterns.map((errorPattern) => ({
                     type: "rich_text_section",
                     elements: [
                       {
                         type: "text",
-                        text: pattern,
+                        text: `${errorPattern.description} (${errorPattern.count} times)`,
                       },
                     ],
                   })),

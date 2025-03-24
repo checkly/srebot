@@ -1,16 +1,18 @@
 import * as fs from "node:fs";
 
 import { initConfig } from "../../lib/init-config";
+import { checkSummary } from "./check-summary";
 
 initConfig();
 
-import { checkSummary } from "./check-summary";
-
 const main = async () => {
-  const checkId = "7017a27e-df7b-4501-a738-fa616782bc4e";
+  const checkId = "13a60bda-0edc-470d-855e-7d092a1cca1c";
   const result = await checkSummary(checkId);
-  fs.writeFileSync(`heatmap-${checkId}.png`, result.image);
   console.log(JSON.stringify(result.message, null, 2));
+
+  if (result.image) {
+    fs.writeFileSync(`heatmap-${checkId}.png`, result.image);
+  }
 };
 
 main();
