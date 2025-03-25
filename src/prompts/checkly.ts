@@ -157,7 +157,7 @@ export function summarizeMultipleChecksStatus(
   currentDate: Date = new Date(),
 ): PromptDefinitionForText {
   const prompt = `
-    The following json data describes the state of multiple monitoring checks in different locations.
+    The following json data describes the state of multiple monitoring checks. The changePoints indicate when the state of the check had meanfinful changes in reliability in different locations.
     ${checks
       .map(
         (check) => `
@@ -178,7 +178,7 @@ export function summarizeMultipleChecksStatus(
     Explanation of the data:
     - checkId: The ID of the check (do not mention in the summary, rather call out the number of affected checks)
     - runLocation: The location of the check (this can be used in the summary to indicate the affected locations)
-    - severity: The severity of the check (do not use the enum values but rather use words describing there meaning)
+    - severity: The direction of the change in check reliability. Passing means the check recovered from a degraded state. Failing means the check started failing after being healthy.
     - patternStart: unix timestamp at which the severity changed from one state to another, render this in time ago format
 
     Be an SRE Engineer which answers the question what the state of the current checks is. Use max 100 characters.
