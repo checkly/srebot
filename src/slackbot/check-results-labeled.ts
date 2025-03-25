@@ -156,7 +156,10 @@ export async function summarizeCheckResultsToLabeledCheckStatus(
         changePoints: changePoints.map((cp) => ({
           timestamp: cp.startedAtBin.getTime(),
           formattedTimestamp: hourlyFormatter.format(cp.startedAtBin),
-          severity: cp.cumSumPassRate > 0 ? "FAILING" : "PASSING", // TODO work out how to get degraded
+          severity:
+            cp.cumSumPassRate > 0
+              ? "FAILING"
+              : ("PASSING" as "PASSING" | "FAILING"), // TODO work out how to get degraded
         })),
       };
     })

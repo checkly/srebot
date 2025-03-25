@@ -1,3 +1,4 @@
+import * as dataForge from "data-forge";
 import { generateText } from "ai";
 import { checkly } from "../checkly/client";
 import { findCheckResultsAggregated } from "../db/check-results";
@@ -166,31 +167,38 @@ function getCheckCountsDelta(
     changePoints: {
       timestamp: number;
       formattedTimestamp: string;
-      severity: string;
+      severity: "PASSING" | "DEGRADED" | "FAILING";
     }[];
   }[],
 ): {
-  passingChecksDelta: any;
-  degradedChecksDelta: any;
+  passingChecksDelta: number;
+  degradedChecksDelta: number;
   failingChecksDelta: number;
 } {
-  let passingChecksDelta = 0;
-  let degradedChecksDelta = 0;
-  let failingChecksDelta = 0;
+  let df = new dataForge.DataFrame(checkResultsWithCheckpoints);
+  let deltaInCheckStatus = df
+    .select((row) => {
+      const lastChangePoint = row.changePoints[row.changePoints.length - 1];
+      return {
+        checkId: row.checkId,
+        runLocation: row.runLocation,
+        delta: lastChangePoint.severity === "PASSING" ? 1 : -1,
+      };
+    })
+    .groupBy((row) => row.checkId)
+    .select((group) => {
+      return {
+        checkId: group.first().checkId,
+        delta: Math.sign(group.deflate((row) => row.delta).sum()),
+      };
+    })
+    .inflate()
+    .getSeries("delta")
+    .sum();
 
-  for (const checkResult of checkResultsWithCheckpoints) {
-    if (checkResult.changePoints.length > 0) {
-      const lastChangePoint =
-        checkResult.changePoints[checkResult.changePoints.length - 1];
-      if (lastChangePoint.severity === "passing") {
-        passingChecksDelta++;
-        failingChecksDelta--;
-      } else if (lastChangePoint.severity === "failing") {
-        failingChecksDelta++;
-        passingChecksDelta--;
-      }
-    }
-  }
-
-  return { passingChecksDelta, degradedChecksDelta, failingChecksDelta };
+  return {
+    passingChecksDelta: deltaInCheckStatus,
+    degradedChecksDelta: 0,
+    failingChecksDelta: deltaInCheckStatus * -1,
+  };
 }
