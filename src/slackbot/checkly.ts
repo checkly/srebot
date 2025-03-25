@@ -103,17 +103,10 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     await ack();
     const args = command.text.split(" ");
     if (args.length == 1 && args[0].trim() === "") {
-      await respond({
-        response_type: "ephemeral",
-        text: "Fetching account summary... ⏳",
-      });
-
       const accountId = process.env.CHECKLY_ACCOUNT_ID!;
+      const interval = last24h(new Date());
       try {
-        const { message } = await accountSummary(
-          accountId,
-          last24h(new Date()),
-        );
+        const { message } = await accountSummary(accountId, interval);
         await respond({
           response_type: "in_channel",
           ...message,
