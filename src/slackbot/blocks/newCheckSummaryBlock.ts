@@ -7,13 +7,16 @@ export type FailurePattern = {
   firstSeenAt: Date;
 };
 
-type CheckState = "PASSING" | "FLAKY" | "FAILING" | "UNKNOWN";
+export type CheckHealth = "PASSING" | "FLAKY" | "FAILING" | "UNKNOWN";
+
+export type CheckStatus = "PASSING" | "FAILING" | "DEGRADED" | "UNKNOWN";
 
 interface CheckStats {
   checkName: string;
   checkId: string;
   checkSummary: string;
-  checkState: CheckState;
+  checkHealth: CheckHealth;
+  checkStatus: CheckStatus;
   failureCount: number;
   successRate: number;
   errorPatterns: FailurePattern[];
@@ -30,20 +33,20 @@ const CHECKLY_APP_BASE_URL = "https://app.checklyhq.com/checks/";
 
 enum COLORS {
   FAILING = "#FF4949",
-  FLAKY = "#FFC82C",
+  DEGRADED = "#FFC82C",
   PASSING = "#13CE66",
   UNKNOWN = "#494746",
 }
 
 const getMetadata = (stats: CheckStats): { title: string; color: string } => {
   let prelude = `Check ${stats.checkName}`;
-  switch (stats.checkState) {
+  switch (stats.checkStatus) {
     case "PASSING":
       return { title: `${prelude} - is passing`, color: COLORS.PASSING };
     case "FAILING":
       return { title: `${prelude} - is failing`, color: COLORS.FAILING };
-    case "FLAKY":
-      return { title: `${prelude} - is flaky`, color: COLORS.FLAKY };
+    case "DEGRADED":
+      return { title: `${prelude} - is degraded`, color: COLORS.DEGRADED };
     case "UNKNOWN":
       return {
         title: `${prelude} - is in an unknown state`,
@@ -52,30 +55,18 @@ const getMetadata = (stats: CheckStats): { title: string; color: string } => {
   }
 };
 
-function formatColumnLayout(
-  items: [string, string][],
-  columnWidth: number = 40,
-): string {
-  // Separate headers and values
-  const headers = items.map(([header]) => {
-    const cleanHeader = header.replace(/[*_~`]/g, "");
-    return `*${cleanHeader}*`;
-  });
-
-  const values = items.map(([, value]) => value);
-
-  // Create header row
-  const headerRow = headers
-    .slice(0, -1)
-    .map((header) => header.padEnd(columnWidth))
-    .concat(headers.slice(-1))
-    .join("");
-
-  // Create value row
-  const valueRow = values.join(" ".repeat(columnWidth));
-
-  return `${headerRow}\n${valueRow}`;
-}
+const getCheckHealth = (stats: CheckStats) => {
+  switch (stats.checkHealth) {
+    case "PASSING":
+      return "Healthy";
+    case "FLAKY":
+      return "Flaky";
+    case "FAILING":
+      return "Unhealthy";
+    case "UNKNOWN":
+      return "Unknown";
+  }
+};
 
 function generateCheckSummaryBlock(stats: CheckStats) {
   const checkUrl = `${CHECKLY_APP_BASE_URL}${stats.checkId}`;
@@ -104,7 +95,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
       )
       .join("\n") || "_No known error patterns_";
 
-  const statusText = `_${stats.failureCount} failure(s) in the last 24 hours_`;
+  const availabilityText = `_${stats.failureCount} failure(s) in the last 24 hours_`;
 
   const actions = [
     {
@@ -134,23 +125,30 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         text: [
           `\u200B`,
           stats.checkSummary,
-          statusText,
-          `\n`,
-          formatColumnLayout(
-            [
-              ["Availability:", `${stats.successRate}%`],
-              ["Last failed at:", lastFailureText],
-            ],
-            80,
-          ),
-          `\n`,
-          "*Impact Analysis:*",
+          availabilityText,
+          "\n",
+          `*Stability:*\n${getCheckHealth(stats)}\n`,
+          "*Stability Analysis:*",
           impactAnalysis,
           `\n`,
           "*Top 3 Error Patterns:*",
           errorPatternsText,
-        ].join("\n"),
+          `\u200B`,
+          `\u200B`,
+        ].join("\n"), // This is ugly as hell, but it's the only way to add a color border to the message
         actions: actions,
+        fields: [
+          {
+            title: "Availability",
+            value: `${stats.successRate}%`,
+            short: true,
+          },
+          {
+            title: "Last Failed At",
+            value: lastFailureText,
+            short: true,
+          },
+        ],
       },
     ],
   };

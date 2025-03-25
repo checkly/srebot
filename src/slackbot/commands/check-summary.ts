@@ -12,6 +12,7 @@ import {
   getOldestMembershipDatesForErrors,
 } from "../../db/error-cluster";
 import generateCheckSummaryBlock, {
+  CheckStatus,
   FailurePattern,
 } from "../blocks/newCheckSummaryBlock";
 import { CheckResultTable, findCheckResults } from "../../db/check-results";
@@ -172,6 +173,23 @@ const getErrorPatterns = async (
     .sort((a, b) => b.count - a.count);
 };
 
+const getCheckStatus = (checkResults: CheckResultTable[]): CheckStatus => {
+  const mostRecent = checkResults.findLast(
+    (element) => element.resultType === "FINAL",
+  );
+
+  if (!mostRecent) {
+    return "UNKNOWN";
+  }
+  if (mostRecent.hasFailures || mostRecent.hasErrors) {
+    return "FAILING";
+  }
+  if (mostRecent.isDegraded) {
+    return "DEGRADED";
+  }
+  return "PASSING";
+};
+
 export async function checkSummary(checkId: string) {
   const start = Date.now();
   const check = await readCheck(checkId);
@@ -236,7 +254,8 @@ export async function checkSummary(checkId: string) {
     checkId,
     checkName: check.name,
     checkSummary: checkSummary,
-    checkState: category,
+    checkHealth: category,
+    checkStatus: getCheckStatus(checkResults),
     lastFailureAt: lastFailure,
     successRate,
     failureCount: failingCheckResults.length,
