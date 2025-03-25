@@ -31,7 +31,7 @@
     "@opentelemetry/sdk-logs": "0.57.1",
     "@opentelemetry/sdk-node": "0.57.1",
     "@prisma/client": "5.22.0",
-    "@slack/bolt": "4.1.0",
+    "@slack/bolt": "4.2.1",
     "ai": "4.1.61",
     "autoevals": "0.0.119",
     "axios": "1.7.9",

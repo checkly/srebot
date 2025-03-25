@@ -145,12 +145,19 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     } else if (args.length === 1 && !!args[0] && getIsUUID(args[0])) {
       const checkId = args[0];
       try {
+        // It is not possible to remove ephemeral messages or update them
+        const response = await app.client.chat.postMessage({
+          channel: command.channel_id,
+          text: `Analyzing check \`${checkId}\`...`,
+        });
+
         const { message } = await checkSummary(checkId);
 
-        await respond({
-          response_type: "in_channel",
+        await app.client.chat.update({
+          channel: command.channel_id,
+          ts: response.ts,
           ...message,
-        });
+        } as any);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         log.error(
