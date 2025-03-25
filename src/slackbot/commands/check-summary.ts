@@ -189,9 +189,11 @@ export async function checkSummary(checkId: string) {
       getErrorPatterns(check.id, interval),
     ]);
 
-  const failingCheckResults = checkResults.filter(
-    (result) =>
-      (result.hasFailures || result.hasErrors) && result.resultType === "FINAL",
+  const finalCheckResults = checkResults.filter(
+    (result) => result.resultType === "FINAL",
+  );
+  const failingCheckResults = finalCheckResults.filter(
+    (result) => result.hasFailures || result.hasErrors,
   );
 
   const mostRecentFailureCheckResult = failingCheckResults.sort(
@@ -203,10 +205,10 @@ export async function checkSummary(checkId: string) {
       : undefined;
 
   const successRate =
-    checkResults.length > 0
+    finalCheckResults.length > 0
       ? Math.round(
-          ((checkResults.length - failingCheckResults.length) /
-            checkResults.length) *
+          ((finalCheckResults.length - failingCheckResults.length) /
+            finalCheckResults.length) *
             100,
         )
       : 0;
