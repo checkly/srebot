@@ -7,8 +7,13 @@ import {
 import { generateObject, generateText } from "ai";
 import { last24h } from "../../prompts/checkly-data";
 import { log } from "../../log";
-import { findErrorClustersForChecks } from "../../db/error-cluster";
-import generateCheckSummaryBlock from "../blocks/newCheckSummaryBlock";
+import {
+  findErrorClustersForChecks,
+  getOldestMembershipDatesForErrors,
+} from "../../db/error-cluster";
+import generateCheckSummaryBlock, {
+  FailurePattern,
+} from "../blocks/newCheckSummaryBlock";
 import { CheckResultTable, findCheckResults } from "../../db/check-results";
 import {
   aggregateCheckResults,
@@ -18,6 +23,7 @@ import { generateHeatmap } from "../../heatmap/generateHeatmap";
 import { getExtraAccountSetupContext } from "../checkly-integration-utils";
 import { CheckTable, readCheck } from "../../db/check";
 import { analyseRetriesAndDegradations } from "../analysis/analyseRetriesAndDegradations";
+import { keyBy } from "lodash";
 
 async function checkSummaryData(
   checkId: string,
@@ -126,6 +132,46 @@ const analyseHeatmap = async (
   };
 };
 
+const getErrorPatterns = async (
+  checkId: string,
+  interval: { from: Date; to: Date },
+): Promise<FailurePattern[]> => {
+  const startedAt = Date.now();
+  const failureClusters = await findErrorClustersForChecks(checkId, {
+    interval,
+    resultType: "FINAL",
+  });
+  const errorIds = failureClusters.map((ec) => ec.id);
+
+  const oldestMembershipDatesForErrors =
+    await getOldestMembershipDatesForErrors(checkId, errorIds);
+  const oldestMembershipByErrorId: Record<
+    string,
+    {
+      date: Date;
+      error_id: string;
+    }
+  > = keyBy(oldestMembershipDatesForErrors, "error_id");
+
+  log.debug(
+    {
+      checkId,
+      durationMs: Date.now() - startedAt,
+      clusterCount: failureClusters.length,
+    },
+    "Found error clusters",
+  );
+
+  return failureClusters
+    .map((ec) => ({
+      id: ec.id,
+      description: ec.error_message.split("\n")[0],
+      count: ec.count,
+      firstSeenAt: oldestMembershipByErrorId[ec.id].date,
+    }))
+    .sort((a, b) => b.count - a.count);
+};
+
 export async function checkSummary(checkId: string) {
   const start = Date.now();
   const check = await readCheck(checkId);
@@ -136,24 +182,17 @@ export async function checkSummary(checkId: string) {
 
   const interval = last24h(new Date());
 
-  const [{ checkResults, heatmapImage }, checkSummary, failureClusters] =
+  const [{ checkResults, heatmapImage }, checkSummary, errorPatterns] =
     await Promise.all([
       checkSummaryData(check.id, interval),
       summarizeCheckGoal(check),
-      findErrorClustersForChecks(check.id, { interval, resultType: "FINAL" }),
+      getErrorPatterns(check.id, interval),
     ]);
 
   const failingCheckResults = checkResults.filter(
     (result) =>
       (result.hasFailures || result.hasErrors) && result.resultType === "FINAL",
   );
-  const errorPatterns = failureClusters
-    .map((ec) => ({
-      id: ec.id,
-      description: ec.error_message.split("\n")[0],
-      count: ec.count,
-    }))
-    .sort((a, b) => b.count - a.count); // Sort from by count descending
 
   const mostRecentFailureCheckResult = failingCheckResults.sort(
     (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
@@ -171,7 +210,8 @@ export async function checkSummary(checkId: string) {
             100,
         )
       : 0;
-  const heatmapAnalysisStartedAt = Date.now();
+
+  const llmAnalysisStartedAt = Date.now();
   const [
     { failureIncidentsSummary, category },
     { retriesAnalysis, degradationsAnalysis },
@@ -186,7 +226,7 @@ export async function checkSummary(checkId: string) {
       checkResultCount: checkResults.length,
       failingCheckResultCount: failingCheckResults.length,
       durationMs: Date.now() - start,
-      heatmapAnalysisDurationMs: Date.now() - heatmapAnalysisStartedAt,
+      llmAnalysisDurationMs: Date.now() - llmAnalysisStartedAt,
     },
     "checkSummary",
   );

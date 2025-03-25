@@ -91,7 +91,7 @@ export async function findErrorClustersForChecks(
     resultType?: "ATTEMPT" | "FINAL";
   } = {},
 ): Promise<ErrorClusterWithCount[]> {
-  return postgres<ErrorClusterWithCount>("error_cluster")
+  const results = await postgres<ErrorClusterWithCount>("error_cluster")
     .select("error_cluster.*")
     .count("error_cluster_membership.check_id as count")
     .join(
@@ -120,6 +120,24 @@ export async function findErrorClustersForChecks(
       }
     })
     .groupBy("error_cluster.id");
+
+  // We have to manually parse count because knex is stupid
+  return results.map((row) => ({
+    ...row,
+    count: Number(row.count),
+  }));
+}
+
+export async function getOldestMembershipDatesForErrors(
+  checkId: string,
+  errorIds: string[],
+): Promise<Pick<ErrorClusterMemberTable, "date" | "error_id">[]> {
+  return postgres<ErrorClusterMemberTable>("error_cluster_membership")
+    .select("error_id", "date")
+    .where("check_id", checkId)
+    .whereIn("error_id", errorIds)
+    .orderBy(["error_id", { column: "date", order: "asc" }])
+    .distinctOn("error_id");
 }
 
 export async function insertErrorClusterMember(

@@ -1,3 +1,12 @@
+import { formatDistanceToNow } from "date-fns";
+
+export type FailurePattern = {
+  id: string;
+  description: string;
+  count: number;
+  firstSeenAt: Date;
+};
+
 interface CheckStats {
   checkName: string;
   checkId: string;
@@ -6,7 +15,7 @@ interface CheckStats {
   lastFailure?: Date;
   failureCount: number;
   successRate: number;
-  errorPatterns: { id: string; description: string; count: number }[];
+  errorPatterns: FailurePattern[];
   lastFailureId?: string;
   timeLocationSummary: string;
   retriesAnalysis?: string;
@@ -93,7 +102,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         text: {
           type: "mrkdwn",
           text: `${lastFailureSection}
-*Success Rate:* ${stats.successRate}% in the last 24 hours`,
+*Success Rate:* ${stats.successRate}%`,
         },
       },
       {
@@ -122,7 +131,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
               type: "section",
               text: {
                 type: "mrkdwn",
-                text: `*Failure Patterns:*`,
+                text: `*Error Patterns:*`,
               },
             },
             {
@@ -138,7 +147,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
                     elements: [
                       {
                         type: "text",
-                        text: `${errorPattern.description} (${errorPattern.count} times)`,
+                        text: `${errorPattern.description} (${errorPattern.count} times) \nFirst seen: ${formatDistanceToNow(errorPattern.firstSeenAt, { addSuffix: true })}`,
                       },
                     ],
                   })),
