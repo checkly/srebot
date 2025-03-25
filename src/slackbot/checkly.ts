@@ -1,93 +1,11 @@
-import { generateObject } from "ai";
 import { checkly } from "../checkly/client";
-import {
-  summarizeErrorsPrompt,
-  SummarizeErrorsPromptType,
-} from "../prompts/checkly";
-import {
-  fetchCheckResults,
-  last24h,
-  summarizeCheckResult,
-} from "../prompts/checkly-data";
-import { createCheckResultBlock } from "./blocks/checkResultBlock";
+import { last24h } from "../prompts/checkly-data";
 import { log } from "../log";
 import { App, StringIndexed } from "@slack/bolt";
 import { analyseMultipleChecks } from "../use-cases/analyse-multiple/analyse-multiple-checks";
 import { createMultipleCheckAnalysisBlock } from "./blocks/multipleChecksAnalysisBlock";
-import { generateHeatmap } from "../heatmap/generateHeatmap";
 import { accountSummary } from "./accountSummaryCommandHandler";
 import { checkSummary } from "./commands/check-summary";
-import { interval } from "date-fns";
-
-async function checkResultSummary(checkId: string, checkResultId: string) {
-  const start = Date.now();
-  const check = await checkly.getCheck(checkId);
-  if (check.groupId) {
-    const checkGroup = await checkly.getCheckGroup(check.groupId);
-    check.locations = checkGroup.locations;
-  }
-
-  const checkAppUrl = checkly.getCheckAppUrl(check.id);
-  const checkResult = await checkly.getCheckResult(check.id, checkResultId);
-  const checkResultAppUrl = checkly.getCheckResultAppUrl(
-    check.id,
-    checkResult.id,
-  );
-
-  const interval = last24h(new Date(checkResult.startedAt));
-
-  const checkResults = await fetchCheckResults(checkly, {
-    checkId: check.id,
-    ...interval,
-  });
-
-  const failingCheckResults = checkResults.filter(
-    (result) => result.hasFailures || result.hasErrors,
-  );
-
-  const promptDef = summarizeErrorsPrompt({
-    check: check.id,
-    locations: check.locations,
-    frequency: check.frequency,
-    interval,
-    results: [...failingCheckResults, checkResult].map(summarizeCheckResult),
-  });
-  const { object: errorGroups } =
-    await generateObject<SummarizeErrorsPromptType>(promptDef);
-
-  const heatmapImage = generateHeatmap(
-    checkResults,
-    interval.from,
-    interval.to,
-    {
-      bucketSizeInMinutes: check.frequency * 10,
-      verticalSeries: check.locations.length,
-    },
-  );
-
-  log.info(
-    {
-      checkId,
-      checkResultId,
-      checkResultCount: checkResults.length,
-      failingCheckResultCount: failingCheckResults.length,
-      duration: Date.now() - start,
-    },
-    "checkResultSummary",
-  );
-  return {
-    message: createCheckResultBlock({
-      check,
-      checkAppUrl,
-      checkResult,
-      checkResultAppUrl,
-      errorGroups,
-      failingCheckResults,
-      intervalStart: interval.from,
-    }),
-    image: heatmapImage,
-  };
-}
 
 // Allow overriding the command name for local dev
 export const CHECKLY_COMMAND_NAME =
@@ -173,16 +91,6 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
           text: `:x: Error analysing check summary: ${error.message}`,
         });
       }
-
-      // FIXME find a way to send the image to slack (al)
-    } else if (args.length === 2) {
-      const [checkId, checkResultId] = args;
-      const { message } = await checkResultSummary(checkId, checkResultId);
-
-      await respond({
-        response_type: "in_channel",
-        ...message,
-      });
     } else {
       await respond({
         text: "Please provide either a check ID or both a check ID and check result ID in the format: /checkly <check_id> (<check_result_id>)",

@@ -2,6 +2,7 @@
 import { initConfig } from "../../lib/init-config";
 import { WebClient } from "@slack/web-api";
 import generateCheckSummaryBlock from "./newCheckSummaryBlock";
+import { Stability } from "../../prompts/stability.prompt";
 
 initConfig();
 
@@ -13,7 +14,7 @@ async function main() {
       failureAnalysis: "Everything looks super good",
       checkName: "My Passing Check",
       checkSummary: "This is a summary of my passing check",
-      checkHealth: "PASSING",
+      checkHealth: Stability.HEALTHY,
       checkStatus: "PASSING",
       lastFailureAt: new Date(),
       successRate: 100,
@@ -23,7 +24,7 @@ async function main() {
       checkId: "123",
       checkName: "My Flaky Check",
       checkSummary: "This is a summary of my flaky check",
-      checkHealth: "FLAKY",
+      checkHealth: Stability.FLAKY,
       checkStatus: "DEGRADED",
       lastFailureAt: new Date(),
       lastFailureId: "123",
@@ -58,7 +59,7 @@ async function main() {
       checkId: "123",
       checkName: "My Check",
       checkSummary: "This is a summary of my check",
-      checkHealth: "FAILING",
+      checkHealth: Stability.UNHEALTHY,
       checkStatus: "FAILING",
       lastFailureAt: new Date(),
       successRate: 0,
@@ -93,7 +94,7 @@ async function main() {
       failureAnalysis: "No check runs",
       checkName: "My Check",
       checkSummary: "This is a summary of my check",
-      checkHealth: "UNKNOWN",
+      checkHealth: Stability.UNKNOWN,
       checkStatus: "UNKNOWN",
       successRate: 0,
       failureCount: 0,

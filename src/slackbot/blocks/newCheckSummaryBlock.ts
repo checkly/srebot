@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
+import { Stability } from "../../prompts/stability.prompt";
 
 export type FailurePattern = {
   id: string;
@@ -7,15 +8,13 @@ export type FailurePattern = {
   firstSeenAt: Date;
 };
 
-export type CheckHealth = "PASSING" | "FLAKY" | "FAILING" | "UNKNOWN";
-
 export type CheckStatus = "PASSING" | "FAILING" | "DEGRADED" | "UNKNOWN";
 
 interface CheckStats {
   checkName: string;
   checkId: string;
   checkSummary: string;
-  checkHealth: CheckHealth;
+  checkHealth: Stability;
   checkStatus: CheckStatus;
   failureCount: number;
   successRate: number;
@@ -57,13 +56,13 @@ const getMetadata = (stats: CheckStats): { title: string; color: string } => {
 
 const getCheckHealth = (stats: CheckStats) => {
   switch (stats.checkHealth) {
-    case "PASSING":
+    case Stability.HEALTHY:
       return "Healthy";
-    case "FLAKY":
+    case Stability.FLAKY:
       return "Flaky";
-    case "FAILING":
+    case Stability.UNHEALTHY:
       return "Unhealthy";
-    case "UNKNOWN":
+    case Stability.UNKNOWN:
       return "Unknown";
   }
 };

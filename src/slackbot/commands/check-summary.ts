@@ -1,10 +1,6 @@
 import { readCheckGroup } from "../../db/check-groups";
-import {
-  analyseCheckFailureHeatMap,
-  SimpleErrorCategory,
-  summarizeTestGoalPrompt,
-} from "../../prompts/checkly";
-import { generateObject, generateText } from "ai";
+import { summarizeTestGoalPrompt } from "../../prompts/checkly";
+import { generateText } from "ai";
 import { last24h } from "../../prompts/checkly-data";
 import { log } from "../../log";
 import {
@@ -20,11 +16,10 @@ import {
   aggregateCheckResults,
   CheckResultsTimeSlice,
 } from "../check-result-slices";
-import { generateHeatmap } from "../../heatmap/generateHeatmap";
 import { getExtraAccountSetupContext } from "../checkly-integration-utils";
 import { CheckTable, readCheck } from "../../db/check";
-import { analyseRetriesAndDegradations } from "../analysis/analyseRetriesAndDegradations";
 import { keyBy } from "lodash";
+import { analyseStability } from "../analysis/analyseStability";
 
 async function checkSummaryData(
   checkId: string,
@@ -78,25 +73,10 @@ async function checkSummaryData(
     return acc;
   }, new Set<string>());
 
-  // Use only FINAL results for heatmap generation
-  const checkResultsForHeatmap = checkResults.filter(
-    (result) => result.resultType === "FINAL",
-  );
-  const heatmapImage = generateHeatmap(
-    checkResultsForHeatmap,
-    interval.from,
-    interval.to,
-    {
-      bucketSizeInMinutes: 30,
-      verticalSeries: runLocations.size,
-    },
-  );
-
   return {
     checkId,
     checkResults,
     runLocations,
-    heatmapImage,
     lastRun,
     lastFailure,
     status,
@@ -110,27 +90,6 @@ const summarizeCheckGoal = async (check: CheckTable): Promise<string> => {
   const { text: checkSummary } = await generateText(prompt);
 
   return checkSummary;
-};
-
-const analyseHeatmap = async (
-  heatmapImage?: Buffer,
-): Promise<{
-  category: SimpleErrorCategory;
-  failureIncidentsSummary: string;
-}> => {
-  if (!heatmapImage) {
-    return {
-      category: SimpleErrorCategory.FAILING, // Fall back to failing state
-      failureIncidentsSummary:
-        "No data available for failure incidents analysis",
-    };
-  }
-  const result = await generateObject(analyseCheckFailureHeatMap(heatmapImage));
-
-  return {
-    category: result.object.category,
-    failureIncidentsSummary: result.object.failureIncidentsSummary,
-  };
 };
 
 const getErrorPatterns = async (
@@ -200,12 +159,11 @@ export async function checkSummary(checkId: string) {
 
   const interval = last24h(new Date());
 
-  const [{ checkResults, heatmapImage }, checkSummary, errorPatterns] =
-    await Promise.all([
-      checkSummaryData(check.id, interval),
-      summarizeCheckGoal(check),
-      getErrorPatterns(check.id, interval),
-    ]);
+  const [{ checkResults }, checkSummary, errorPatterns] = await Promise.all([
+    checkSummaryData(check.id, interval),
+    summarizeCheckGoal(check),
+    getErrorPatterns(check.id, interval),
+  ]);
 
   const finalCheckResults = checkResults.filter(
     (result) => result.resultType === "FINAL",
@@ -232,12 +190,8 @@ export async function checkSummary(checkId: string) {
       : 0;
 
   const llmAnalysisStartedAt = Date.now();
-  const [
-    { failureIncidentsSummary, category },
-    { retriesAnalysis, degradationsAnalysis },
-  ] = await Promise.all([
-    analyseHeatmap(heatmapImage),
-    analyseRetriesAndDegradations(checkResults, interval),
+  const [stabilityAnalysis] = await Promise.all([
+    analyseStability(checkResults, interval),
   ]);
 
   log.info(
@@ -254,17 +208,17 @@ export async function checkSummary(checkId: string) {
     checkId,
     checkName: check.name,
     checkSummary: checkSummary,
-    checkHealth: category,
+    checkHealth: stabilityAnalysis.stability,
     checkStatus: getCheckStatus(checkResults),
     lastFailureAt: lastFailure,
     successRate,
+    errorPatterns,
     failureCount: failingCheckResults.length,
     lastFailureId: mostRecentFailureCheckResult?.id,
-    failureAnalysis: failureIncidentsSummary,
-    errorPatterns,
-    retriesAnalysis,
-    degradationsAnalysis,
+    failureAnalysis: stabilityAnalysis.failuresAnalysis,
+    retriesAnalysis: stabilityAnalysis.retriesAnalysis,
+    degradationsAnalysis: stabilityAnalysis.degradationsAnalysis,
   });
 
-  return { message, image: heatmapImage };
+  return { message };
 }

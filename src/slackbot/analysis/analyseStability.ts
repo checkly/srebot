@@ -1,17 +1,19 @@
 import { CheckResultTable } from "../../db/check-results";
-import {
-  analyseDegradationAndRetriesTimeline,
-  DegradationAndRetriesTimeline,
-} from "../../prompts/checkly";
 import { generateObject } from "ai";
+import {
+  Stability,
+  StabilityAnalysisTimeLine,
+  stabilityPrompt,
+} from "../../prompts/stability.prompt";
 
 const prepareData = (
   checkResults: CheckResultTable[],
   interval: { from: Date; to: Date },
 ): {
-  buckets: DegradationAndRetriesTimeline;
+  buckets: StabilityAnalysisTimeLine;
   totalAttempts: number;
   totalDegraded: number;
+  totalFailures: number;
 } => {
   const bucketSizeMinutes = 30;
 
@@ -24,7 +26,14 @@ const prepareData = (
   // Step 2: Create buckets between interval.from and interval.to
   const buckets: Record<
     string,
-    { region: string; degraded: 0; retries: 0; failures: 0 }[]
+    {
+      region: string;
+      degraded: number;
+      retries: number;
+      failures: number;
+      failureRate: number;
+      passing: number;
+    }[]
   > = {};
   const bucketStart = new Date(interval.from.getTime());
 
@@ -43,12 +52,15 @@ const prepareData = (
       degraded: 0,
       retries: 0,
       failures: 0,
+      passing: 0,
+      failureRate: 0,
     }));
     bucketStart.setMinutes(bucketStart.getMinutes() + bucketSizeMinutes);
   }
 
   let totalAttempts = 0;
   let totalDegraded = 0;
+  let totalFailures = 0;
 
   // Step 3: Populate buckets
   checkResults.forEach((result) => {
@@ -76,12 +88,17 @@ const prepareData = (
         regionData.retries += 1;
         totalAttempts += 1;
       }
-      if (
-        result.resultType === "FINAL" &&
-        (result.hasErrors || result.hasFailures)
-      ) {
-        regionData.failures += 1;
+      if (result.resultType === "FINAL") {
+        if (result.hasErrors || result.hasFailures) {
+          regionData.failures += 1;
+          totalFailures += 1;
+        } else {
+          regionData.passing += 1;
+        }
       }
+      regionData.failureRate =
+        regionData.failures /
+        (regionData.failures + regionData.passing + regionData.degraded);
     }
   });
 
@@ -95,31 +112,44 @@ const prepareData = (
     buckets: data,
     totalAttempts,
     totalDegraded,
+    totalFailures,
   };
 };
 
-export const analyseRetriesAndDegradations = async (
+type StabilityAnalysis = {
+  degradationsAnalysis?: string;
+  retriesAnalysis?: string;
+  failuresAnalysis: string;
+  stability: Stability;
+};
+
+export const analyseStability = async (
   checkResults: CheckResultTable[],
   interval: {
     from: Date;
     to: Date;
   },
-): Promise<{ degradationsAnalysis?: string; retriesAnalysis?: string }> => {
+): Promise<StabilityAnalysis> => {
+  if (checkResults.length === 0) {
+    return {
+      failuresAnalysis: "No check results found",
+      stability: Stability.UNKNOWN,
+    };
+  }
+
   const { buckets, totalAttempts, totalDegraded } = prepareData(
     checkResults,
     interval,
   );
 
-  if (totalDegraded === 0 && totalAttempts === 0) {
-    return {};
-  }
-
   const response = await generateObject(
-    analyseDegradationAndRetriesTimeline(buckets, totalAttempts, totalDegraded),
+    stabilityPrompt(buckets, totalAttempts, totalDegraded),
   );
 
-  const result: { degradationsAnalysis?: string; retriesAnalysis?: string } =
-    {};
+  const result: StabilityAnalysis = {
+    failuresAnalysis: response.object.failuresAnalysis,
+    stability: response.object.stability,
+  };
   if (totalDegraded > 0) {
     result.degradationsAnalysis = response.object.degradationsAnalysis;
   }
