@@ -110,7 +110,10 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
 
       const accountId = process.env.CHECKLY_ACCOUNT_ID!;
       try {
-        const { message } = await accountSummary(accountId);
+        const { message } = await accountSummary(
+          accountId,
+          last24h(new Date()),
+        );
         await respond({
           response_type: "in_channel",
           ...message,

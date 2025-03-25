@@ -12,8 +12,10 @@ import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
 import { findErrorClustersForChecks } from "../db/error-cluster";
 import { getExtraAccountSetupContext } from "./checkly-integration-utils";
 
-export async function accountSummary(accountId: string) {
-  const interval = last24h(new Date());
+export async function accountSummary(
+  accountId: string,
+  interval: { from: Date; to: Date },
+) {
   const account = await checkly.getAccount(accountId);
 
   const accountSummary = await getAccountSummary();
@@ -35,9 +37,9 @@ export async function accountSummary(accountId: string) {
     checkResultsWithCheckpoints,
   );
 
-  const checkIdsWithChangePoints = checkResultsWithCheckpoints.map(
-    (cr) => cr.checkId,
-  );
+  const checkIdsWithChangePoints = [
+    ...new Set(checkResultsWithCheckpoints.map((cr) => cr.checkId)),
+  ];
   const checksWithChangePoints = await readChecks(checkIdsWithChangePoints);
 
   const failingChecksGoals = await summarizeChecksGoal(checksWithChangePoints);
@@ -116,12 +118,8 @@ async function getChangePoints(
     to: interval.to,
   });
 
-  const aggregatedCheckResultsWithFailures = aggregatedCheckResults.filter(
-    (cr) => (cr.errorCount > 0 || cr.degradedCount > 0) && cr.passingCount > 0,
-  );
-
   const labeledCheckResults = await summarizeCheckResultsToLabeledCheckStatus(
-    aggregatedCheckResultsWithFailures,
+    aggregatedCheckResults,
   );
 
   const checkResultsWithCheckpoints = labeledCheckResults
