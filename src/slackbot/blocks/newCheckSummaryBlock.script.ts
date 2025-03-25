@@ -25,11 +25,21 @@ async function main() {
       successRate: 0,
       failureCount: 10,
       errorPatterns: [
-        { description: "This is a failure pattern", count: 5553, id: "123" },
+        {
+          description: "This is a failure pattern",
+          count: 5553,
+          id: "123",
+          firstSeenAt: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+          ),
+        },
         {
           description: "This is another failure pattern",
           count: 123,
           id: "511",
+          firstSeenAt: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+          ),
         },
       ],
     }),
@@ -43,11 +53,21 @@ async function main() {
       successRate: 0,
       failureCount: 10,
       errorPatterns: [
-        { description: "This is a failure pattern", count: 11, id: "123" },
+        {
+          description: "This is a failure pattern",
+          count: 11,
+          id: "123",
+          firstSeenAt: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+          ),
+        },
         {
           description: "This is another failure pattern",
           count: 12,
           id: "511",
+          firstSeenAt: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+          ),
         },
       ],
     }),
