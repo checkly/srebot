@@ -92,6 +92,7 @@ export async function accountSummary(
       id: ec.id,
       description: ec.error_message.split("\n")[0],
       count: ec.count,
+      firstSeen: ec.first_seen_at,
     })),
   });
 
