@@ -39,11 +39,13 @@ describe("accountSummaryBlock", () => {
           id: "123",
           description: "Error Pattern #1",
           count: 100,
+          firstSeen: new Date("2025-03-24T00:00:00Z"),
         },
         {
           id: "124",
           description: "Error Pattern #2",
           count: 100,
+          firstSeen: new Date("2025-03-24T00:00:00Z"),
         },
       ],
     });
@@ -70,6 +72,7 @@ describe("accountSummaryBlock", () => {
           id: "123",
           description: "Error Pattern #1",
           count: 10,
+          firstSeen: new Date("2025-03-24T00:00:00Z"),
         },
       ],
     });
