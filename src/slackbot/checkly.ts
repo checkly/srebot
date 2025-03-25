@@ -17,6 +17,7 @@ import { createMultipleCheckAnalysisBlock } from "./blocks/multipleChecksAnalysi
 import { generateHeatmap } from "../heatmap/generateHeatmap";
 import { accountSummary } from "./accountSummaryCommandHandler";
 import { checkSummary } from "./commands/check-summary";
+import { interval } from "date-fns";
 
 async function checkResultSummary(checkId: string, checkResultId: string) {
   const start = Date.now();
@@ -103,17 +104,17 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     await ack();
     const args = command.text.split(" ");
     if (args.length == 1 && args[0].trim() === "") {
+      const accountId = process.env.CHECKLY_ACCOUNT_ID!;
+      const account = await checkly.getAccount(accountId);
+      const interval = last24h(new Date());
+
       await respond({
         response_type: "ephemeral",
-        text: "Fetching account summary... ⏳",
+        text: `Analysing account "${account.name}"... ⏳`,
       });
 
-      const accountId = process.env.CHECKLY_ACCOUNT_ID!;
       try {
-        const { message } = await accountSummary(
-          accountId,
-          last24h(new Date()),
-        );
+        const { message } = await accountSummary(accountId, interval);
         await respond({
           response_type: "in_channel",
           ...message,

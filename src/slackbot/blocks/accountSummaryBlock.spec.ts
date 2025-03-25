@@ -7,6 +7,9 @@ describe("accountSummaryBlock", () => {
       passingChecks: 50,
       degradedChecks: 0,
       failingChecks: 0,
+      passingChecksDelta: 0,
+      degradedChecksDelta: 0,
+      failingChecksDelta: 0,
       hasIssues: false,
       issuesSummary: "No issues detected in the last 24h.",
       failingChecksGoals: "No failing checks detected in the last 24h.",
@@ -23,6 +26,9 @@ describe("accountSummaryBlock", () => {
       passingChecks: 45,
       degradedChecks: 5,
       failingChecks: 0,
+      passingChecksDelta: 0,
+      degradedChecksDelta: 0,
+      failingChecksDelta: 0,
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
@@ -49,8 +55,11 @@ describe("accountSummaryBlock", () => {
     const blocks = createAccountSummaryBlock({
       accountName: "Failing",
       passingChecks: 40,
+      passingChecksDelta: 0,
       degradedChecks: 2,
+      degradedChecksDelta: 0,
       failingChecks: 8,
+      failingChecksDelta: 0,
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
