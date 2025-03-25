@@ -1,7 +1,6 @@
 import { generateText } from "ai";
 import { checkly } from "../checkly/client";
 import { findCheckResultsAggregated } from "../db/check-results";
-import { last24h } from "../prompts/checkly-data";
 import { summarizeCheckResultsToLabeledCheckStatus } from "./check-results-labeled";
 import {
   summariseMultipleChecksGoal,
@@ -33,6 +32,9 @@ export async function accountSummary(
     interval,
   );
 
+  const { passingChecksDelta, degradedChecksDelta, failingChecksDelta } =
+    getCheckCountsDelta(checkResultsWithCheckpoints);
+
   const changePointsSummary = await summarizeChangePoints(
     checkResultsWithCheckpoints,
   );
@@ -52,8 +54,11 @@ export async function accountSummary(
   const message = createAccountSummaryBlock({
     accountName: account.name,
     passingChecks: accountSummary.passing,
+    passingChecksDelta,
     degradedChecks: accountSummary.degraded,
+    degradedChecksDelta,
     failingChecks: accountSummary.failing,
+    failingChecksDelta,
     hasIssues: checkResultsWithCheckpoints.length > 0,
     issuesSummary: changePointsSummary,
     failingChecksGoals,
@@ -153,4 +158,39 @@ async function getAccountSummary() {
   );
 
   return { ...counts, checks: activatedChecks };
+}
+function getCheckCountsDelta(
+  checkResultsWithCheckpoints: {
+    checkId: string;
+    runLocation: string;
+    changePoints: {
+      timestamp: number;
+      formattedTimestamp: string;
+      severity: string;
+    }[];
+  }[],
+): {
+  passingChecksDelta: any;
+  degradedChecksDelta: any;
+  failingChecksDelta: number;
+} {
+  let passingChecksDelta = 0;
+  let degradedChecksDelta = 0;
+  let failingChecksDelta = 0;
+
+  for (const checkResult of checkResultsWithCheckpoints) {
+    if (checkResult.changePoints.length > 0) {
+      const lastChangePoint =
+        checkResult.changePoints[checkResult.changePoints.length - 1];
+      if (lastChangePoint.severity === "passing") {
+        passingChecksDelta++;
+        failingChecksDelta--;
+      } else if (lastChangePoint.severity === "failing") {
+        failingChecksDelta++;
+        passingChecksDelta--;
+      }
+    }
+  }
+
+  return { passingChecksDelta, degradedChecksDelta, failingChecksDelta };
 }

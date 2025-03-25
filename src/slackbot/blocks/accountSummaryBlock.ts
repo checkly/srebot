@@ -11,23 +11,44 @@ interface AccountSummaryProps {
   failingChecksGoals: string;
   failingCheckIds: string[];
   errorPatterns: { id: string; description: string; count: number }[];
+  passingChecksDelta: number;
+  degradedChecksDelta: number;
+  failingChecksDelta: number;
 }
 
 export function createAccountSummaryBlock({
-  accountName,
   passingChecks,
+  passingChecksDelta,
   degradedChecks,
+  degradedChecksDelta,
   failingChecks,
-  hasIssues,
+  failingChecksDelta,
   issuesSummary,
   failingChecksGoals,
   failingCheckIds,
   errorPatterns,
+  accountName,
 }: AccountSummaryProps) {
-  const state = hasIssues ? "❌" : "✅";
-  const stateText = hasIssues
-    ? `Account ${accountName} has issues.`
-    : `Account ${accountName} appears stable.`;
+  const passingChecksDeltaText =
+    passingChecksDelta > 0
+      ? `(+${passingChecksDelta})`
+      : passingChecksDelta < 0
+        ? `(${passingChecksDelta})`
+        : "";
+  const degradedChecksDeltaText =
+    degradedChecksDelta > 0
+      ? `(+${degradedChecksDelta})`
+      : degradedChecksDelta < 0
+        ? `(${degradedChecksDelta})`
+        : "";
+  const failingChecksDeltaText =
+    failingChecksDelta > 0
+      ? `(+${failingChecksDelta})`
+      : failingChecksDelta < 0
+        ? `(${failingChecksDelta})`
+        : "";
+
+  errorPatterns.sort((a, b) => b.count - a.count);
 
   return {
     blocks: [
@@ -35,96 +56,56 @@ export function createAccountSummaryBlock({
         type: "header",
         text: {
           type: "plain_text",
-          text: `${state} ${stateText}`,
+          text: `Account "${accountName}" last 24h`,
           emoji: true,
         },
       },
       {
-        type: "rich_text",
-        elements: [
-          {
-            type: "rich_text_section",
-            elements: [
-              {
-                type: "text",
-                text: "Blast Radius:\n",
-                style: {
-                  bold: true,
-                },
-              },
-            ],
-          },
-          {
-            type: "rich_text_list",
-            style: "bullet",
-            indent: 0,
-            elements: [
-              {
-                type: "rich_text_section",
-                elements: [
-                  {
-                    type: "text",
-                    text: `${issuesSummary}`,
-                  },
-                ],
-              },
-              {
-                type: "rich_text_section",
-                elements: [
-                  {
-                    type: "text",
-                    text: `${failingChecksGoals}`,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `:white_check_mark: *PASSING*: ${passingChecks} ${passingChecksDeltaText}\n :warning: *DEGRADED*: ${degradedChecks} ${degradedChecksDeltaText}\n:x: *FAILING*: ${failingChecks} ${failingChecksDeltaText}`,
+        },
       },
-      ...(errorPatterns.length > 0
-        ? [
-            {
-              type: "rich_text",
-              elements: [
-                {
-                  type: "rich_text_section",
-                  elements: [
-                    {
-                      type: "text",
-                      text: "Top 3 Error Patterns:\n",
-                      style: {
-                        bold: true,
-                      },
-                    },
-                  ],
-                },
-                {
-                  type: "rich_text_list",
-                  style: "bullet",
-                  indent: 0,
-                  elements: errorPatterns.slice(0, 3).map((errorPattern) => ({
-                    type: "rich_text_section",
-                    elements: [
-                      {
-                        type: "text",
-                        text: `${errorPattern.description} (${errorPattern.count} times)`,
-                      },
-                    ],
-                  })),
-                },
-              ],
-            },
-          ]
-        : []),
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `:white_check_mark: *PASSING*: ${passingChecks} :warning: *DEGRADED*: ${degradedChecks} :x: *FAILING*: ${failingChecks}`,
+          text: `${issuesSummary}`,
         },
       },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Impact Analysis:*\n${failingChecksGoals}`,
+        },
+      },
+      ...(errorPatterns.length > 0
+        ? [
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: "*Top 3 Error Patterns:*\n",
+              },
+            },
+            ...errorPatterns.slice(0, 3).flatMap((errorPattern, index) => [
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: `${index + 1}. \`${errorPattern.description}\` (${errorPattern.count} times)`,
+                },
+              },
+            ]),
+          ]
+        : []),
       ...(failingCheckIds.length > 0 || errorPatterns.length > 0
         ? [
+            {
+              type: "divider",
+            },
             {
               type: "actions",
               elements: [
