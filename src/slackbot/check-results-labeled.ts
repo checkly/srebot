@@ -42,7 +42,12 @@ export async function summarizeCheckResultsToLabeledCheckStatus(
       return acc;
     }, new Map<string, { meanPassRate: number; passRateStdDev: number }>());
 
-  log.debug("MEAN PASS RATE\n" + meanPassRatePerCheckAndLocation.toString());
+  log.debug(
+    {
+      meanPassRates: Array.from(meanPassRatePerCheckAndLocation.entries()),
+    },
+    "MEAN PASS RATE",
+  );
 
   interface CheckTimeSlice {
     checkId: string;
@@ -61,11 +66,14 @@ export async function summarizeCheckResultsToLabeledCheckStatus(
 
   const checkIdLocationTimeSliceWithPassRateStdDev = df
     .groupBy((row) => `${row.checkId}|${row.runLocation}|${row.startedAtBin}`)
-    .select((group): CheckTimeSlice => {
+    .select((group): CheckTimeSlice | null => {
       const checkId = group.first().checkId;
       const runLocation = group.first().runLocation;
       const { meanPassRate, passRateStdDev } =
         meanPassRatePerCheckAndLocation.get(`${checkId}|${runLocation}`)!;
+      if (meanPassRate == 0 || meanPassRate == 1) {
+        return null;
+      }
 
       const count = group.deflate((row) => row.count).sum();
       const passing = group.deflate((row) => row.passingCount).sum();
@@ -90,6 +98,7 @@ export async function summarizeCheckResultsToLabeledCheckStatus(
         failRate: failRate,
       };
     })
+    .filter((row) => row !== null)
     .inflate()
     .withSeries<CheckTimeSlice & { cumSumPassRate: number }>(
       "cumSumPassRate",
@@ -123,8 +132,11 @@ export async function summarizeCheckResultsToLabeledCheckStatus(
     );
 
   log.debug(
-    "CHECK ID LOCATION TIME SLICE WITH PASS RATE STD DEV\n" +
-      checkIdLocationTimeSliceWithPassRateStdDev.toString(),
+    {
+      checkIdLocationTimeSliceWithPassRateStdDev:
+        checkIdLocationTimeSliceWithPassRateStdDev.toArray(),
+    },
+    "CHECK ID LOCATION TIME SLICE WITH PASS RATE STD DEV",
   );
 
   const checksWithChangePoints = checkIdLocationTimeSliceWithPassRateStdDev
@@ -144,18 +156,18 @@ export async function summarizeCheckResultsToLabeledCheckStatus(
         changePoints: changePoints.map((cp) => ({
           timestamp: cp.startedAtBin.getTime(),
           formattedTimestamp: hourlyFormatter.format(cp.startedAtBin),
-          severity:
-            cp.failRate > 0
-              ? "FAILING"
-              : cp.degradedRate > 0
-                ? "DEGRADED"
-                : "PASSING",
+          severity: cp.cumSumPassRate > 0 ? "FAILING" : "PASSING", // TODO work out how to get degraded
         })),
       };
     })
     .inflate();
 
-  log.debug("CHECKS WITH CHANGE POINTS\n" + checksWithChangePoints.toString());
+  log.debug(
+    {
+      checksWithChangePoints: checksWithChangePoints.toArray(),
+    },
+    "CHECKS WITH CHANGE POINTS",
+  );
 
   return checksWithChangePoints;
 }
