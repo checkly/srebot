@@ -88,7 +88,7 @@ export async function findErrorClustersForChecks(
   checkIds: string | string[],
   options: {
     interval?: { from: Date; to: Date };
-    resultType?: "FINAL";
+    resultType?: "FINAL" | "ATTEMPT";
   } = {},
 ): Promise<ErrorClusterWithCount[]> {
   return postgres<ErrorClusterWithCount>("error_cluster")
