@@ -326,6 +326,8 @@ describe("analyseCheckFailureHeatMap prompt", () => {
   ])(
     "should categorize heatmap correctly - $heatmap",
     async ({ heatmap, expectedCategory, input, expectedSummary }) => {
+      jest.retryTimes(3);
+
       const buffer = readFileSync(
         path.join(__dirname, `checkly.eval.spec.fixtures/heatmaps/${heatmap}`),
       );

@@ -145,26 +145,12 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
     } else if (args.length === 1 && !!args[0] && getIsUUID(args[0])) {
       const checkId = args[0];
       try {
-        await respond({
-          response_type: "ephemeral",
-          text: `Analysing check \`${checkId}\`... ⏳`,
-        });
-
-        const { message, image } = await checkSummary(checkId);
+        const { message } = await checkSummary(checkId);
 
         await respond({
           response_type: "in_channel",
           ...message,
         });
-
-        if (image) {
-          await app.client.files.uploadV2({
-            channel_id: command.channel_id,
-            file: image,
-            filename: "CheckResultsPerLocation.png",
-            title: "Check Results per Location",
-          });
-        }
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         log.error(
@@ -184,19 +170,7 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
       // FIXME find a way to send the image to slack (al)
     } else if (args.length === 2) {
       const [checkId, checkResultId] = args;
-      const { message, image } = await checkResultSummary(
-        checkId,
-        checkResultId,
-      );
-
-      if (image) {
-        await app.client.files.uploadV2({
-          channel_id: command.channel_id,
-          file: image,
-          filename: "CheckResultsPerLocation.png",
-          title: "Check Results per Location",
-        });
-      }
+      const { message } = await checkResultSummary(checkId, checkResultId);
 
       await respond({
         response_type: "in_channel",

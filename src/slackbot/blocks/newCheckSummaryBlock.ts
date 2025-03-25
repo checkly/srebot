@@ -7,155 +7,151 @@ export type FailurePattern = {
   firstSeenAt: Date;
 };
 
+type CheckState = "PASSING" | "FLAKY" | "FAILING" | "UNKNOWN";
+
 interface CheckStats {
   checkName: string;
   checkId: string;
   checkSummary: string;
-  checkState: "PASSING" | "FLAKY" | "FAILING";
-  lastFailure?: Date;
+  checkState: CheckState;
   failureCount: number;
   successRate: number;
   errorPatterns: FailurePattern[];
+
+  lastFailureAt?: Date;
   lastFailureId?: string;
-  timeLocationSummary: string;
+
+  failureAnalysis: string;
   retriesAnalysis?: string;
   degradationsAnalysis?: string;
 }
 
 const CHECKLY_APP_BASE_URL = "https://app.checklyhq.com/checks/";
 
+enum COLORS {
+  FAILING = "#FF4949",
+  FLAKY = "#FFC82C",
+  PASSING = "#13CE66",
+  UNKNOWN = "#494746",
+}
+
+const getMetadata = (stats: CheckStats): { title: string; color: string } => {
+  let prelude = `Check ${stats.checkName}`;
+  switch (stats.checkState) {
+    case "PASSING":
+      return { title: `${prelude} - is passing`, color: COLORS.PASSING };
+    case "FAILING":
+      return { title: `${prelude} - is failing`, color: COLORS.FAILING };
+    case "FLAKY":
+      return { title: `${prelude} - is flaky`, color: COLORS.FLAKY };
+    case "UNKNOWN":
+      return {
+        title: `${prelude} - is in an unknown state`,
+        color: COLORS.UNKNOWN,
+      };
+  }
+};
+
+function formatColumnLayout(
+  items: [string, string][],
+  columnWidth: number = 40,
+): string {
+  // Separate headers and values
+  const headers = items.map(([header]) => {
+    const cleanHeader = header.replace(/[*_~`]/g, "");
+    return `*${cleanHeader}*`;
+  });
+
+  const values = items.map(([, value]) => value);
+
+  // Create header row
+  const headerRow = headers
+    .slice(0, -1)
+    .map((header) => header.padEnd(columnWidth))
+    .concat(headers.slice(-1))
+    .join("");
+
+  // Create value row
+  const valueRow = values.join(" ".repeat(columnWidth));
+
+  return `${headerRow}\n${valueRow}`;
+}
+
 function generateCheckSummaryBlock(stats: CheckStats) {
-  // Helper to get emoji based on state
-  const getStateEmoji = (state: string) => {
-    switch (state) {
-      case "PASSING":
-        return "✅";
-      case "FLAKY":
-        return "⚠️";
-      case "FAILING":
-        return "❌";
-      default:
-        return "❓";
-    }
-  };
-
-  const extraTitle =
-    stats.checkState != "PASSING"
-      ? ` - ${stats.failureCount} failures in the last 24 hours`
-      : "";
-
   const checkUrl = `${CHECKLY_APP_BASE_URL}${stats.checkId}`;
-
   const lastFailureLink = `${checkUrl}/results/${stats.lastFailureId}`;
 
-  const lastFailureSection =
-    stats.lastFailure && lastFailureLink
-      ? `*Last failure:* <!date^${Math.floor(stats.lastFailure.getTime() / 1000)}^{ago}|${stats.lastFailure.toLocaleString()}> <${lastFailureLink}|view>`
-      : `*Last failure:* _No failures in the last 24 hours_`;
+  const lastFailureText = stats.lastFailureAt
+    ? `<${lastFailureLink}|${formatDistanceToNow(stats.lastFailureAt, { addSuffix: true })}>`
+    : "No failures in the last 24 hours";
 
-  const failureSummaryElements = [
+  const impactAnalysis = [
+    stats.failureAnalysis,
+    stats.degradationsAnalysis,
+    stats.retriesAnalysis,
+  ]
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((analysis) => `• ${analysis}`)
+    .join("\n");
+
+  const errorPatternsText =
+    stats.errorPatterns
+      .slice(0, 3)
+      .map(
+        (pattern, index) =>
+          `${index + 1}. \`${pattern.description}\` (${pattern.count} times)\n     _First seen ${formatDistanceToNow(pattern.firstSeenAt, { addSuffix: true })}_`,
+      )
+      .join("\n") || "_No known error patterns_";
+
+  const statusText = `_${stats.failureCount} failure(s) in the last 24 hours_`;
+
+  const actions = [
     {
-      type: "rich_text_section",
-      elements: [
-        {
-          type: "text",
-          text: `${stats.timeLocationSummary}`,
-        },
-      ],
+      name: "check",
+      text: "View this check",
+      type: "button",
+      url: checkUrl,
     },
   ];
-  if (stats.degradationsAnalysis) {
-    failureSummaryElements.push({
-      type: "rich_text_section",
-      elements: [
-        {
-          type: "text",
-          text: `${stats.degradationsAnalysis}`,
-        },
-      ],
-    });
-  }
-  if (stats.retriesAnalysis) {
-    failureSummaryElements.push({
-      type: "rich_text_section",
-      elements: [
-        {
-          type: "text",
-          text: `${stats.retriesAnalysis}`,
-        },
-      ],
+  if (stats.lastFailureId) {
+    actions.push({
+      name: "failure",
+      text: "View last failure",
+      type: "button",
+      url: lastFailureLink,
     });
   }
 
+  const { color, title } = getMetadata(stats);
   return {
-    blocks: [
+    attachments: [
       {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Check:* <${checkUrl}|${stats.checkName}> (${getStateEmoji(stats.checkState)} ${stats.checkState}${extraTitle})
-*Check summary:* ${stats.checkSummary}`,
-        },
+        color,
+        title,
+        fallback: `Check Summary for ${stats.checkName}`,
+        title_link: checkUrl,
+        text: [
+          `\u200B`,
+          stats.checkSummary,
+          statusText,
+          `\n`,
+          formatColumnLayout(
+            [
+              ["Availability:", `${stats.successRate}%`],
+              ["Last failed at:", lastFailureText],
+            ],
+            80,
+          ),
+          `\n`,
+          "*Impact Analysis:*",
+          impactAnalysis,
+          `\n`,
+          "*Top 3 Error Patterns:*",
+          errorPatternsText,
+        ].join("\n"),
+        actions: actions,
       },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `${lastFailureSection}
-*Success Rate:* ${stats.successRate}%`,
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Failures Summary:*`,
-        },
-      },
-      {
-        type: "rich_text",
-        elements: [
-          {
-            type: "rich_text_list",
-            style: "bullet",
-            indent: 0,
-            border: 0,
-            elements: failureSummaryElements,
-          },
-        ],
-      },
-
-      ...(stats.errorPatterns && stats.errorPatterns.length > 0
-        ? [
-            {
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: `*Error Patterns:*`,
-              },
-            },
-            {
-              type: "rich_text",
-              elements: [
-                {
-                  type: "rich_text_list",
-                  style: "bullet",
-                  indent: 0,
-                  border: 0,
-                  elements: stats.errorPatterns.map((errorPattern) => ({
-                    type: "rich_text_section",
-                    elements: [
-                      {
-                        type: "text",
-                        text: `${errorPattern.description} (${errorPattern.count} times) \nFirst seen: ${formatDistanceToNow(errorPattern.firstSeenAt, { addSuffix: true })}`,
-                      },
-                    ],
-                  })),
-                },
-              ],
-            },
-          ]
-        : []),
     ],
   };
 }

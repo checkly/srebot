@@ -5,4 +5,5 @@ then
 else
   echo "Bun not found—falling back to npm (npx lint-staged)..."
   npx lint-staged
+  npx tsc --noEmit
 fi
