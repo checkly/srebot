@@ -63,6 +63,15 @@ No failing checks detected in the last 24h.",
     {
       "elements": [
         {
+          "text": {
+            "emoji": true,
+            "text": "Open Checkly Dashboard",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "url": "https://app.checklyhq.com/",
+        },
+        {
           "action_id": "list_failing_checks",
           "text": {
             "emoji": true,
@@ -145,6 +154,15 @@ No failing checks detected in the last 24h.",
     {
       "elements": [
         {
+          "text": {
+            "emoji": true,
+            "text": "Open Checkly Dashboard",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "url": "https://app.checklyhq.com/",
+        },
+        {
           "action_id": "list_failing_checks",
           "text": {
             "emoji": true,
@@ -205,6 +223,23 @@ No failing checks detected in the last 24h.",
         "type": "mrkdwn",
       },
       "type": "section",
+    },
+    {
+      "type": "divider",
+    },
+    {
+      "elements": [
+        {
+          "text": {
+            "emoji": true,
+            "text": "Open Checkly Dashboard",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "url": "https://app.checklyhq.com/",
+        },
+      ],
+      "type": "actions",
     },
   ],
 }

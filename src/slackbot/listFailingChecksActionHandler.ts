@@ -45,10 +45,13 @@ export const listFailingChecksActionHandler = () => {
         },
         group: groupNamesForCheckIds[group.first().checkId],
         lastFailure: (() => {
-          const lastFailure = group
+          const orderedFailures = group
             .where((cr) => cr.hasFailures || cr.hasErrors || cr.isDegraded)
-            .orderBy((cr) => cr.startedAt)
-            .last();
+            .orderBy((cr) => cr.startedAt);
+          if (orderedFailures.none()) {
+            return null;
+          }
+          const lastFailure = orderedFailures.last();
           return lastFailure
             ? {
                 checkResultId: lastFailure.id,

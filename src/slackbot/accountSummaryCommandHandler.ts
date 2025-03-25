@@ -33,8 +33,31 @@ export async function accountSummary(
     interval,
   );
 
-  const { passingChecksDelta, degradedChecksDelta, failingChecksDelta } =
-    getCheckCountsDelta(checkResultsWithCheckpoints);
+  const labeledChecks = labeledChecksFromChangePoints(
+    checkResultsWithCheckpoints,
+  );
+
+  const delta = labeledChecks
+    .groupBy((row) => row.checkId)
+    .select((group) => {
+      return {
+        checkId: group.first().checkId,
+        delta: Math.sign(group.deflate((row) => row.delta).sum()),
+      };
+    })
+    .inflate()
+    .getSeries("delta")
+    .sum();
+  const { passingChecksDelta, degradedChecksDelta, failingChecksDelta } = {
+    passingChecksDelta: delta,
+    degradedChecksDelta: 0,
+    failingChecksDelta: delta * -1,
+  };
+
+  const failingChecks = labeledChecks
+    .filter((row) => row.delta < 0)
+    .getSeries<string>("checkId")
+    .toArray();
 
   const changePointsSummary = await summarizeChangePoints(
     checkResultsWithCheckpoints,
@@ -63,7 +86,7 @@ export async function accountSummary(
     hasIssues: checkResultsWithCheckpoints.length > 0,
     issuesSummary: changePointsSummary,
     failingChecksGoals,
-    failingCheckIds: checkIdsWithChangePoints,
+    failingCheckIds: failingChecks,
     errorPatterns: errorPatterns.map((ec) => ({
       id: ec.id,
       description: ec.error_message.split("\n")[0],
@@ -160,7 +183,8 @@ async function getAccountSummary() {
 
   return { ...counts, checks: activatedChecks };
 }
-function getCheckCountsDelta(
+
+function labeledChecksFromChangePoints(
   checkResultsWithCheckpoints: {
     checkId: string;
     runLocation: string;
@@ -170,35 +194,13 @@ function getCheckCountsDelta(
       severity: "PASSING" | "DEGRADED" | "FAILING";
     }[];
   }[],
-): {
-  passingChecksDelta: number;
-  degradedChecksDelta: number;
-  failingChecksDelta: number;
-} {
-  let df = new dataForge.DataFrame(checkResultsWithCheckpoints);
-  let deltaInCheckStatus = df
-    .select((row) => {
-      const lastChangePoint = row.changePoints[row.changePoints.length - 1];
-      return {
-        checkId: row.checkId,
-        runLocation: row.runLocation,
-        delta: lastChangePoint.severity === "PASSING" ? 1 : -1,
-      };
-    })
-    .groupBy((row) => row.checkId)
-    .select((group) => {
-      return {
-        checkId: group.first().checkId,
-        delta: Math.sign(group.deflate((row) => row.delta).sum()),
-      };
-    })
-    .inflate()
-    .getSeries("delta")
-    .sum();
-
-  return {
-    passingChecksDelta: deltaInCheckStatus,
-    degradedChecksDelta: 0,
-    failingChecksDelta: deltaInCheckStatus * -1,
-  };
+) {
+  return new dataForge.DataFrame(checkResultsWithCheckpoints).select((row) => {
+    const lastChangePoint = row.changePoints[row.changePoints.length - 1];
+    return {
+      checkId: row.checkId,
+      runLocation: row.runLocation,
+      delta: lastChangePoint.severity === "PASSING" ? 1 : -1,
+    };
+  });
 }
