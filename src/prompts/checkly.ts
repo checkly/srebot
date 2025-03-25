@@ -750,8 +750,8 @@ Answer the following:
 
 ### **Expected Output:**
 Respond with a JSON object containing exactly two fields:
-1. **degradationsAnalysis**: Summary of degradation behavior, including totalDegradations (max 1 sentence).
-2. **retriesAnalysis**: Summary of retry behavior, including totalRetries (max 1 sentence).
+1. **degradationsAnalysis**: Summary of degradation behavior, including explicitly mentioning the number of total degradations (max 1 sentence).
+2. **retriesAnalysis**: Summary of retry behavior, explicitly mentioning the number of total retries (max 1 sentence).
 `,
     },
     {
@@ -775,12 +775,12 @@ Total degradations: ${totalDegradations}, Total retries: ${totalRetries}`,
     degradationsAnalysis: z
       .string()
       .describe(
-        "Short summary (max 1 sentence) analyzing degradation patterns leading to failures, explicitly mentioning totalDegradations.",
+        "Short summary (max 1 sentence) analyzing degradation patterns leading to failures, explicitly mentioning the number of total degradations.",
       ),
     retriesAnalysis: z
       .string()
       .describe(
-        "Short summary (max 1 sentence) analyzing retry patterns leading to failures, explicitly mentioning totalRetries.",
+        "Short summary (max 1 sentence) analyzing retry patterns leading to failures, explicitly mentioning the number of total retries.",
       ),
   });
 
