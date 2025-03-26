@@ -37,7 +37,7 @@ const prepareData = (
   > = {};
   const bucketStart = new Date(interval.from.getTime());
 
-  while (bucketStart < interval.to) {
+  while (bucketStart <= interval.to) {
     const bucketTime = new Date(bucketStart);
     bucketTime.setMinutes(
       Math.floor(bucketTime.getMinutes() / bucketSizeMinutes) *
