@@ -14,7 +14,7 @@ export const analyseMultipleChecks = async (
   const targetChecks = await findTargetChecks(arg);
 
   const output = await generateText(
-    summariseMultipleChecksGoal(targetChecks, { maxTokens: 30 }),
+    summariseMultipleChecksGoal(targetChecks, { maxTokens: 500 }),
   );
 
   return {
