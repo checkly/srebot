@@ -45,9 +45,10 @@ export class PublicApiImporter {
       "Starting to sync check results",
     );
 
+    let total = 0;
     for (const checkId of checkIds) {
       try {
-        await this.syncResultsForCheck(checkId, minutesToSyncBack);
+        total += await this.syncResultsForCheck(checkId, minutesToSyncBack);
       } catch (err) {
         console.error(
           "Failed to sync check result for checkId: ",
@@ -60,8 +61,9 @@ export class PublicApiImporter {
       {
         duration_ms: Date.now() - startedAt,
         checks_count: checkIds.length,
+        total_check_results: total,
       },
-      "All checks synced",
+      "Check results synced",
     );
   }
 
@@ -90,9 +92,7 @@ export class PublicApiImporter {
   private async syncResultsForCheck(
     checkId: string,
     minutesBackToSync: number,
-  ) {
-    const startedAt = Date.now();
-
+  ): Promise<number> {
     const to = new Date();
     const from = subMinutes(to, minutesBackToSync);
 
@@ -116,14 +116,7 @@ export class PublicApiImporter {
       );
     }
 
-    log.info(
-      {
-        duration_ms: Date.now() - startedAt,
-        checkId,
-        total,
-      },
-      "Check results for check synced",
-    );
+    return total;
   }
 
   private getPeriodsToSync = async (
