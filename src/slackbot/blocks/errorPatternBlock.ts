@@ -5,15 +5,13 @@ export const LIST_ERROR_PATTERNS_ACTION_ID = "list_error_patterns";
 export function createErrorPatternsBlock(
   errorPatterns: ErrorClusterWithCount[],
 ) {
-  errorPatterns.forEach((errorPattern) => {
-    console.log(errorPattern.error_message);
-  });
   return {
+    text: "Error Patterns - Top 20",
     blocks: [
       {
         text: {
           emoji: true,
-          text: "Error Pattern - Top 20",
+          text: "Error Patterns - Top 20",
           type: "plain_text",
         },
         type: "header",

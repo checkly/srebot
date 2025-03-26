@@ -1,6 +1,7 @@
 import { LIST_ERROR_PATTERNS_ACTION_ID } from "./errorPatternBlock";
 import { LIST_FAILING_CHECKS_ACTION_ID } from "./failingChecksBlock";
 import { MultipleChecksGoalResponse } from "../../prompts/summarizeCheckGoals";
+import { NOOP_ACTION_ID } from "../noopActionHandler";
 interface AccountSummaryProps {
   accountName: string;
   passingChecks: number;
@@ -119,6 +120,7 @@ export function createAccountSummaryBlock({
               emoji: true,
               text: "Open Checkly Dashboard",
             },
+            action_id: NOOP_ACTION_ID,
             url: `https://app.checklyhq.com/`,
           },
           ...(failingCheckIds.length > 0

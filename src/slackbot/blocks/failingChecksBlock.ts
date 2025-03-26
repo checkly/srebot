@@ -33,6 +33,7 @@ export function renderFailingChecksBlock(checks: Check[]) {
   const checkResultUrl = (checkId: string, checkResultId: string) =>
     checkly.getCheckResultAppUrl(checkId, checkResultId);
   return {
+    text: "Failing Checks",
     blocks: [
       {
         type: "header",

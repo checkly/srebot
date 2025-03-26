@@ -4,8 +4,8 @@ import { last24h } from "../prompts/checkly-data";
 import * as dataForge from "data-forge";
 import { renderFailingChecksBlock } from "./blocks/failingChecksBlock";
 
-export const listFailingChecksActionHandler = () => {
-  return async ({ ack, respond, body }) => {
+export const listFailingChecksActionHandler = (app) => {
+  return async ({ ack, body }) => {
     await ack();
     const interval = last24h(new Date());
     const checkIds = (body.actions[0].value as string).split(",");
@@ -63,10 +63,10 @@ export const listFailingChecksActionHandler = () => {
       .toArray();
 
     const message = renderFailingChecksBlock(failedChecks);
-    await respond({
-      response_type: "in_channel",
+    await app.client.chat.postMessage({
+      thread_ts: body.message.ts,
+      channel: body.channel.id,
       ...message,
-      replace_original: false,
     });
   };
 };
