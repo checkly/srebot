@@ -100,7 +100,7 @@ export function createAccountSummaryBlock({
                 type: "section",
                 text: {
                   type: "mrkdwn",
-                  text: `${index + 1}. \`${errorPattern.description}\` (${errorPattern.count} times)\n      _First seen: <!date^${Math.floor(errorPattern.firstSeen.getTime() / 1000)}^{ago}|${errorPattern.firstSeen.toLocaleString()}>_`,
+                  text: `${index + 1}. \`${errorPattern.description}\` (${errorPattern.count} times)\n      _First seen: <!date^${Math.floor(errorPattern.firstSeen.getTime() / 1000)}^{ago}|${errorPattern.firstSeen.toISOString()}>_`,
                 },
               },
             ]),
