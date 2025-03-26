@@ -13,7 +13,7 @@ jobs:
         run: |
           curl -L https://github.com/render-oss/cli/releases/download/v2.1.1/cli_2.1.1_linux_amd64.zip -o render.zip
           unzip render.zip
-          sudo mv cli_2.1.1 /usr/local/bin/render
+          sudo mv cli_v2.1.1 /usr/local/bin/render
 
       - name: Authenticate with Render
         env:
