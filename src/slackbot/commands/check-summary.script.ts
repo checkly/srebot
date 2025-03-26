@@ -6,7 +6,7 @@ import { checkSummary } from "./check-summary";
 initConfig();
 
 const main = async () => {
-  const checkId = process.argv[2] || "48325fbe-2d06-42a9-8a63-71d0ca27b080";
+  const checkId = process.argv[2] || "97660b50-da30-46fa-bf39-8191c89aa1c7";
 
   console.log("Fetching check summary for", checkId);
   const result = await checkSummary(checkId);

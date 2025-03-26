@@ -14,6 +14,7 @@ import { slackFormatInstructions } from "./slack";
 import { z } from "zod";
 import { log } from "../log";
 import { CheckTable } from "../db/check";
+import { CheckTableMerged } from "../db/checks-merged";
 
 /** Maximum length for context analysis text to prevent oversized prompts */
 const CONTEXT_ANALYSIS_MAX_LENGTH = 200000;
@@ -198,7 +199,7 @@ export function summarizeMultipleChecksStatus(
 }
 
 export function summarizeTestGoalPrompt(
-  check: Check | CheckTable,
+  check: CheckTableMerged,
   extraContext: string | null = null,
 ): PromptDefinitionForText {
   let prompt = `The following details describe a test which is used to monitor an application.

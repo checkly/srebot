@@ -40,6 +40,12 @@ export async function readCheckGroup(id: bigint): Promise<CheckGroupTable> {
   return group;
 }
 
+export async function readCheckGroups(
+  ids: number[],
+): Promise<CheckGroupTable[]> {
+  return postgres<CheckGroupTable>("check_groups").whereIn("id", ids);
+}
+
 export async function insertCheckGroups(groups: CheckGroup[]) {
   const serializedGroups = groups.map((group) => ({
     id: group.id,

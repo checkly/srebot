@@ -1,4 +1,3 @@
-import { CheckGroupTable, readCheckGroup } from "../../db/check-groups";
 import { summarizeTestGoalPrompt } from "../../prompts/checkly";
 import { generateText } from "ai";
 import { last24h } from "../../prompts/checkly-data";
@@ -17,9 +16,9 @@ import {
   CheckResultsTimeSlice,
 } from "../check-result-slices";
 import { getExtraAccountSetupContext } from "../checkly-integration-utils";
-import { CheckTable, readCheck } from "../../db/check";
 import { keyBy } from "lodash";
 import { analyseStability } from "../analysis/analyseStability";
+import { CheckTableMerged, readCheckMerged } from "../../db/checks-merged";
 
 async function checkSummaryData(
   checkId: string,
@@ -84,7 +83,7 @@ async function checkSummaryData(
   };
 }
 
-const summarizeCheckGoal = async (check: CheckTable): Promise<string> => {
+const summarizeCheckGoal = async (check: CheckTableMerged): Promise<string> => {
   const extraAccountSetupContext = await getExtraAccountSetupContext();
   const prompt = summarizeTestGoalPrompt(check, extraAccountSetupContext);
   const { text: checkSummary } = await generateText(prompt);
@@ -149,19 +148,10 @@ const getCheckStatus = (checkResults: CheckResultTable[]): CheckStatus => {
   return "PASSING";
 };
 
-type CheckTableWithGroup = CheckTable & { group?: CheckGroupTable };
-
 export async function checkSummary(checkId: string) {
   const start = Date.now();
-  const check: CheckTableWithGroup = await readCheck(checkId);
-  if (check.groupId) {
-    // TODO introduce one utility that will fetch check and group together
-    const checkGroup = await readCheckGroup(BigInt(check.groupId));
-    check.locations = checkGroup.locations;
-    check.tags = [...new Set([...checkGroup.tags, ...check.tags])];
-    check.group = checkGroup;
-  }
 
+  const check = await readCheckMerged(checkId);
   const interval = last24h(new Date());
 
   const [{ checkResults }, checkSummary, errorPatterns] = await Promise.all([
