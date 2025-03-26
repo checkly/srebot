@@ -26,17 +26,19 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
       const account = await checkly.getAccount(accountId);
       const interval = last24h(new Date());
 
-      await respond({
-        response_type: "ephemeral",
-        text: `Analysing account "${account.name}"... ⏳`,
+      const response = await app.client.chat.postMessage({
+        channel: command.channel_id,
+        text: `Analysing account \`${account.name}\`... ⏳`,
       });
 
       try {
         const { message } = await accountSummary(accountId, interval);
-        await respond({
-          response_type: "in_channel",
+
+        await app.client.chat.update({
+          channel: command.channel_id,
+          ts: response.ts,
           ...message,
-        });
+        } as any);
       } catch (err) {
         // Ensure we have a proper Error object
         const error = err instanceof Error ? err : new Error(String(err));
@@ -54,19 +56,13 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
           text: `:x: Error fetching account summary: ${error.message}`,
         });
       }
-    } else if (args.length == 1 && !getIsUUID(args[0])) {
-      const multipleCheckAnalysisResult = await analyseMultipleChecks(args[0]);
-      await respond({
-        ...createMultipleCheckAnalysisBlock(multipleCheckAnalysisResult),
-        response_type: "in_channel",
-      });
     } else if (args.length === 1 && !!args[0] && getIsUUID(args[0])) {
       const checkId = args[0];
       try {
         // It is not possible to remove ephemeral messages or update them
         const response = await app.client.chat.postMessage({
           channel: command.channel_id,
-          text: `Analyzing check \`${checkId}\`...`,
+          text: `Analyzing check \`${checkId}\`... ⏳`,
         });
 
         const { message } = await checkSummary(checkId);
@@ -93,7 +89,7 @@ export const checklyCommandHandler = (app: App<StringIndexed>) => {
       }
     } else {
       await respond({
-        text: "Please provide either a check ID or both a check ID and check result ID in the format: /checkly <check_id> (<check_result_id>)",
+        text: "Please provide either a valid check id or no arguments for Account wide analysis",
       });
     }
   };
