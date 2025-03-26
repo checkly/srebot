@@ -23,7 +23,9 @@ import {
 import { CheckResultsInserter } from "./DataInserter";
 import { findCheckSyncStatus } from "../db/check-sync-status";
 
-const SAFETY_MARGIN_MINUTES = 2;
+// This is how long back we will look for check results to sync from the latest "to" synced date
+// Max check run duration is 4 minutes, so this adds a little margin
+const SAFETY_MARGIN_MINUTES = 5;
 
 export class PublicApiImporter {
   private inserter: CheckResultsInserter;
