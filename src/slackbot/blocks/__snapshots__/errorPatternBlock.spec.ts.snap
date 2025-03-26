@@ -50,6 +50,7 @@ exports[`errorPatternBlock renders multiple error patterns 1`] = `
     {
       "text": {
         "text": "*(10) Error Pattern #1*
+_Last seen: <!date^1742998712^{ago}|2025-03-26T14:18:32.687Z> | First seen: <!date^1742998712^{ago}|2025-03-26T14:18:32.687Z>_
 \`\`\`Error Pattern #1
 Details of error pattern #1\`\`\`",
         "type": "mrkdwn",
@@ -62,6 +63,7 @@ Details of error pattern #1\`\`\`",
     {
       "text": {
         "text": "*(20) Error Pattern #2*
+_Last seen: <!date^1742998712^{ago}|2025-03-26T14:18:32.687Z> | First seen: <!date^1742998712^{ago}|2025-03-26T14:18:32.687Z>_
 \`\`\`Error Pattern #2
 Details of error pattern #2\`\`\`",
         "type": "mrkdwn",
@@ -100,6 +102,7 @@ exports[`errorPatternBlock renders single error pattern 1`] = `
     {
       "text": {
         "text": "*(10) Error Pattern #1*
+_Last seen: <!date^1742998712^{ago}|2025-03-26T14:18:32.683Z> | First seen: <!date^1742998712^{ago}|2025-03-26T14:18:32.683Z>_
 \`\`\`Error Pattern #1
 Details of error pattern #1\`\`\`",
         "type": "mrkdwn",

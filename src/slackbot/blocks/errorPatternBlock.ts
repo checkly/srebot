@@ -33,7 +33,9 @@ export function createErrorPatternsBlock(
             ...errorPatterns.slice(0, 20).flatMap((errorPattern) => [
               {
                 text: {
-                  text: `*(${errorPattern.count}) ${errorPattern.error_message.split("\n")[0]}*\n\`\`\`${errorPattern.error_message.replaceAll('"', "")}\`\`\``,
+                  text: `*(${errorPattern.count}) ${errorPattern.error_message.split("\n")[0]}*
+_Last seen: <!date^${Math.floor(errorPattern.last_seen_at.getTime() / 1000)}^{ago}|${errorPattern.last_seen_at.toISOString()}> | First seen: <!date^${Math.floor(errorPattern.first_seen_at.getTime() / 1000)}^{ago}|${errorPattern.first_seen_at.toISOString()}>_
+\`\`\`${errorPattern.error_message.replaceAll('"', "")}\`\`\``,
                   type: "mrkdwn",
                 },
                 type: "section",
