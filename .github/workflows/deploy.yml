@@ -11,9 +11,9 @@ jobs:
     steps:
       - name: Install Render CLI
         run: |
-          curl -L https://github.com/render-oss/cli/releases/download/v0.8.6/cli_0.8.6_linux_amd64.zip -o render.zip
+          curl -L https://github.com/render-oss/cli/releases/download/v2.1.1/cli_2.1.1_linux_amd64.zip -o render.zip
           unzip render.zip
-          sudo mv cli_v0.8.6 /usr/local/bin/render
+          sudo mv cli_2.1.1 /usr/local/bin/render
 
       - name: Authenticate with Render
         env:
