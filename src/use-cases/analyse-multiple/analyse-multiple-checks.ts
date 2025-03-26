@@ -1,10 +1,11 @@
 import { findTargetChecks } from "./find-target-checks";
-import { generateText } from "ai";
+import { generateObject } from "ai";
 import { summariseMultipleChecksGoal } from "../../prompts/summarizeCheckGoals";
 import { Check } from "../../checkly/models";
+import { MultipleChecksGoalResponse } from "../../prompts/summarizeCheckGoals";
 
 export type MultipleCheckAnalysisResult = {
-  goalSummary: string;
+  goalSummary: MultipleChecksGoalResponse;
   allAnalysedChecks: Check[];
 };
 
@@ -13,12 +14,12 @@ export const analyseMultipleChecks = async (
 ): Promise<MultipleCheckAnalysisResult> => {
   const targetChecks = await findTargetChecks(arg);
 
-  const output = await generateText(
-    summariseMultipleChecksGoal(targetChecks, { maxTokens: 200 }),
+  const output = await generateObject<MultipleChecksGoalResponse>(
+    summariseMultipleChecksGoal(targetChecks, { maxTokens: 500 }),
   );
 
   return {
-    goalSummary: output.text,
+    goalSummary: output.object,
     allAnalysedChecks: targetChecks,
   };
 };

@@ -1,6 +1,6 @@
 import { LIST_ERROR_PATTERNS_ACTION_ID } from "./errorPatternBlock";
 import { LIST_FAILING_CHECKS_ACTION_ID } from "./failingChecksBlock";
-
+import { MultipleChecksGoalResponse } from "../../prompts/summarizeCheckGoals";
 interface AccountSummaryProps {
   accountName: string;
   passingChecks: number;
@@ -8,7 +8,7 @@ interface AccountSummaryProps {
   failingChecks: number;
   hasIssues: boolean;
   issuesSummary: string;
-  failingChecksGoals: string;
+  failingChecksGoals: MultipleChecksGoalResponse;
   failingCheckIds: string[];
   errorPatterns: { id: string; description: string; count: number }[];
   passingChecksDelta: number;
@@ -78,7 +78,7 @@ export function createAccountSummaryBlock({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Impact Analysis:*\n${failingChecksGoals}`,
+          text: `*Impact Analysis:*\n${failingChecksGoals.response.length > 0 ? failingChecksGoals.response.map((group, index) => `${index + 1}. *${group.header}*: ${group.description}`).join("\n") : "No failing checks detected in the last 24h."}`,
         },
       },
       ...(errorPatterns.length > 0

@@ -1,5 +1,5 @@
 import * as dataForge from "data-forge";
-import { generateText } from "ai";
+import { generateObject, generateText } from "ai";
 import { checkly } from "../checkly/client";
 import { findCheckResultsAggregated } from "../db/check-results";
 import { summarizeCheckResultsToLabeledCheckStatus } from "./check-results-labeled";
@@ -8,7 +8,10 @@ import { CheckTable, readChecks } from "../db/check";
 import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
 import { findErrorClustersForChecks } from "../db/error-cluster";
 import { getExtraAccountSetupContext } from "./checkly-integration-utils";
-import { summariseMultipleChecksGoal } from "../prompts/summarizeCheckGoals";
+import {
+  MultipleChecksGoalResponse,
+  summariseMultipleChecksGoal,
+} from "../prompts/summarizeCheckGoals";
 
 export async function accountSummary(
   accountId: string,
@@ -97,20 +100,22 @@ export async function accountSummary(
 
 async function summarizeChecksGoal(
   checkWithChangePoints: CheckTable[],
-): Promise<string> {
+): Promise<MultipleChecksGoalResponse> {
   if (checkWithChangePoints.length === 0) {
-    return "No change in check reliability, thus no impact on your customers.";
+    return {
+      response: [],
+    };
   }
 
   const extraContext = await getExtraAccountSetupContext();
   return (
-    await generateText(
+    await generateObject<MultipleChecksGoalResponse>(
       summariseMultipleChecksGoal(checkWithChangePoints, {
-        maxTokens: 200,
+        maxTokens: 500,
         extraContext,
       }),
     )
-  ).text;
+  ).object;
 }
 
 async function summarizeChangePoints(

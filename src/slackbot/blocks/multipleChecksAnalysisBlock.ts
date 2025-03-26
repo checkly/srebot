@@ -10,7 +10,7 @@ export function createMultipleCheckAnalysisBlock(
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Blast Radius:\n* ${analysisResult.allAnalysedChecks.length} checks analysed\n* ${analysisResult.goalSummary}`,
+          text: `Impact Analysis:\n* ${analysisResult.allAnalysedChecks.length} checks analysed\n* ${analysisResult.goalSummary.response.map((group, index) => `${index + 1}. **${group.header}**: ${group.description}`).join("\n")}`,
         },
       },
     ],
