@@ -21,23 +21,36 @@ jobs:
         run: |
           render login --output json
 
-      - name: Deploy and Wait for All Services
+      - name: Deploy and Wait for All Services in Parallel
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
           set -e
 
-          # Create deployments and capture deployment IDs
-          DEPLOY_ID_1=$(render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm | jq -r '.id')
-          DEPLOY_ID_2=$(render deploys create ${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID }} --output json --confirm | jq -r '.id')
-          DEPLOY_ID_3=$(render deploys create ${{ secrets.RENDER_SERVICE_ID_DEV }} --output json --confirm | jq -r '.id')
-          DEPLOY_ID_4=$(render deploys create ${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID_DEV }} --output json --confirm | jq -r '.id')
+          deploy() {
+            SERVICE_ID=$1
+            echo "Starting deployment for service $SERVICE_ID"
+            render deploys create "$SERVICE_ID" --output json --confirm --wait
+            echo "✅ Deployment for $SERVICE_ID completed"
+          }
 
-          echo "Waiting for deployments to finish..."
+          # Start all deployments in parallel
+          deploy "${{ secrets.RENDER_SERVICE_ID }}" &
+          PID1=$!
 
-          render deployments wait "$DEPLOY_ID_1"
-          render deployments wait "$DEPLOY_ID_2"
-          render deployments wait "$DEPLOY_ID_3"
-          render deployments wait "$DEPLOY_ID_4"
+          deploy "${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID }}" &
+          PID2=$!
 
-          echo "Done"
+          deploy "${{ secrets.RENDER_SERVICE_ID_DEV }}" &
+          PID3=$!
+
+          deploy "${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID_DEV }}" &
+          PID4=$!
+
+          # Wait for all to finish
+          wait $PID1
+          wait $PID2
+          wait $PID3
+          wait $PID4
+
+          echo "✅ All deployments finished"
