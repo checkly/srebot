@@ -2,7 +2,7 @@ import { CheckGroup } from "../checkly/models";
 import { checkly } from "../checkly/client";
 import postgres from "./postgres";
 
-interface CheckGroupTable {
+export interface CheckGroupTable {
   id: bigint;
   name: string;
   concurrency: number;
@@ -30,7 +30,7 @@ interface CheckGroupTable {
   fetchedAt: Date | null;
 }
 
-export async function readCheckGroup(id: bigint) {
+export async function readCheckGroup(id: bigint): Promise<CheckGroupTable> {
   const group = await postgres<CheckGroupTable>("check_groups")
     .where({ id })
     .first();

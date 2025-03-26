@@ -1,4 +1,4 @@
-import { readCheckGroup } from "../../db/check-groups";
+import { CheckGroupTable, readCheckGroup } from "../../db/check-groups";
 import { summarizeTestGoalPrompt } from "../../prompts/checkly";
 import { generateText } from "ai";
 import { last24h } from "../../prompts/checkly-data";
@@ -149,12 +149,17 @@ const getCheckStatus = (checkResults: CheckResultTable[]): CheckStatus => {
   return "PASSING";
 };
 
+type CheckTableWithGroup = CheckTable & { group?: CheckGroupTable };
+
 export async function checkSummary(checkId: string) {
   const start = Date.now();
-  const check = await readCheck(checkId);
+  const check: CheckTableWithGroup = await readCheck(checkId);
   if (check.groupId) {
+    // TODO introduce one utility that will fetch check and group together
     const checkGroup = await readCheckGroup(BigInt(check.groupId));
     check.locations = checkGroup.locations;
+    check.tags = [...new Set([...checkGroup.tags, ...check.tags])];
+    check.group = checkGroup;
   }
 
   const interval = last24h(new Date());
