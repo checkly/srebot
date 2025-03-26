@@ -3,14 +3,12 @@ import { generateText } from "ai";
 import { checkly } from "../checkly/client";
 import { findCheckResultsAggregated } from "../db/check-results";
 import { summarizeCheckResultsToLabeledCheckStatus } from "./check-results-labeled";
-import {
-  summariseMultipleChecksGoal,
-  summarizeMultipleChecksStatus,
-} from "../prompts/checkly";
+import { summarizeMultipleChecksStatus } from "../prompts/checkly";
 import { CheckTable, readChecks } from "../db/check";
 import { createAccountSummaryBlock } from "./blocks/accountSummaryBlock";
 import { findErrorClustersForChecks } from "../db/error-cluster";
 import { getExtraAccountSetupContext } from "./checkly-integration-utils";
+import { summariseMultipleChecksGoal } from "../prompts/summarizeCheckGoals";
 
 export async function accountSummary(
   accountId: string,
@@ -108,7 +106,7 @@ async function summarizeChecksGoal(
   return (
     await generateText(
       summariseMultipleChecksGoal(checkWithChangePoints, {
-        maxTokens: 500,
+        maxTokens: 200,
         extraContext,
       }),
     )

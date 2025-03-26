@@ -1,6 +1,6 @@
 import { findTargetChecks } from "./find-target-checks";
 import { generateText } from "ai";
-import { summariseMultipleChecksGoal } from "../../prompts/checkly";
+import { summariseMultipleChecksGoal } from "../../prompts/summarizeCheckGoals";
 import { Check } from "../../checkly/models";
 
 export type MultipleCheckAnalysisResult = {
@@ -14,7 +14,7 @@ export const analyseMultipleChecks = async (
   const targetChecks = await findTargetChecks(arg);
 
   const output = await generateText(
-    summariseMultipleChecksGoal(targetChecks, { maxTokens: 500 }),
+    summariseMultipleChecksGoal(targetChecks, { maxTokens: 200 }),
   );
 
   return {
