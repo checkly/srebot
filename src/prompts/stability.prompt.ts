@@ -84,7 +84,7 @@ Your goal is to:
   - Total degradation count
   - Total retry count
   - Specific regions affected (if applicable)
-  - Time ranges of notable events
+  - Time ranges of notable events (Always explicitly mention that timestamps are UTC e.g. 12:00 UTC)
 
 ## Expected Output
 Provide a JSON object with the following fields:
