@@ -45,14 +45,16 @@ No failing checks detected in the last 24h.",
     },
     {
       "text": {
-        "text": "1. \`Error Pattern #1\` (100 times)",
+        "text": "1. \`Error Pattern #1\` (100 times)
+      _First seen: <!date^1742774400^{ago}|2025-03-24T00:00:00.000Z>_",
         "type": "mrkdwn",
       },
       "type": "section",
     },
     {
       "text": {
-        "text": "2. \`Error Pattern #2\` (100 times)",
+        "text": "2. \`Error Pattern #2\` (100 times)
+      _First seen: <!date^1742774400^{ago}|2025-03-24T00:00:00.000Z>_",
         "type": "mrkdwn",
       },
       "type": "section",
@@ -143,7 +145,8 @@ No failing checks detected in the last 24h.",
     },
     {
       "text": {
-        "text": "1. \`Error Pattern #1\` (10 times)",
+        "text": "1. \`Error Pattern #1\` (10 times)
+      _First seen: <!date^1742774400^{ago}|2025-03-24T00:00:00.000Z>_",
         "type": "mrkdwn",
       },
       "type": "section",

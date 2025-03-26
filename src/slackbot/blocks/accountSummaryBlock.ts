@@ -10,7 +10,12 @@ interface AccountSummaryProps {
   issuesSummary: string;
   failingChecksGoals: MultipleChecksGoalResponse;
   failingCheckIds: string[];
-  errorPatterns: { id: string; description: string; count: number }[];
+  errorPatterns: {
+    id: string;
+    description: string;
+    count: number;
+    firstSeen: Date;
+  }[];
   passingChecksDelta: number;
   degradedChecksDelta: number;
   failingChecksDelta: number;
@@ -95,7 +100,7 @@ export function createAccountSummaryBlock({
                 type: "section",
                 text: {
                   type: "mrkdwn",
-                  text: `${index + 1}. \`${errorPattern.description}\` (${errorPattern.count} times)`,
+                  text: `${index + 1}. \`${errorPattern.description}\` (${errorPattern.count} times)\n      _First seen: <!date^${Math.floor(errorPattern.firstSeen.getTime() / 1000)}^{ago}|${errorPattern.firstSeen.toISOString()}>_`,
                 },
               },
             ]),
