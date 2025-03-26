@@ -108,7 +108,7 @@ async function summarizeChecksGoal(
   return (
     await generateText(
       summariseMultipleChecksGoal(checkWithChangePoints, {
-        maxTokens: 30,
+        maxTokens: 500,
         extraContext,
       }),
     )
