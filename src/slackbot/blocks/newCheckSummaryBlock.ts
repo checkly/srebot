@@ -138,7 +138,7 @@ function generateCheckSummaryBlock(stats: CheckStats) {
         actions: actions,
         fields: [
           {
-            title: "Availability",
+            title: "Availability (24 hours)",
             value: `${stats.successRate}%`,
             short: true,
           },
