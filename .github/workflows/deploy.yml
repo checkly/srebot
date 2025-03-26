@@ -6,21 +6,6 @@ on:
       - main
 
 jobs:
-  Deploy-Vercel:
-    if: false
-    #Temporarily disabled
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-
   Deploy-Render:
     runs-on: ubuntu-latest
     steps:
@@ -29,13 +14,30 @@ jobs:
           curl -L https://github.com/render-oss/cli/releases/download/v0.8.6/cli_0.8.6_linux_amd64.zip -o render.zip
           unzip render.zip
           sudo mv cli_v0.8.6 /usr/local/bin/render
-      - name: Authenticate with Render& Deploy
+
+      - name: Authenticate with Render
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          CI: true
         run: |
           render login --output json
-          render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm
-          render deploys create ${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID }} --output json --confirm
-          render deploys create ${{ secrets.RENDER_SERVICE_ID_DEV }} --output json --confirm
-          render deploys create ${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID_DEV }} --output json --confirm
+
+      - name: Deploy and Wait for All Services
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          set -e
+
+          # Create deployments and capture deployment IDs
+          DEPLOY_ID_1=$(render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm | jq -r '.id')
+          DEPLOY_ID_2=$(render deploys create ${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID }} --output json --confirm | jq -r '.id')
+          DEPLOY_ID_3=$(render deploys create ${{ secrets.RENDER_SERVICE_ID_DEV }} --output json --confirm | jq -r '.id')
+          DEPLOY_ID_4=$(render deploys create ${{ secrets.RENDER_DATA_SYNCER_SERVICE_ID_DEV }} --output json --confirm | jq -r '.id')
+
+          echo "Waiting for deployments to finish..."
+
+          render deployments wait "$DEPLOY_ID_1"
+          render deployments wait "$DEPLOY_ID_2"
+          render deployments wait "$DEPLOY_ID_3"
+          render deployments wait "$DEPLOY_ID_4"
+
+          echo "Done"
