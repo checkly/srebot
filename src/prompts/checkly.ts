@@ -273,7 +273,6 @@ type SummariseCheckInput = {
   tags: string[];
   groupName?: string;
   checkType: string;
-  dependencies: { path: string; content: string }[];
   locations: string[];
   request?: {
     method: string;
@@ -287,30 +286,6 @@ export const formatMultipleChecks = (
   characterLimit = 100_000,
 ): string => {
   const checkInputs: SummariseCheckInput[] = checks.map((check) => {
-    const dependencies: { content: string; path: string }[] = [];
-
-    if (check.script) {
-      dependencies.push({
-        content: check.script,
-        path: check.scriptPath,
-      });
-    }
-
-    if (check.localSetupScript) {
-      dependencies.push({
-        path: "localSetupScript",
-        content: check.localSetupScript,
-      });
-    }
-    if (check.localTearDownScript) {
-      dependencies.push({
-        path: "localTearDownScript",
-        content: check.localTearDownScript,
-      });
-    }
-
-    dependencies.push(...check.dependencies);
-
     return {
       name: check.name,
       tags: check.tags,
@@ -318,7 +293,6 @@ export const formatMultipleChecks = (
       checkType: check.checkType,
       request: check.request,
       locations: check.locations,
-      dependencies,
     };
   });
 
@@ -334,14 +308,6 @@ ${
         ", ",
       )}`
     : ""
-}
-- Dependencies:
-${
-  check.dependencies.length
-    ? check.dependencies
-        .map((d) => `\`\`\`\n#${d.path}\n  ${d.content}\`\`\``)
-        .join("\n")
-    : "None"
 }
 `;
 

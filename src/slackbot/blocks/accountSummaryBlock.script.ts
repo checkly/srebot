@@ -15,7 +15,7 @@ async function main() {
       failingChecksDelta: -1,
       hasIssues: false,
       issuesSummary: "No issues detected in the last 24h.",
-      failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingChecksGoals: { response: [] },
       failingCheckIds: [],
       errorPatterns: [],
     }),
@@ -31,7 +31,7 @@ async function main() {
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
-      failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingChecksGoals: { response: [] },
       failingCheckIds: [],
       errorPatterns: [
         {
@@ -63,7 +63,14 @@ async function main() {
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
-      failingChecksGoals: "Some checks have failed in the last 24h.",
+      failingChecksGoals: {
+        response: [
+          {
+            header: "main feature",
+            description: "The main feature is broken.",
+          },
+        ],
+      },
       failingCheckIds: ["126", "127", "128", "129", "130"],
       errorPatterns: [],
     }),
@@ -79,7 +86,7 @@ async function main() {
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
-      failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingChecksGoals: { response: [] },
       failingCheckIds: ["123", "124", "125"],
       errorPatterns: [
         {

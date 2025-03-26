@@ -12,7 +12,7 @@ describe("accountSummaryBlock", () => {
       failingChecksDelta: 0,
       hasIssues: false,
       issuesSummary: "No issues detected in the last 24h.",
-      failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingChecksGoals: { response: [] },
       failingCheckIds: [],
       errorPatterns: [],
     });
@@ -32,7 +32,7 @@ describe("accountSummaryBlock", () => {
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
-      failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingChecksGoals: { response: [] },
       failingCheckIds: ["123", "124"],
       errorPatterns: [
         {
@@ -63,7 +63,7 @@ describe("accountSummaryBlock", () => {
       hasIssues: true,
       issuesSummary:
         "New degrading or failing checks detected in the last 24h.",
-      failingChecksGoals: "No failing checks detected in the last 24h.",
+      failingChecksGoals: { response: [] },
       failingCheckIds: ["123", "124", "125"],
       errorPatterns: [
         {
