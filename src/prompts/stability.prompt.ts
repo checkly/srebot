@@ -138,7 +138,14 @@ Total degradations: ${totalDegradations}, Total retries: ${totalRetries}`,
     failuresAnalysis: z
       .string()
       .describe(
-        "Brief summary of the failure incidents, with their time-frame.\n         For each incident mention if it affected all locations, or a subset.\n         Use only hours for times, and full locations names.\n         If there is no clear pattern (sporadic or random failures)- do not mention specific times or locations.\n         If the failures are still happening, mention it. Use 2 sentences max.",
+        [
+          "Brief summary of the failure incidents, with their time-frame.",
+          "For each incident mention if it affected all locations, or a subset.",
+          "Use only hours for times, and full locations names.",
+          "If there is no clear pattern (sporadic or random failures) - do not mention specific times or locations.",
+          "If there are only failures - mention that the check is consistently failing",
+          "If the failures are still happening, mention it. Use 2 sentences max.",
+        ].join(" "),
       ),
   });
 

@@ -45,17 +45,9 @@ const prepareData = (
       0,
       0,
     );
-    const bucketKey = bucketTime.toISOString();
     // Initialize each bucket with all regions set to zero
-    buckets[bucketKey] = allLocations.map((region) => ({
-      region,
-      degraded: 0,
-      retries: 0,
-      failures: 0,
-      passing: 0,
-      failureRate: 0,
-    }));
     bucketStart.setMinutes(bucketStart.getMinutes() + bucketSizeMinutes);
+    buckets[bucketTime.toISOString()] = [];
   }
 
   let totalAttempts = 0;
@@ -76,30 +68,39 @@ const prepareData = (
 
     if (!buckets[bucketKey]) return; // Skip if outside interval
 
-    const regionData = buckets[bucketKey].find(
+    let regionData = buckets[bucketKey].find(
       (r) => r.region === result.runLocation,
     );
-    if (regionData) {
-      if (result.isDegraded) {
-        regionData.degraded += 1;
-        totalDegraded += 1;
-      }
-      if (result.resultType === "ATTEMPT") {
-        regionData.retries += 1;
-        totalAttempts += 1;
-      }
-      if (result.resultType === "FINAL") {
-        if (result.hasErrors || result.hasFailures) {
-          regionData.failures += 1;
-          totalFailures += 1;
-        } else {
-          regionData.passing += 1;
-        }
-      }
-      regionData.failureRate =
-        regionData.failures /
-        (regionData.failures + regionData.passing + regionData.degraded);
+    if (!regionData) {
+      regionData = {
+        region: result.runLocation,
+        degraded: 0,
+        retries: 0,
+        failures: 0,
+        failureRate: 0,
+        passing: 0,
+      };
+      buckets[bucketKey].push(regionData);
     }
+    if (result.isDegraded) {
+      regionData.degraded += 1;
+      totalDegraded += 1;
+    }
+    if (result.resultType === "ATTEMPT") {
+      regionData.retries += 1;
+      totalAttempts += 1;
+    }
+    if (result.resultType === "FINAL") {
+      if (result.hasErrors || result.hasFailures) {
+        regionData.failures += 1;
+        totalFailures += 1;
+      } else {
+        regionData.passing += 1;
+      }
+    }
+    regionData.failureRate =
+      regionData.failures /
+      (regionData.failures + regionData.passing + regionData.degraded);
   });
 
   // Step 4: Convert buckets to desired output format
